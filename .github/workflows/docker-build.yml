@@ -25,7 +25,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 构建并推送前端镜像
+      # 构建并推送 UI 镜像
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v6
         with:
@@ -35,13 +35,13 @@ jobs:
             xiz001/quant_ui:latest
             xiz001/quant_ui:${{ env.COMMIT_TAG }}
 
-      # 修改 quant_docker 的 docker-compose.yml 并推送分支
+      # 克隆正确仓库（zhengtiantian/quant_docker）
       - name: Clone quant_docker and update image tag
         run: |
-          git clone https://xiz001:${{ secrets.MAIN_REPO_PAT }}@github.com/xiz001/quant_docker.git
+          git clone https://zhengtiantian:${{ secrets.MAIN_REPO_PAT }}@github.com/zhengtiantian/quant_docker.git
           cd quant_docker
 
-          # 更新 quant_ui 的镜像版本号
+          # 更新 quant_ui 镜像版本号
           sed -i -E "s|(xiz001/quant_ui:)[^[:space:]]+|\1${{ env.COMMIT_TAG }}|g" docker-compose.yml
 
           git config user.name "github-actions"
@@ -51,7 +51,7 @@ jobs:
           git commit -m "Update quant_ui image tag to ${{ env.COMMIT_TAG }}"
           git push origin update-ui-image-${{ env.COMMIT_TAG }}
 
-      # 用 GitHub API 创建跨仓库 PR
+      # 调用 GitHub API 创建 PR（目标仓库同样是 zhengtiantian/quant_docker）
       - name: Create Pull Request in quant_docker
         env:
           GITHUB_TOKEN: ${{ secrets.MAIN_REPO_PAT }}
@@ -59,7 +59,7 @@ jobs:
           curl -X POST \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Accept: application/vnd.github+json" \
-            https://api.github.com/repos/xiz001/quant_docker/pulls \
+            https://api.github.com/repos/zhengtiantian/quant_docker/pulls \
             -d '{
               "title": "Update quant_ui image to '${{ env.COMMIT_TAG }}'",
               "head": "update-ui-image-'${{ env.COMMIT_TAG }}'",
