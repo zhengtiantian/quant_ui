@@ -1,13 +1,19 @@
-import "./App.css";
-import WorkflowList from "./components/WorkflowList";
+import React from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import LoginRegister from "./components/LoginRegister";
+import Dashboard from "./pages/Dashboard";
 
-function App() {
+const App: React.FC = () => {
+    const token = localStorage.getItem("token");
+
     return (
-        <div className="App">
-            <h1>Quant Workflow System</h1>
-            <WorkflowList />
-        </div>
+        <Router>
+            <Routes>
+                <Route path="/" element={token ? <Navigate to="/dashboard" /> : <LoginRegister />} />
+                <Route path="/dashboard" element={token ? <Dashboard /> : <Navigate to="/" />} />
+            </Routes>
+        </Router>
     );
-}
+};
 
 export default App;
