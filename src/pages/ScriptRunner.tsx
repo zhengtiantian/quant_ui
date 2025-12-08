@@ -5,10 +5,25 @@ const ScriptRunner: React.FC = () => {
     const [selectedScript, setSelectedScript] = useState<string | null>(null);
     const [logs, setLogs] = useState<string>("");
 
+    // 从 localStorage 获取 token
+    const token = localStorage.getItem("token");
+
+    // 通用请求头
+    const authHeaders: HeadersInit = {
+        Authorization: `Bearer ${token}`,
+    };
+
     // 获取脚本列表
     useEffect(() => {
-        fetch("/api/scripts")
-            .then((res) => res.json())
+        fetch("/api/scripts", { headers: authHeaders })
+            .then((res) => {
+                if (res.status === 401 || res.status === 403) {
+                    alert("登录已过期，请重新登录");
+                    localStorage.removeItem("token");
+                    window.location.href = "/";
+                }
+                return res.json();
+            })
             .then((data) => {
                 if (data.scripts) setScripts(data.scripts);
             })
@@ -20,7 +35,7 @@ const ScriptRunner: React.FC = () => {
         setSelectedScript(path);
         setLogs("Running script...\n");
 
-        const response = await fetch(`/api/run/${path}`);
+        const response = await fetch(`/api/run/${path}`, { headers: authHeaders });
         const reader = response.body?.getReader();
         if (!reader) return;
 
@@ -34,7 +49,10 @@ const ScriptRunner: React.FC = () => {
 
     // 停止脚本
     const stopScript = async (path: string) => {
-        await fetch(`/api/stop/${path}`, { method: "POST" });
+        await fetch(`/api/stop/${path}`, {
+            method: "POST",
+            headers: authHeaders,
+        });
         setLogs((prev) => prev + "\n=== Script stopped ===\n");
     };
 
@@ -66,8 +84,8 @@ const ScriptRunner: React.FC = () => {
                             overflowY: "scroll",
                         }}
                     >
-            {logs}
-          </pre>
+                        {logs}
+                    </pre>
                 </div>
             )}
         </div>
