@@ -1,7 +1,9 @@
 import React, { useState } from "react";
-import axios from "axios";
 
-const API_BASE = "http://localhost:8081/api/auth";
+const KEYCLOAK_TOKEN_URL =
+    "http://localhost:8080/realms/quant/protocol/openid-connect/token"; // ✅ 替换成你的 realm 名
+
+const CLIENT_ID = "quant-ui"; // ✅ 对应 Keycloak 里配置的前端 clientId
 
 const LoginRegister: React.FC = () => {
     const [mode, setMode] = useState<"login" | "register">("login");
@@ -9,14 +11,36 @@ const LoginRegister: React.FC = () => {
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
 
+    // === ✅ Keycloak 登录逻辑 ===
     const handleLogin = async () => {
         setLoading(true);
         try {
-            const res = await axios.post(`${API_BASE}/login`, { username, password });
-            localStorage.setItem("token", res.data.access_token);
-            localStorage.setItem("username", username);
-            alert("✅ 登录成功");
-            window.location.href = "/dashboard"; // ✅ 跳转到 Dashboard
+            const params = new URLSearchParams();
+            params.append("grant_type", "password");
+            params.append("client_id", CLIENT_ID);
+            params.append("username", username);
+            params.append("password", password);
+
+            const res = await fetch(KEYCLOAK_TOKEN_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: params,
+            });
+
+            if (!res.ok) throw new Error("Login failed");
+            const data = await res.json();
+
+            if (data.access_token) {
+                // ✅ 存储 token
+                localStorage.setItem("token", data.access_token);
+                localStorage.setItem("refresh_token", data.refresh_token);
+                localStorage.setItem("username", username);
+
+                alert("✅ 登录成功");
+                window.location.href = "/dashboard";
+            } else {
+                alert("❌ 登录失败：未返回 token");
+            }
         } catch (err) {
             console.error(err);
             alert("❌ 登录失败，请检查账号或密码");
@@ -25,18 +49,9 @@ const LoginRegister: React.FC = () => {
         }
     };
 
+    // === 可选注册逻辑（用 Keycloak Admin API 或后端代理） ===
     const handleRegister = async () => {
-        setLoading(true);
-        try {
-            await axios.post(`${API_BASE}/register`, { username, password });
-            alert("✅ 注册成功，请登录");
-            setMode("login");
-        } catch (err) {
-            console.error(err);
-            alert("❌ 注册失败，可能用户已存在");
-        } finally {
-            setLoading(false);
-        }
+        alert("⚠️ 注册请联系管理员或使用 Keycloak Admin Console。");
     };
 
     return (
