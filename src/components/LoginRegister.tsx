@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 
-const KEYCLOAK_TOKEN_URL =
-    "http://localhost:8080/realms/quant/protocol/openid-connect/token"; // ✅ Keycloak realm token endpoint
-const CLIENT_ID = "quant-ui"; // ✅ 对应 Keycloak clientId
+const KEYCLOAK_TOKEN_URL = "http://localhost:8080/realms/quant/protocol/openid-connect/token";
+const CLIENT_ID = "quant-ui";
 
 const LoginRegister: React.FC = () => {
     const [mode, setMode] = useState<"login" | "register">("login");
@@ -10,18 +9,18 @@ const LoginRegister: React.FC = () => {
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
 
-    // === ✅ 自动刷新 token ===
+    // === 自动刷新 token ===
     useEffect(() => {
-        const refreshInterval = setInterval(async () => {
+        const refresh = async () => {
             const refresh_token = localStorage.getItem("refresh_token");
             if (!refresh_token) return;
 
-            try {
-                const params = new URLSearchParams();
-                params.append("grant_type", "refresh_token");
-                params.append("client_id", CLIENT_ID);
-                params.append("refresh_token", refresh_token);
+            const params = new URLSearchParams();
+            params.append("grant_type", "refresh_token");
+            params.append("client_id", CLIENT_ID);
+            params.append("refresh_token", refresh_token);
 
+            try {
                 const res = await fetch(KEYCLOAK_TOKEN_URL, {
                     method: "POST",
                     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -29,25 +28,26 @@ const LoginRegister: React.FC = () => {
                 });
 
                 if (!res.ok) throw new Error("Refresh failed");
-
                 const data = await res.json();
+
                 if (data.access_token) {
                     localStorage.setItem("token", data.access_token);
                     localStorage.setItem("refresh_token", data.refresh_token);
-                    console.log("🔁 Token refreshed successfully");
+                    console.log("🔁 Token refreshed");
                 }
-            } catch (err) {
-                console.warn("❌ Token refresh failed:", err);
-                alert("登录已过期，请重新登录");
+            } catch (e) {
+                console.warn("Token refresh failed:", e);
+                // 静默登出而非 alert 循环
                 localStorage.clear();
-                window.location.href = "/";
+                window.location.replace("/");
             }
-        }, 4 * 60 * 1000); // 每4分钟刷新一次
+        };
 
-        return () => clearInterval(refreshInterval);
+        const interval = setInterval(refresh, 4 * 60 * 1000);
+        return () => clearInterval(interval);
     }, []);
 
-    // === ✅ 登录逻辑 ===
+    // === 登录 ===
     const handleLogin = async () => {
         setLoading(true);
         try {
@@ -63,30 +63,25 @@ const LoginRegister: React.FC = () => {
                 body: params,
             });
 
-            if (!res.ok) throw new Error("Login failed");
             const data = await res.json();
-
             if (data.access_token) {
                 localStorage.setItem("token", data.access_token);
                 localStorage.setItem("refresh_token", data.refresh_token);
                 localStorage.setItem("username", username);
-
-                alert("✅ 登录成功");
-                window.location.href = "/dashboard";
+                window.location.replace("/dashboard");
             } else {
-                alert("❌ 登录失败：未返回 token");
+                alert("登录失败：" + (data.error_description || "未返回 token"));
             }
-        } catch (err) {
-            console.error(err);
-            alert("❌ 登录失败，请检查账号或密码");
+        } catch (e) {
+            console.error("Login error:", e);
+            alert("登录失败，请检查账号或密码");
         } finally {
             setLoading(false);
         }
     };
 
-    // === 注册逻辑（可选） ===
-    const handleRegister = async () => {
-        alert("⚠️ 注册请联系管理员或使用 Keycloak Admin Console。");
+    const handleRegister = () => {
+        alert("⚠️ 注册请联系管理员或使用 Keycloak 控制台。");
     };
 
     return (
