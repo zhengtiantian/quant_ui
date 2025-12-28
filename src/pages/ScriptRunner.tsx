@@ -5,19 +5,17 @@ const ScriptRunner: React.FC = () => {
     const [selectedScript, setSelectedScript] = useState<string | null>(null);
     const [logs, setLogs] = useState<string>("");
 
-    // === 防止重复弹窗 ===
     const [sessionExpired, setSessionExpired] = useState(false);
 
     // === Token Header ===
     const token = localStorage.getItem("token");
     const authHeaders: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
 
-    // === 通用处理：检测401/403 ===
+    // === 检查401/403自动登出 ===
     const handleAuthError = (res: Response) => {
         if (!sessionExpired && (res.status === 401 || res.status === 403)) {
             setSessionExpired(true);
-            localStorage.removeItem("token");
-            localStorage.removeItem("username");
+            localStorage.clear();
             console.warn("⚠️ 登录已过期，跳转到登录页");
             setTimeout(() => window.location.replace("/"), 500);
             return true;
@@ -25,7 +23,7 @@ const ScriptRunner: React.FC = () => {
         return false;
     };
 
-    // === 获取脚本列表 ===
+    // === 加载脚本列表 ===
     useEffect(() => {
         fetch("/api/scripts", { headers: authHeaders })
             .then((res) => {
@@ -35,36 +33,52 @@ const ScriptRunner: React.FC = () => {
             .then((data) => {
                 if (data && data.scripts) setScripts(data.scripts);
             })
-            .catch((err) => console.error("Failed to fetch scripts:", err));
+            .catch((err) => console.error("❌ Failed to fetch scripts:", err));
     }, []);
 
-    // === 运行脚本并实时读取日志 ===
+    // === 运行脚本 ===
     const runScript = async (path: string) => {
         setSelectedScript(path);
-        setLogs("Running script...\n");
+        setLogs(`Running script: ${path}\n`);
 
-        const response = await fetch(`/api/run/${path}`, { headers: authHeaders });
-        if (handleAuthError(response)) return;
+        try {
+            // ✅ 用 query 参数传递 path
+            const response = await fetch(`/api/run?path=${encodeURIComponent(path)}`, {
+                headers: authHeaders,
+            });
+            if (handleAuthError(response)) return;
 
-        const reader = response.body?.getReader();
-        if (!reader) return;
+            if (!response.body) {
+                setLogs((prev) => prev + "\n❌ No response body\n");
+                return;
+            }
 
-        const decoder = new TextDecoder("utf-8");
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            setLogs((prev) => prev + decoder.decode(value));
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                setLogs((prev) => prev + decoder.decode(value));
+            }
+        } catch (err) {
+            console.error("❌ Run script error:", err);
+            setLogs((prev) => prev + "\nError running script.\n");
         }
     };
 
     // === 停止脚本 ===
     const stopScript = async (path: string) => {
-        const res = await fetch(`/api/stop/${path}`, {
-            method: "POST",
-            headers: authHeaders,
-        });
-        if (handleAuthError(res)) return;
-        setLogs((prev) => prev + "\n=== Script stopped ===\n");
+        try {
+            const res = await fetch(`/api/stop?path=${encodeURIComponent(path)}`, {
+                method: "POST",
+                headers: authHeaders,
+            });
+            if (handleAuthError(res)) return;
+            setLogs((prev) => prev + "\n=== Script stopped ===\n");
+        } catch (err) {
+            console.error("❌ Stop script error:", err);
+        }
     };
 
     return (
