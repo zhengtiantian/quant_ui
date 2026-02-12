@@ -1,0 +1,197 @@
+.wf-studio {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  color: #1f2937;
+}
+
+.wf-head {
+  margin-bottom: 12px;
+}
+
+.wf-head h2 {
+  margin: 0;
+  font-size: 1.8rem;
+  letter-spacing: 0.02em;
+}
+
+.wf-head p {
+  margin: 4px 0 0;
+  color: #4b5563;
+}
+
+.wf-panel {
+  border: 1px solid #d1d5db;
+  border-radius: 14px;
+  padding: 14px;
+  background: linear-gradient(160deg, #f8fafc 0%, #f4f9f3 100%);
+}
+
+.wf-panel label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.wf-panel textarea {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid #9ca3af;
+  padding: 10px;
+  font-family: "Fira Code", "Menlo", "Consolas", monospace;
+  resize: vertical;
+  box-sizing: border-box;
+  background: #ffffff;
+}
+
+.wf-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.wf-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(130px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.wf-actions button,
+.wf-presets button {
+  border: 1px solid #0f766e;
+  border-radius: 10px;
+  background: #0f766e;
+  color: #ffffff;
+  padding: 10px 12px;
+  font-weight: 700;
+}
+
+.wf-actions button:disabled {
+  background: #9ca3af;
+  border-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.wf-error {
+  margin-top: 12px;
+  background: #fee2e2;
+  border: 1px solid #ef4444;
+  color: #991b1b;
+  border-radius: 10px;
+  padding: 10px;
+  white-space: pre-wrap;
+}
+
+.wf-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.wf-main-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.wf-card {
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 12px;
+  background: #ffffff;
+}
+
+.wf-card h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.wf-card textarea {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 10px;
+  box-sizing: border-box;
+  font-family: "Fira Code", "Menlo", "Consolas", monospace;
+  resize: vertical;
+}
+
+.wf-chat-card {
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 12px;
+  background: #ffffff;
+  position: sticky;
+  top: 8px;
+}
+
+.wf-chat-card h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.wf-chat-list {
+  border: 1px solid #dbe2ea;
+  border-radius: 10px;
+  padding: 10px;
+  height: 460px;
+  overflow-y: auto;
+  background: #f8fafc;
+}
+
+.wf-chat-bubble {
+  padding: 8px 10px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  white-space: pre-wrap;
+}
+
+.wf-chat-assistant {
+  background: #e6f4ea;
+  border: 1px solid #8ad1a0;
+}
+
+.wf-chat-user {
+  background: #e8f0fe;
+  border: 1px solid #9ec0ff;
+}
+
+.wf-chat-input-row {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.wf-chat-input-row textarea {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 10px;
+  box-sizing: border-box;
+  font-family: "Fira Code", "Menlo", "Consolas", monospace;
+  resize: vertical;
+}
+
+.wf-chat-input-row button {
+  justify-self: end;
+}
+
+@media (max-width: 900px) {
+  .wf-main-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wf-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .wf-grid {
+    grid-template-columns: 1fr;
+  }
+}

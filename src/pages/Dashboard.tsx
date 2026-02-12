@@ -1,8 +1,10 @@
 import React from "react";
 import ScriptRunner from "../pages/ScriptRunner";
+import StrategyStudio from "./StrategyStudio";
 
 const Dashboard: React.FC = () => {
     const username = localStorage.getItem("username");
+    const [tab, setTab] = React.useState<"strategy" | "scripts">("strategy");
 
     const handleLogout = () => {
         localStorage.removeItem("token");
@@ -30,9 +32,14 @@ const Dashboard: React.FC = () => {
                 </div>
             </header>
 
-            {/* 主体：脚本运行器 */}
+            <div style={{ display: "flex", gap: "10px", marginBottom: "16px" }}>
+                <button onClick={() => setTab("strategy")}>Strategy Studio</button>
+                <button onClick={() => setTab("scripts")}>Script Runner</button>
+            </div>
+
+            {/* 主体 */}
             <main>
-                <ScriptRunner />
+                {tab === "strategy" ? <StrategyStudio /> : <ScriptRunner />}
             </main>
         </div>
     );
