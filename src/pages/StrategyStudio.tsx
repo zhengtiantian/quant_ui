@@ -6,6 +6,7 @@ import {
   generateStrategyXml,
   saveStrategy,
 } from "../api/strategy";
+import type { StrategyTaskCode } from "../api/strategy";
 import "./StrategyStudio.css";
 
 const PRESET_PROMPTS = [
@@ -71,11 +72,11 @@ const StrategyStudio: React.FC = () => {
     return JSON.parse(strategySpecText) as Record<string, unknown>;
   };
 
-  const parseTasks = (): Record<string, unknown> | Array<Record<string, unknown>> => {
+  const parseTasks = (): StrategyTaskCode[] | Record<string, unknown> => {
     if (!taskText.trim()) {
       throw new Error("Tasks为空，请先生成任务代码。");
     }
-    return JSON.parse(taskText) as Record<string, unknown> | Array<Record<string, unknown>>;
+    return JSON.parse(taskText) as StrategyTaskCode[] | Record<string, unknown>;
   };
 
   const sendChat = async () => {
@@ -104,7 +105,7 @@ const StrategyStudio: React.FC = () => {
     <section className="wf-studio">
       <div className="wf-head">
         <h2>Strategy Studio</h2>
-        <p>Prompt -> StrategySpec -> Tasks -> XML -> Save</p>
+        <p>Prompt -&gt; StrategySpec -&gt; Tasks -&gt; XML -&gt; Save</p>
       </div>
 
       <div className="wf-panel">
