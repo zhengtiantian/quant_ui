@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 
-const API_BASE = "http://localhost:8081/api/auth"; // ✅ 指向你的后端端口
+const API_BASE = "/api/auth";
+const KEYCLOAK_TOKEN_URL = `${window.location.protocol}//${window.location.hostname}:18082/realms/quant/protocol/openid-connect/token`;
 
 const LoginRegister: React.FC = () => {
     const [mode, setMode] = useState<"login" | "register">("login");
@@ -20,14 +21,11 @@ const LoginRegister: React.FC = () => {
             params.append("refresh_token", refresh_token);
 
             try {
-                const res = await fetch(
-                    "http://localhost:8080/realms/quant/protocol/openid-connect/token",
-                    {
-                        method: "POST",
-                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                        body: params,
-                    }
-                );
+                const res = await fetch(KEYCLOAK_TOKEN_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: params,
+                });
                 if (!res.ok) throw new Error("refresh failed");
                 const data = await res.json();
                 localStorage.setItem("token", data.access_token);
@@ -52,15 +50,18 @@ const LoginRegister: React.FC = () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ username, password }),
             });
-            const data = await res.json();
+            const data = await res.json().catch(() => ({}));
 
-            if (data.access_token) {
+            if (res.ok && data.access_token) {
                 localStorage.setItem("token", data.access_token);
                 localStorage.setItem("refresh_token", data.refresh_token);
                 localStorage.setItem("username", username);
                 window.location.replace("/dashboard");
             } else {
-                alert("❌ 登录失败：" + (data.error_description || "未返回 token"));
+                alert(
+                    "❌ 登录失败：" +
+                    (data.error_description || data.error || `HTTP ${res.status}，未返回 token`)
+                );
             }
         } catch (e) {
             alert("❌ 登录失败：" + e);

@@ -68,10 +68,25 @@
   font-weight: 700;
 }
 
+.wf-actions .wf-primary-action {
+  background: #0f172a;
+  border-color: #0f172a;
+}
+
 .wf-actions button:disabled {
   background: #9ca3af;
   border-color: #9ca3af;
   cursor: not-allowed;
+}
+
+.wf-auto-status {
+  margin-top: 10px;
+  border: 1px solid #bae6fd;
+  background: #f0f9ff;
+  color: #0c4a6e;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-weight: 600;
 }
 
 .wf-error {

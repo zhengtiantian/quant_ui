@@ -50,6 +50,7 @@ const StrategyStudio: React.FC = () => {
   ]);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [autoStatus, setAutoStatus] = useState("");
 
   const userId = useMemo(() => localStorage.getItem("username") || "local-user", []);
 
@@ -101,6 +102,34 @@ const StrategyStudio: React.FC = () => {
     });
   };
 
+  const autoGenerateAll = async () => {
+    await withAction("auto", async () => {
+      const finalPrompt = prompt.trim();
+      if (!finalPrompt) {
+        throw new Error("策略需求不能为空。");
+      }
+
+      setAutoStatus("正在生成 StrategySpec...");
+      const spec = await generateStrategySpec(finalPrompt, userId);
+      setStrategySpecText(pretty(spec));
+
+      setAutoStatus("正在生成 Tasks...");
+      const tasks = await generateStrategyTasks(spec);
+      setTaskText(pretty(tasks));
+
+      setAutoStatus("正在生成 XML...");
+      const xmlRaw = await generateStrategyXml({ strategySpec: spec, tasks });
+      const xml = extractXml(xmlRaw);
+      setXmlText(xml);
+
+      setAutoStatus("正在保存 Strategy...");
+      const saved = await saveStrategy({ strategySpec: spec, tasks, xml, userId });
+      setSaveResultText(pretty(saved));
+
+      setAutoStatus("自动生成完成。");
+    });
+  };
+
   return (
     <section className="wf-studio">
       <div className="wf-head">
@@ -125,6 +154,14 @@ const StrategyStudio: React.FC = () => {
           ))}
         </div>
         <div className="wf-actions">
+          <button
+            type="button"
+            className="wf-primary-action"
+            disabled={!!busy || !prompt.trim()}
+            onClick={autoGenerateAll}
+          >
+            {busy === "auto" ? "自动生成中..." : "一键自动生成并保存"}
+          </button>
           <button
             type="button"
             disabled={!!busy || !prompt.trim()}
@@ -179,6 +216,7 @@ const StrategyStudio: React.FC = () => {
             {busy === "save" ? "保存中..." : "4. 保存 Strategy"}
           </button>
         </div>
+        {autoStatus && <div className="wf-auto-status">{autoStatus}</div>}
       </div>
 
       {error && <div className="wf-error">{error}</div>}

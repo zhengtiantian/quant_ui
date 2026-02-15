@@ -55,7 +55,7 @@ export async function generateStrategySpec(prompt: string, userId: string) {
 export async function generateStrategyTasks(strategySpec: Record<string, unknown>) {
   return postJsonWithFallback<StrategyTaskCode[] | Record<string, unknown>>(
     ["/api/v1/strategies/generate-tasks", "/api/v1/workflows/generate-tasks", "/api/v1/strategy/generate-code"],
-    strategySpec,
+    { strategySpec },
     localStorage.getItem("token"),
   );
 }
