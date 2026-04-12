@@ -1,10 +1,10 @@
 # ========== 构建阶段 ==========
-FROM node:20-alpine AS builder
+FROM node:20-bookworm AS builder
 WORKDIR /app
 
 # 复制依赖文件并安装
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 # 复制项目代码并构建
 COPY . .
