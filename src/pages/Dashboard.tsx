@@ -2,10 +2,11 @@ import React from "react";
 import ScriptRunner from "../pages/ScriptRunner";
 import StrategyStudio from "./StrategyStudio";
 import MarketCharts from "./MarketCharts";
+import SignalsPanel from "../components/SignalsPanel";
 
 const Dashboard: React.FC = () => {
     const username = localStorage.getItem("username");
-    const [tab, setTab] = React.useState<"strategy" | "market" | "scripts">("strategy");
+    const [tab, setTab] = React.useState<"signals" | "strategy" | "market" | "scripts">("signals");
 
     const handleLogout = () => {
         localStorage.removeItem("token");
@@ -28,20 +29,29 @@ const Dashboard: React.FC = () => {
             >
                 <h2>Quant Dashboard</h2>
                 <div>
-                    <span style={{ marginRight: "15px" }}>👋 欢迎, {username || "用户"}</span>
-                    <button onClick={handleLogout}>退出登录</button>
+                    <span style={{ marginRight: "15px" }}>👋 Welcome, {username || "User"}</span>
+                    <button onClick={handleLogout}>Logout</button>
                 </div>
             </header>
 
             <div style={{ display: "flex", gap: "10px", marginBottom: "16px" }}>
+                <button onClick={() => setTab("signals")}>Signals</button>
                 <button onClick={() => setTab("strategy")}>Strategy Studio</button>
                 <button onClick={() => setTab("market")}>Market</button>
                 <button onClick={() => setTab("scripts")}>Script Runner</button>
             </div>
 
-            {/* 主体 */}
+            {/* Main */}
             <main>
-                {tab === "strategy" ? <StrategyStudio /> : tab === "market" ? <MarketCharts /> : <ScriptRunner />}
+                {tab === "signals" ? (
+                    <SignalsPanel />
+                ) : tab === "strategy" ? (
+                    <StrategyStudio />
+                ) : tab === "market" ? (
+                    <MarketCharts />
+                ) : (
+                    <ScriptRunner />
+                )}
             </main>
         </div>
     );
