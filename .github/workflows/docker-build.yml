@@ -39,7 +39,7 @@ jobs:
       # 克隆正确仓库（zhengtiantian/quant_docker）
       - name: Clone quant_docker and update image tag
         run: |
-          git clone https://zhengtiantian:${{ secrets.MAIN_REPO_PAT }}@github.com/zhengtiantian/quant_docker.git
+          git clone https://zhengtiantian:${{ secrets.MAIN_REPO_PAT }}@github.com/zhengtiantian/ai-equity-signal-platform.git quant_docker
           cd quant_docker
 
           # 更新 quant_ui 镜像版本号
@@ -60,7 +60,7 @@ jobs:
           curl -X POST \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Accept: application/vnd.github+json" \
-            https://api.github.com/repos/zhengtiantian/quant_docker/pulls \
+            https://api.github.com/repos/zhengtiantian/ai-equity-signal-platform/pulls \
             -d '{
               "title": "Update quant_ui image to '${{ env.COMMIT_TAG }}'",
               "head": "update-ui-image-'${{ env.COMMIT_TAG }}'",
