@@ -31,3 +31,33 @@ export async function fetchPerformance(): Promise<Performance> {
     if (!res.ok) throw new Error("Failed to fetch performance");
     return await res.json();
 }
+
+export interface PaperTrade {
+    symbol: string;
+    entryDate: string;
+    exitDate?: string;
+    daysHeld?: number;
+    exitReturn?: number;
+    exitTrigger?: string;
+}
+
+export interface PaperPerformance {
+    summary?: {
+        openCount: number;
+        closedCount: number;
+        firstEntry?: string;
+        realizedAvgReturn: number;
+        unrealizedAvgReturn: number;
+        winRate: number;
+        avgDaysHeld: number;
+        cumulativeReturn: number;
+    };
+    equityCurve?: { exitDate: string; equity: number; tradeReturn: number; symbol: string }[];
+    recentTrades?: PaperTrade[];
+}
+
+export async function fetchPaperPerformance(): Promise<PaperPerformance> {
+    const res = await fetch("/api/paper-performance");
+    if (!res.ok) throw new Error("Failed to fetch paper performance");
+    return await res.json();
+}

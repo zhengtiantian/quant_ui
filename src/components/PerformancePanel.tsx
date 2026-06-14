@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { fetchPerformance } from "../api/performance";
-import type { Performance, PerfStats } from "../api/performance";
+import { fetchPerformance, fetchPaperPerformance } from "../api/performance";
+import type { Performance, PerfStats, PaperPerformance } from "../api/performance";
 
 const pct = (v: number | null | undefined): string =>
     v === null || v === undefined ? "—" : `${(v * 100).toFixed(1)}%`;
+
+const retColor = (v: number | null | undefined): string =>
+    (v ?? 0) > 0 ? "#1a7f37" : (v ?? 0) < 0 ? "#cf222e" : "#6e7781";
 
 const W = 900;
 const H = 320;
@@ -51,12 +54,16 @@ function StatBlock({ title, color, s }: { title: string; color: string; s?: Perf
 
 export default function PerformancePanel() {
     const [perf, setPerf] = useState<Performance | null>(null);
+    const [paper, setPaper] = useState<PaperPerformance | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetchPerformance()
-            .then(setPerf)
+        Promise.all([fetchPerformance(), fetchPaperPerformance()])
+            .then(([p, pp]) => {
+                setPerf(p);
+                setPaper(pp);
+            })
             .catch((e) => setError(String(e)))
             .finally(() => setLoading(false));
     }, []);
@@ -97,6 +104,57 @@ export default function PerformancePanel() {
                 <path d={paths.bench} fill="none" stroke="#8c959f" strokeWidth="1.5" />
                 <path d={paths.strat} fill="none" stroke="#1f6feb" strokeWidth="2" />
             </svg>
+
+            {/* Live paper-trading record (accumulates day by day) */}
+            {paper?.summary && (paper.summary.closedCount > 0 || paper.summary.openCount > 0) && (
+                <div style={{ marginTop: 28, borderTop: "1px solid #eaeef2", paddingTop: 16 }}>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 10 }}>
+                        <h3 style={{ margin: 0 }}>Paper Trading</h3>
+                        <span style={{ color: "#8c959f", fontSize: "0.85rem" }}>
+                            out-of-sample · live since {paper.summary.firstEntry ?? "—"}
+                        </span>
+                    </div>
+
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 24, marginBottom: 14 }}>
+                        {[
+                            ["Open / Closed", `${paper.summary.openCount} / ${paper.summary.closedCount}`, undefined],
+                            ["Realized avg", pct(paper.summary.realizedAvgReturn), retColor(paper.summary.realizedAvgReturn)],
+                            ["Cumulative", pct(paper.summary.cumulativeReturn), retColor(paper.summary.cumulativeReturn)],
+                            ["Win rate", pct(paper.summary.winRate), undefined],
+                            ["Open P/L", pct(paper.summary.unrealizedAvgReturn), retColor(paper.summary.unrealizedAvgReturn)],
+                            ["Avg hold", `${(paper.summary.avgDaysHeld ?? 0).toFixed(0)}d`, undefined],
+                        ].map(([label, val, color]) => (
+                            <div key={label as string}>
+                                <div style={{ fontSize: "0.78rem", color: "#8c959f" }}>{label}</div>
+                                <div style={{ fontSize: "1.05rem", fontWeight: 700, color: (color as string) ?? "#24292f" }}>{val}</div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {paper.recentTrades && paper.recentTrades.length > 0 && (
+                        <>
+                            <div style={{ fontSize: "0.85rem", color: "#57606a", marginBottom: 4 }}>Recent closed trades</div>
+                            <table style={{ borderCollapse: "collapse", width: "100%", maxWidth: 720 }}>
+                                <tbody>
+                                    {paper.recentTrades.map((t, i) => (
+                                        <tr key={i} style={{ borderBottom: "1px solid #f0f2f4" }}>
+                                            <td style={{ padding: "6px 10px", fontWeight: 600 }}>{t.symbol}</td>
+                                            <td style={{ padding: "6px 10px", color: "#57606a", fontSize: "0.85rem" }}>
+                                                {t.entryDate} → {t.exitDate}
+                                            </td>
+                                            <td style={{ padding: "6px 10px", textAlign: "right", color: "#8c959f" }}>{t.daysHeld}d</td>
+                                            <td style={{ padding: "6px 10px", textAlign: "right", fontWeight: 600, color: retColor(t.exitReturn) }}>
+                                                {pct(t.exitReturn)}
+                                            </td>
+                                            <td style={{ padding: "6px 10px", color: "#8c959f", fontSize: "0.8rem" }}>{t.exitTrigger}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </>
+                    )}
+                </div>
+            )}
         </div>
     );
 }
