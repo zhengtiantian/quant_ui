@@ -5,6 +5,12 @@ import type { DailySignal } from "../api/signals";
 const fmt = (v: number | null | undefined, digits = 3): string =>
     v === null || v === undefined ? "—" : v.toFixed(digits);
 
+const fmtPct = (v: number | null | undefined): string =>
+    v === null || v === undefined ? "—" : `${(v * 100).toFixed(2)}%`;
+
+const signedColor = (v: number | null | undefined): string =>
+    v === null || v === undefined ? "#6e7781" : v >= 0 ? "#1a7f37" : "#cf222e";
+
 const typeColor = (t: string | null): string => {
     switch ((t || "").toUpperCase()) {
         case "LONG":
@@ -37,6 +43,8 @@ export default function SignalsPanel() {
 
     const tradeDate = signals[0]?.tradeDate;
     const publishedAt = signals[0]?.publishedAt;
+    const regimeMult = signals[0]?.regimeMult;
+    const riskOn = signals[0]?.macroRiskOn;
 
     const th: React.CSSProperties = {
         textAlign: "left",
@@ -73,6 +81,20 @@ export default function SignalsPanel() {
                         Generated {new Date(publishedAt).toLocaleString()}
                     </span>
                 )}
+                {regimeMult != null && (
+                    <span
+                        style={{
+                            color: "#fff",
+                            background: riskOn === 1 ? "#1a7f37" : "#9a6700",
+                            padding: "2px 10px",
+                            borderRadius: "10px",
+                            fontSize: "0.8rem",
+                        }}
+                        title="Macro regime multiplier applied to composite score"
+                    >
+                        {riskOn === 1 ? "Risk-on" : "Risk-off"} ×{regimeMult.toFixed(2)}
+                    </span>
+                )}
                 <button onClick={load} style={{ marginLeft: "auto" }}>
                     Refresh
                 </button>
@@ -91,6 +113,9 @@ export default function SignalsPanel() {
                             <th style={{ ...th, textAlign: "right" }}>Quality</th>
                             <th style={{ ...th, textAlign: "right" }}>News burst 20d</th>
                             <th style={{ ...th, textAlign: "center" }}>Earnings</th>
+                            <th style={{ ...th, textAlign: "right" }}>AH Gap</th>
+                            <th style={{ ...th, textAlign: "right" }}>Analyst Δ1m</th>
+                            <th style={{ ...th, textAlign: "right" }}>Inst Δ</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -125,6 +150,15 @@ export default function SignalsPanel() {
                                 <td style={{ ...td, textAlign: "right" }}>{fmt(s.newsBurst20d)}</td>
                                 <td style={{ ...td, textAlign: "center" }}>
                                     {s.earningsBeatSignal ? "📈 beat" : s.earningsMissSignal ? "📉 miss" : "—"}
+                                </td>
+                                <td style={{ ...td, textAlign: "right", color: signedColor(s.ahGap) }}>
+                                    {fmtPct(s.ahGap)}
+                                </td>
+                                <td style={{ ...td, textAlign: "right", color: signedColor(s.analystBuyRatioChg1m) }}>
+                                    {fmtPct(s.analystBuyRatioChg1m)}
+                                </td>
+                                <td style={{ ...td, textAlign: "right", color: signedColor(s.instHoldingPctChg) }}>
+                                    {fmtPct(s.instHoldingPctChg)}
                                 </td>
                             </tr>
                         ))}

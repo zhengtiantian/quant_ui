@@ -13,6 +13,15 @@ export interface DailySignal {
     sentimentShift5d: number | null;
     topN: number | null;
     publishedAt: string | null;
+    // D-series context
+    ahGap: number | null;
+    analystBuyRatio: number | null;
+    analystBuyRatioChg1m: number | null;
+    instHoldingPctChg: number | null;
+    retailSentScore: number | null;
+    macroRiskOn: number | null;
+    macroVix: number | null;
+    regimeMult: number | null;
 }
 
 export async function fetchLatestSignals(): Promise<DailySignal[]> {
