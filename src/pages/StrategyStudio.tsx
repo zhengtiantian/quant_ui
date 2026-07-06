@@ -10,9 +10,9 @@ import type { StrategyTaskCode } from "../api/strategy";
 import "./StrategyStudio.css";
 
 const PRESET_PROMPTS = [
-  "创建一个RSI均值回归策略：RSI<30买入，RSI>70卖出，日频，美股AAPL和MSFT",
-  "创建MACD趋势跟随策略，包含止损2%和止盈5%，回测窗口2年",
-  "基于GDELT新闻情绪和20日动量的组合策略，加入仓位限制10%",
+  "Create an RSI mean-reversion strategy: buy when RSI<30, sell when RSI>70, daily frequency, US stocks AAPL and MSFT",
+  "Create a MACD trend-following strategy with 2% stop-loss and 5% take-profit, 2-year backtest window",
+  "A composite strategy based on GDELT news sentiment and 20-day momentum, with 10% position limit",
 ];
 
 function pretty(value: unknown) {
@@ -45,7 +45,7 @@ const StrategyStudio: React.FC = () => {
   const [chatMessages, setChatMessages] = useState<Array<{ role: "user" | "assistant"; message: string }>>([
     {
       role: "assistant",
-      message: "你好，我是策略助手。你可以问我：参数怎么调、风控如何加、当前策略如何优化。",
+      message: "Hi, I'm your strategy assistant. Ask me about parameter tuning, risk controls, or how to optimize your current strategy.",
     },
   ]);
   const [busy, setBusy] = useState<string | null>(null);
@@ -68,14 +68,14 @@ const StrategyStudio: React.FC = () => {
 
   const parseSpec = (): Record<string, unknown> => {
     if (!strategySpecText.trim()) {
-      throw new Error("StrategySpec为空，请先生成或粘贴合法JSON。");
+      throw new Error("StrategySpec is empty. Generate or paste valid JSON first.");
     }
     return JSON.parse(strategySpecText) as Record<string, unknown>;
   };
 
   const parseTasks = (): StrategyTaskCode[] | Record<string, unknown> => {
     if (!taskText.trim()) {
-      throw new Error("Tasks为空，请先生成任务代码。");
+      throw new Error("Tasks is empty. Generate tasks first.");
     }
     return JSON.parse(taskText) as StrategyTaskCode[] | Record<string, unknown>;
   };
@@ -106,27 +106,27 @@ const StrategyStudio: React.FC = () => {
     await withAction("auto", async () => {
       const finalPrompt = prompt.trim();
       if (!finalPrompt) {
-        throw new Error("策略需求不能为空。");
+        throw new Error("Strategy prompt cannot be empty.");
       }
 
-      setAutoStatus("正在生成 StrategySpec...");
+      setAutoStatus("Generating StrategySpec...");
       const spec = await generateStrategySpec(finalPrompt, userId);
       setStrategySpecText(pretty(spec));
 
-      setAutoStatus("正在生成 Tasks...");
+      setAutoStatus("Generating Tasks...");
       const tasks = await generateStrategyTasks(spec);
       setTaskText(pretty(tasks));
 
-      setAutoStatus("正在生成 XML...");
+      setAutoStatus("Generating XML...");
       const xmlRaw = await generateStrategyXml({ strategySpec: spec, tasks });
       const xml = extractXml(xmlRaw);
       setXmlText(xml);
 
-      setAutoStatus("正在保存 Strategy...");
+      setAutoStatus("Saving Strategy...");
       const saved = await saveStrategy({ strategySpec: spec, tasks, xml, userId });
       setSaveResultText(pretty(saved));
 
-      setAutoStatus("自动生成完成。");
+      setAutoStatus("Auto-generation complete.");
     });
   };
 
@@ -138,18 +138,18 @@ const StrategyStudio: React.FC = () => {
       </div>
 
       <div className="wf-panel">
-        <label htmlFor="wf-prompt">策略需求</label>
+        <label htmlFor="wf-prompt">Strategy Prompt</label>
         <textarea
           id="wf-prompt"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           rows={4}
-          placeholder="描述你要生成的量化交易策略..."
+          placeholder="Describe the quant strategy you want to generate..."
         />
         <div className="wf-presets">
           {PRESET_PROMPTS.map((item) => (
             <button key={item} type="button" onClick={() => setPrompt(item)}>
-              使用示例
+              Use example
             </button>
           ))}
         </div>
@@ -160,7 +160,7 @@ const StrategyStudio: React.FC = () => {
             disabled={!!busy || !prompt.trim()}
             onClick={autoGenerateAll}
           >
-            {busy === "auto" ? "自动生成中..." : "一键自动生成并保存"}
+            {busy === "auto" ? "Generating..." : "Auto Generate & Save"}
           </button>
           <button
             type="button"
@@ -172,7 +172,7 @@ const StrategyStudio: React.FC = () => {
               })
             }
           >
-            {busy === "spec" ? "生成中..." : "1. 生成 StrategySpec"}
+            {busy === "spec" ? "Generating..." : "1. Generate StrategySpec"}
           </button>
           <button
             type="button"
@@ -185,7 +185,7 @@ const StrategyStudio: React.FC = () => {
               })
             }
           >
-            {busy === "tasks" ? "生成中..." : "2. 生成 Tasks"}
+            {busy === "tasks" ? "Generating..." : "2. Generate Tasks"}
           </button>
           <button
             type="button"
@@ -199,7 +199,7 @@ const StrategyStudio: React.FC = () => {
               })
             }
           >
-            {busy === "xml" ? "生成中..." : "3. 预览 XML"}
+            {busy === "xml" ? "Generating..." : "3. Preview XML"}
           </button>
           <button
             type="button"
@@ -213,7 +213,7 @@ const StrategyStudio: React.FC = () => {
               })
             }
           >
-            {busy === "save" ? "保存中..." : "4. 保存 Strategy"}
+            {busy === "save" ? "Saving..." : "4. Save Strategy"}
           </button>
         </div>
         {autoStatus && <div className="wf-auto-status">{autoStatus}</div>}
@@ -229,7 +229,7 @@ const StrategyStudio: React.FC = () => {
             value={strategySpecText}
             onChange={(e) => setStrategySpecText(e.target.value)}
             rows={14}
-            placeholder="生成后的StrategySpec会显示在这里"
+            placeholder="Generated StrategySpec will appear here"
           />
         </article>
         <article className="wf-card">
@@ -238,7 +238,7 @@ const StrategyStudio: React.FC = () => {
             value={taskText}
             onChange={(e) => setTaskText(e.target.value)}
             rows={14}
-            placeholder="生成的Task代码元数据会显示在这里"
+            placeholder="Generated task metadata will appear here"
           />
         </article>
         <article className="wf-card">
@@ -247,7 +247,7 @@ const StrategyStudio: React.FC = () => {
             value={xmlText}
             onChange={(e) => setXmlText(e.target.value)}
             rows={14}
-            placeholder="XML预览内容会显示在这里"
+            placeholder="XML preview will appear here"
           />
         </article>
         <article className="wf-card">
@@ -256,16 +256,16 @@ const StrategyStudio: React.FC = () => {
             value={saveResultText}
             onChange={(e) => setSaveResultText(e.target.value)}
             rows={14}
-            placeholder="保存结果会显示在这里"
+            placeholder="Save result will appear here"
           />
         </article>
       </div>
         <aside className="wf-chat-card">
-          <h3>AI 策略助手</h3>
+          <h3>AI Strategy Assistant</h3>
           <div className="wf-chat-list">
             {chatMessages.map((item, idx) => (
               <div key={`${item.role}-${idx}`} className={`wf-chat-bubble wf-chat-${item.role}`}>
-                <strong>{item.role === "assistant" ? "AI" : "你"}:</strong> {item.message}
+                <strong>{item.role === "assistant" ? "AI" : "You"}:</strong> {item.message}
               </div>
             ))}
           </div>
@@ -274,10 +274,10 @@ const StrategyStudio: React.FC = () => {
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
               rows={3}
-              placeholder="问 AI：请帮我把止损改成 2%，并解释影响"
+              placeholder="Ask AI: e.g. Change stop-loss to 2% and explain the impact"
             />
             <button type="button" disabled={busy === "chat" || !chatInput.trim()} onClick={sendChat}>
-              {busy === "chat" ? "发送中..." : "发送"}
+              {busy === "chat" ? "Sending..." : "Send"}
             </button>
           </div>
         </aside>
