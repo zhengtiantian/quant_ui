@@ -12,7 +12,6 @@ interface JwtPayload {
     [key: string]: unknown;
 }
 
-// Returns true if the JWT exists and has not expired
 const isTokenValid = (token: string | null): boolean => {
     if (!token) return false;
     try {
@@ -28,7 +27,6 @@ const App: React.FC = () => {
     const token = localStorage.getItem("token");
     const isValid = isTokenValid(token);
 
-    // Clear storage if the token is invalid or expired
     if (!isValid) {
         localStorage.removeItem("token");
         localStorage.removeItem("refresh_token");
@@ -38,25 +36,18 @@ const App: React.FC = () => {
     return (
         <Router>
             <Routes>
-                {/* Login page */}
                 <Route
                     path="/"
                     element={isValid ? <Navigate to="/dashboard" replace /> : <LoginRegister />}
                 />
-
-                {/* Dashboard */}
                 <Route
                     path="/dashboard"
                     element={isValid ? <Dashboard /> : <Navigate to="/" replace />}
                 />
-
-                {/* News page */}
                 <Route
                     path="/news"
                     element={isValid ? <NewsList /> : <Navigate to="/" replace />}
                 />
-
-                {/* Fallback: redirect to root */}
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         </Router>

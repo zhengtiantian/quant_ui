@@ -7,11 +7,9 @@ const ScriptRunner: React.FC = () => {
 
     const [sessionExpired, setSessionExpired] = useState(false);
 
-    // === Token Header ===
     const token = localStorage.getItem("token");
     const authHeaders: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
 
-    // === Handle 401/403: auto-logout ===
     const handleAuthError = (res: Response) => {
         if (!sessionExpired && (res.status === 401 || res.status === 403)) {
             setSessionExpired(true);
@@ -23,7 +21,6 @@ const ScriptRunner: React.FC = () => {
         return false;
     };
 
-    // === Load script list ===
     useEffect(() => {
         fetch("/api/scripts", { headers: authHeaders })
             .then((res) => {
@@ -36,13 +33,11 @@ const ScriptRunner: React.FC = () => {
             .catch((err) => console.error("Failed to fetch scripts:", err));
     }, []);
 
-    // === Run script ===
     const runScript = async (path: string) => {
         setSelectedScript(path);
         setLogs(`Running script: ${path}\n`);
 
         try {
-            // Pass path as a query parameter
             const response = await fetch(`/api/run?path=${encodeURIComponent(path)}`, {
                 headers: authHeaders,
             });
@@ -67,7 +62,6 @@ const ScriptRunner: React.FC = () => {
         }
     };
 
-    // === Stop script ===
     const stopScript = async (path: string) => {
         try {
             const res = await fetch(`/api/stop?path=${encodeURIComponent(path)}`, {

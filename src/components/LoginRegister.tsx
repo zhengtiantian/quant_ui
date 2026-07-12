@@ -30,7 +30,6 @@ const LoginRegister: React.FC = () => {
                 const data = await res.json();
                 localStorage.setItem("token", data.access_token);
                 localStorage.setItem("refresh_token", data.refresh_token);
-                console.log("Token refreshed");
             } catch (e) {
                 console.warn("refresh failed", e);
                 localStorage.clear();
