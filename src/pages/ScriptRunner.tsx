@@ -11,19 +11,19 @@ const ScriptRunner: React.FC = () => {
     const token = localStorage.getItem("token");
     const authHeaders: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
 
-    // === 检查401/403自动登出 ===
+    // === Handle 401/403: auto-logout ===
     const handleAuthError = (res: Response) => {
         if (!sessionExpired && (res.status === 401 || res.status === 403)) {
             setSessionExpired(true);
             localStorage.clear();
-            console.warn("⚠️ 登录已过期，跳转到登录页");
+            console.warn("Session expired, redirecting to login");
             setTimeout(() => window.location.replace("/"), 500);
             return true;
         }
         return false;
     };
 
-    // === 加载脚本列表 ===
+    // === Load script list ===
     useEffect(() => {
         fetch("/api/scripts", { headers: authHeaders })
             .then((res) => {
@@ -33,23 +33,23 @@ const ScriptRunner: React.FC = () => {
             .then((data) => {
                 if (data && data.scripts) setScripts(data.scripts);
             })
-            .catch((err) => console.error("❌ Failed to fetch scripts:", err));
+            .catch((err) => console.error("Failed to fetch scripts:", err));
     }, []);
 
-    // === 运行脚本 ===
+    // === Run script ===
     const runScript = async (path: string) => {
         setSelectedScript(path);
         setLogs(`Running script: ${path}\n`);
 
         try {
-            // ✅ 用 query 参数传递 path
+            // Pass path as a query parameter
             const response = await fetch(`/api/run?path=${encodeURIComponent(path)}`, {
                 headers: authHeaders,
             });
             if (handleAuthError(response)) return;
 
             if (!response.body) {
-                setLogs((prev) => prev + "\n❌ No response body\n");
+                setLogs((prev) => prev + "\nNo response body\n");
                 return;
             }
 
@@ -62,12 +62,12 @@ const ScriptRunner: React.FC = () => {
                 setLogs((prev) => prev + decoder.decode(value));
             }
         } catch (err) {
-            console.error("❌ Run script error:", err);
+            console.error("Run script error:", err);
             setLogs((prev) => prev + "\nError running script.\n");
         }
     };
 
-    // === 停止脚本 ===
+    // === Stop script ===
     const stopScript = async (path: string) => {
         try {
             const res = await fetch(`/api/stop?path=${encodeURIComponent(path)}`, {
@@ -77,7 +77,7 @@ const ScriptRunner: React.FC = () => {
             if (handleAuthError(res)) return;
             setLogs((prev) => prev + "\n=== Script stopped ===\n");
         } catch (err) {
-            console.error("❌ Stop script error:", err);
+            console.error("Stop script error:", err);
         }
     };
 

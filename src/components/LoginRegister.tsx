@@ -9,7 +9,7 @@ const LoginRegister: React.FC = () => {
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
 
-    // === 自动刷新 token（保持登录） ===
+    // === Auto-refresh token (keep session alive) ===
     useEffect(() => {
         const refresh = async () => {
             const refresh_token = localStorage.getItem("refresh_token");
@@ -30,7 +30,7 @@ const LoginRegister: React.FC = () => {
                 const data = await res.json();
                 localStorage.setItem("token", data.access_token);
                 localStorage.setItem("refresh_token", data.refresh_token);
-                console.log("🔁 token refreshed");
+                console.log("Token refreshed");
             } catch (e) {
                 console.warn("refresh failed", e);
                 localStorage.clear();
@@ -41,7 +41,7 @@ const LoginRegister: React.FC = () => {
         return () => clearInterval(interval);
     }, []);
 
-    // === 登录 ===
+    // === Login ===
     const handleLogin = async () => {
         setLoading(true);
         try {
@@ -70,7 +70,7 @@ const LoginRegister: React.FC = () => {
         }
     };
 
-    // === 注册 ===
+    // === Register ===
     const handleRegister = async () => {
         setLoading(true);
         try {

@@ -11,6 +11,8 @@ export interface StrategyChatResponse {
   [key: string]: unknown;
 }
 
+const AGENT_BASE = "http://localhost:18000";
+
 async function postJsonWithFallback<T>(
   paths: string[],
   payload: unknown,
@@ -46,7 +48,11 @@ async function postJsonWithFallback<T>(
 
 export async function generateStrategySpec(prompt: string, userId: string) {
   return postJsonWithFallback<Record<string, unknown>>(
-    ["/api/v1/strategies/generate-spec", "/api/v1/workflows/generate-spec", "/api/v1/strategy/generate-spec"],
+    [
+      `${AGENT_BASE}/api/v1/strategies/generate-spec`,
+      "/api/v1/strategies/generate-spec",
+      "/api/v1/workflows/generate-spec",
+    ],
     { prompt, userId },
     localStorage.getItem("token"),
   );
@@ -54,7 +60,11 @@ export async function generateStrategySpec(prompt: string, userId: string) {
 
 export async function generateStrategyTasks(strategySpec: Record<string, unknown>) {
   return postJsonWithFallback<StrategyTaskCode[] | Record<string, unknown>>(
-    ["/api/v1/strategies/generate-tasks", "/api/v1/workflows/generate-tasks", "/api/v1/strategy/generate-code"],
+    [
+      `${AGENT_BASE}/api/v1/strategies/generate-tasks`,
+      "/api/v1/strategies/generate-tasks",
+      "/api/v1/workflows/generate-tasks",
+    ],
     { strategySpec },
     localStorage.getItem("token"),
   );
@@ -69,7 +79,6 @@ export async function generateStrategyXml(payload: {
       "/api/v1/strategies/generate-xml",
       "/api/v1/strategies/preview-xml",
       "/api/v1/workflows/generate-xml",
-      "/api/v1/workflows/preview-xml",
     ],
     payload,
     localStorage.getItem("token"),
@@ -83,7 +92,7 @@ export async function saveStrategy(payload: {
   userId: string;
 }) {
   return postJsonWithFallback<Record<string, unknown>>(
-    ["/api/v1/strategies/save", "/api/v1/workflows/save", "/api/v1/strategy/finalize"],
+    ["/api/v1/strategies/save", "/api/v1/workflows/save"],
     payload,
     localStorage.getItem("token"),
   );
@@ -94,8 +103,26 @@ export async function chatStrategy(payload: {
   userId: string;
   strategySpec?: Record<string, unknown>;
 }) {
+  // Try langchain-agent /api/ask directly first (browser → localhost:18000)
+  try {
+    const contextNote = payload.strategySpec
+      ? `\n\nCurrent strategy context: ${JSON.stringify(payload.strategySpec, null, 2)}`
+      : "";
+    const resp = await fetch(`${AGENT_BASE}/api/ask`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: payload.message + contextNote }),
+    });
+    if (resp.ok) {
+      const data = (await resp.json()) as { answer?: string };
+      return { role: "assistant" as const, message: data.answer ?? "" };
+    }
+  } catch {
+    // fall through to quant_api
+  }
+
   return postJsonWithFallback<StrategyChatResponse>(
-    ["/api/v1/strategies/chat", "/api/v1/workflows/chat", "/api/ai/chat"],
+    ["/api/v1/strategies/chat", "/api/v1/workflows/chat"],
     payload,
     localStorage.getItem("token"),
   );
