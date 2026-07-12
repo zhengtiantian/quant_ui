@@ -1,73 +1,56 @@
-# React + TypeScript + Vite
+# quant_ui
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + TypeScript frontend dashboard for the AI-Driven Equity Signal Platform.
 
-Currently, two official plugins are available:
+## Overview
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Single-page application that displays daily equity signals, portfolio positions, news articles, and connects to the quant_ai assistant for natural language stock analysis.
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Signal Dashboard** — daily composite scores and signal rankings for 100 US stocks
+- **Portfolio Tracker** — open positions, entry price, unrealized P&L, exit alerts
+- **News Feed** — labeled articles with sentiment scores per symbol
+- **Script Runner** — trigger and monitor quant_data pipeline scripts from the browser
+- **AI Chat** — browser-direct calls to `quant_ai` for natural language Q&A (e.g., "What's the sentiment trend for NVDA?")
+- **Keycloak auth** — JWT login/register with auto-refresh token
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+| Layer | Technology |
+|-------|-----------|
+| Framework | React 18 + TypeScript |
+| Build tool | Vite |
+| Auth | Keycloak (OpenID Connect) |
+| Routing | React Router v6 |
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Development
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev        # dev server at http://localhost:5173
+npm run build      # production build → dist/
+npm run lint
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Docker
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+The CI workflow (`.github/workflows/docker-build.yml`) builds a multi-arch image on every push to `main` and opens a PR in `ai-equity-signal-platform` to update the image tag.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+docker build -t xiz001/quant_ui:local .
+```
+
+## Environment
+
+The app is served by Nginx in production. API calls use relative `/api/*` paths proxied to `quant_api` (port 8081). AI calls go directly to `http://localhost:18000` (the `quant_ai` host process) to bypass Docker VPNKit limitations.
+
+## Project Structure
+
+```
+src/
+├── api/              # API client modules (signals, news, portfolio)
+├── components/       # Shared UI components (LoginRegister, NewsList)
+├── pages/            # Page-level components (Dashboard, ScriptRunner)
+└── App.tsx           # Router + JWT guard
 ```
