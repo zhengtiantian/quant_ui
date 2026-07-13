@@ -103,7 +103,7 @@ export async function chatStrategy(payload: {
   userId: string;
   strategySpec?: Record<string, unknown>;
 }) {
-  // Try langchain-agent /api/ask directly first (browser → localhost:18000)
+  // Try quant_ai /api/ask directly first (browser → localhost:18000)
   try {
     const contextNote = payload.strategySpec
       ? `\n\nCurrent strategy context: ${JSON.stringify(payload.strategySpec, null, 2)}`
