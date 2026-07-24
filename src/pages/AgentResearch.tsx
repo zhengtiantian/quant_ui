@@ -1,9 +1,6 @@
 import React from "react";
-import {
-  streamAgentResearch,
-  AgentResearchResponse,
-  AgentTraceStep,
-} from "../api/agent";
+import { streamAgentResearch } from "../api/agent";
+import type { AgentResearchResponse, AgentTraceStep } from "../api/agent";
 
 /**
  * ReAct research agent console.
