@@ -2,13 +2,14 @@ import React from "react";
 import ScriptRunner from "../pages/ScriptRunner";
 import StrategyStudio from "./StrategyStudio";
 import MarketCharts from "./MarketCharts";
+import AgentResearch from "./AgentResearch";
 import SignalsPanel from "../components/SignalsPanel";
 import PositionsPanel from "../components/PositionsPanel";
 import PerformancePanel from "../components/PerformancePanel";
 
 const Dashboard: React.FC = () => {
     const username = localStorage.getItem("username");
-    const [tab, setTab] = React.useState<"signals" | "positions" | "performance" | "strategy" | "market" | "scripts">("signals");
+    const [tab, setTab] = React.useState<"signals" | "positions" | "performance" | "strategy" | "market" | "scripts" | "agent">("signals");
 
     const handleLogout = () => {
         localStorage.removeItem("token");
@@ -43,6 +44,7 @@ const Dashboard: React.FC = () => {
                 <button onClick={() => setTab("strategy")}>Strategy Studio</button>
                 <button onClick={() => setTab("market")}>Market</button>
                 <button onClick={() => setTab("scripts")}>Script Runner</button>
+                <button onClick={() => setTab("agent")}>AI Agent</button>
             </div>
 
             {/* Main */}
@@ -57,6 +59,8 @@ const Dashboard: React.FC = () => {
                     <StrategyStudio />
                 ) : tab === "market" ? (
                     <MarketCharts />
+                ) : tab === "agent" ? (
+                    <AgentResearch />
                 ) : (
                     <ScriptRunner />
                 )}
