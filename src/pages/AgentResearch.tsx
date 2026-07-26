@@ -46,7 +46,7 @@ const AgentResearch: React.FC = () => {
       <h2 style={{ marginBottom: 4 }}>Research Agent</h2>
       <p style={{ color: "#888", marginTop: 0, fontSize: 14 }}>
         A ReAct tool-calling agent: the LLM autonomously queries platform data
-        (news sentiment from 840K+ labeled articles, engineered features), then
+        (news sentiment from 845K+ labeled articles, engineered features), then
         writes a grounded research note. Read-only — it never trades.
       </p>
 
