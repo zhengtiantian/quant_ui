@@ -1,3 +1,5 @@
+import { apiFetch } from "./client";
+
 export interface NewsArticle {
     id: string;
     title: string;
@@ -9,7 +11,5 @@ export interface NewsArticle {
 }
 
 export async function fetchNews(): Promise<NewsArticle[]> {
-    const res = await fetch("/api/news");
-    if (!res.ok) throw new Error("Failed to fetch news");
-    return await res.json();
+    return apiFetch("/api/news");
 }

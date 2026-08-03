@@ -1,3 +1,5 @@
+import { apiFetch } from "./client";
+
 export interface DailySignal {
     id: string;
     symbol: string;
@@ -25,13 +27,9 @@ export interface DailySignal {
 }
 
 export async function fetchLatestSignals(): Promise<DailySignal[]> {
-    const res = await fetch("/api/signals/latest");
-    if (!res.ok) throw new Error("Failed to fetch signals");
-    return await res.json();
+    return apiFetch("/api/signals/latest");
 }
 
 export async function fetchSignalsByDate(date: string): Promise<DailySignal[]> {
-    const res = await fetch(`/api/signals?date=${encodeURIComponent(date)}`);
-    if (!res.ok) throw new Error("Failed to fetch signals");
-    return await res.json();
+    return apiFetch(`/api/signals?date=${encodeURIComponent(date)}`);
 }

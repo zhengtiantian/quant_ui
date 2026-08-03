@@ -1,3 +1,5 @@
+import { apiFetch } from "./client";
+
 export interface PricePoint {
   timestamp: string;
   open: number | null;
@@ -25,19 +27,13 @@ export interface NasdaqHoursResponse {
 }
 
 export async function fetchMarketSymbols(): Promise<string[]> {
-  const res = await fetch("/api/market/symbols");
-  if (!res.ok) throw new Error("Failed to fetch symbols");
-  return await res.json();
+  return apiFetch("/api/market/symbols");
 }
 
 export async function fetchStockChart(symbol: string, range: string): Promise<StockChartResponse> {
-  const res = await fetch(`/api/market/stocks/${encodeURIComponent(symbol)}/chart?range=${encodeURIComponent(range)}`);
-  if (!res.ok) throw new Error("Failed to fetch stock chart");
-  return await res.json();
+  return apiFetch(`/api/market/stocks/${encodeURIComponent(symbol)}/chart?range=${encodeURIComponent(range)}`);
 }
 
 export async function fetchNasdaqHours(): Promise<NasdaqHoursResponse> {
-  const res = await fetch("/api/market/nasdaq-hours");
-  if (!res.ok) throw new Error("Failed to fetch Nasdaq hours");
-  return await res.json();
+  return apiFetch("/api/market/nasdaq-hours");
 }

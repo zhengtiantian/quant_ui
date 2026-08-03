@@ -1,3 +1,5 @@
+import { apiFetch } from "./client";
+
 export interface Position {
     symbol: string;
     entryDate: string;
@@ -26,13 +28,9 @@ export interface Alert {
 }
 
 export async function fetchPositions(): Promise<Position[]> {
-    const res = await fetch("/api/positions");
-    if (!res.ok) throw new Error("Failed to fetch positions");
-    return await res.json();
+    return apiFetch("/api/positions");
 }
 
 export async function fetchAlerts(limit = 20): Promise<Alert[]> {
-    const res = await fetch(`/api/alerts?limit=${limit}`);
-    if (!res.ok) throw new Error("Failed to fetch alerts");
-    return await res.json();
+    return apiFetch(`/api/alerts?limit=${limit}`);
 }

@@ -1,3 +1,5 @@
+import { apiFetch } from "./client";
+
 export interface EquityPoint {
     date: string;
     strategy: number;
@@ -27,9 +29,7 @@ export interface Performance {
 }
 
 export async function fetchPerformance(): Promise<Performance> {
-    const res = await fetch("/api/performance");
-    if (!res.ok) throw new Error("Failed to fetch performance");
-    return await res.json();
+    return apiFetch("/api/performance");
 }
 
 export interface PaperTrade {
@@ -57,7 +57,5 @@ export interface PaperPerformance {
 }
 
 export async function fetchPaperPerformance(): Promise<PaperPerformance> {
-    const res = await fetch("/api/paper-performance");
-    if (!res.ok) throw new Error("Failed to fetch paper performance");
-    return await res.json();
+    return apiFetch("/api/paper-performance");
 }
