@@ -163,10 +163,13 @@ export interface ChartData {
   stale?: boolean;
 }
 
+export type BriefKind = "asia_europe" | "us" | "outlook" | "flash";
+
 export interface BriefMeta {
   id: number;
-  kind: "asia_europe" | "us";
+  kind: BriefKind;
   session_date: string;
+  topic: string;
   status: "running" | "done" | "failed";
   attempts: number;
   trigger: string;
@@ -180,16 +183,55 @@ export interface BriefMeta {
   cost_usd: number | null;
 }
 
+export interface Prediction {
+  id: number;
+  brief_id: number;
+  kind: BriefKind;
+  symbol: string;
+  name: string | null;
+  exchange: string;
+  target_date: string;
+  op: ">=" | "<=" | "abs>=" | "abs<=";
+  threshold: number;
+  confidence: number | null;
+  text_zh: string | null;
+  text_en: string | null;
+  status: "pending" | "hit" | "miss" | "void";
+  actual: number | null;
+  note: string | null;
+}
+
 export interface Brief extends BriefMeta {
   body_zh: string | null;
   body_en: string | null;
   sources: { title: string; url: string }[];
+  predictions: Prediction[];
+  context: { symbol: string; name: string; move_pct: number | null; session: string | null } | null;
+}
+
+export interface PredictionStats {
+  total: number;
+  scored: number;
+  hits: number;
+  pending: number;
+  hit_rate: number | null;
+  brier: number | null;
+  mean_confidence: number | null;
+}
+
+export interface Scorecard {
+  overall: PredictionStats;
+  by_kind: Record<string, PredictionStats>;
+  calibration: { range: string; scored: number; hit_rate: number | null }[];
+  recent: Prediction[];
 }
 
 export interface BriefsResponse {
   briefs: BriefMeta[];
   kinds: Record<string, { title: string; due_session: string | null; running: boolean }>;
   claude_found: boolean;
+  flash_threshold: number;
+  bellwethers: Record<string, string>;
 }
 
 export interface MacroState {
@@ -230,4 +272,5 @@ export const removeWatch = (symbol: string) => post<{ state: PortfolioState }>("
 export const fetchMacro = () => call<MacroState>("/macro");
 export const fetchBriefs = (kind = "") => call<BriefsResponse>(`/briefs${kind ? `?kind=${kind}` : ""}`);
 export const fetchBrief = (id: number) => call<{ brief: Brief }>(`/briefs/${id}`).then((r) => r.brief);
-export const runBrief = (kind: string) => post<BriefsResponse & { started: boolean }>("/briefs/run", { kind });
+export const runBrief = (kind: string, symbol = "") => post<BriefsResponse & { started: boolean }>("/briefs/run", { kind, symbol });
+export const fetchScorecard = () => call<Scorecard>("/predictions/scorecard");
