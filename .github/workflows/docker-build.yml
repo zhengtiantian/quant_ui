@@ -35,6 +35,7 @@ jobs:
             xiz001/quant_ui:${{ env.COMMIT_TAG }}
 
       - name: Clone quant_docker and update image tag
+        id: compose
         run: |
           git clone https://zhengtiantian:${{ secrets.MAIN_REPO_PAT }}@github.com/zhengtiantian/ai-equity-signal-platform.git quant_docker
           cd quant_docker
@@ -42,12 +43,20 @@ jobs:
 
           git config user.name "github-actions"
           git config user.email "actions@github.com"
+          # Already pinned (e.g. the tag was set by hand when deploying locally): nothing to propose.
+          if git diff --quiet docker-compose.yml; then
+            echo "docker-compose.yml already points at quant_ui:${{ env.COMMIT_TAG }}; no PR needed."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           git checkout -b update-ui-image-${{ env.COMMIT_TAG }}
           git add docker-compose.yml
           git commit -m "Update quant_ui image tag to ${{ env.COMMIT_TAG }}"
           git push origin update-ui-image-${{ env.COMMIT_TAG }}
+          echo "changed=true" >> "$GITHUB_OUTPUT"
 
       - name: Create Pull Request in quant_docker
+        if: steps.compose.outputs.changed == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.MAIN_REPO_PAT }}
         run: |
