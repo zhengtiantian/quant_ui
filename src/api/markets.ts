@@ -1,0 +1,233 @@
+/**
+ * The user's portfolio, global markets and daily briefs, served by quant_ai's markets routes
+ * on the host (/api/markets/...). Those routes answer only requests from this machine, which
+ * the browser is, so no token is attached.
+ *
+ * Replaces api/holdings.ts (quant_api's Java/MySQL holdings), which is deprecated: the
+ * portfolio moved from job_agent's dashboard into quant_ai on 2026-10-22.
+ */
+
+export const MARKETS_BASE = "http://localhost:18000/api/markets";
+
+export type Session = "pre" | "regular" | "post" | "closed";
+export type Side = "buy" | "sell" | "dividend" | "fee";
+
+export interface Quote {
+  symbol?: string;
+  name?: string;
+  price?: number | null;
+  prev_close?: number | null;
+  session?: Session;
+  regular_price?: number | null;
+  session_change?: number | null;
+  session_change_pct?: number | null;
+  stale?: boolean;
+  pending?: boolean;
+  error?: string;
+  fetched_at?: number;
+}
+
+export interface Holding {
+  symbol: string;
+  quantity: number;
+  cost: number;
+  avg_cost: number;
+  fifo_cost: number;
+  fifo_avg_cost: number;
+  realized: number;
+  fifo_realized: number;
+  dividends: number;
+  trades: number;
+  quote: Quote;
+  market_value?: number;
+  unrealized?: number;
+  unrealized_pct?: number | null;
+  fifo_unrealized?: number;
+  day_change?: number | null;
+  day_change_pct?: number | null;
+  day_pnl?: number | null;
+  weight?: number | null;
+}
+
+export interface WatchItem {
+  symbol: string;
+  note?: string;
+  quote: Quote;
+  day_change?: number | null;
+  day_change_pct?: number | null;
+}
+
+export interface Transaction {
+  id: number;
+  trade_date: string;
+  symbol: string;
+  side: Side;
+  quantity: number;
+  price: number;
+  fee: number;
+  note?: string;
+  budget_sync?: number;
+  budget_entry_id?: number | null;
+}
+
+export interface Totals {
+  market_value: number;
+  cost: number;
+  day_pnl: number;
+  day_pnl_pct: number | null;
+  realized: number;
+  dividends: number;
+  unrealized: number;
+  unrealized_pct: number | null;
+  fifo_cost: number;
+  fifo_unrealized: number;
+  fifo_realized: number;
+}
+
+export interface GlobalItem {
+  symbol: string;
+  name: string;
+  price?: number;
+  change?: number;
+  change_pct?: number;
+  prev_close?: number;
+  currency?: string;
+  trade_time?: string;
+  full_name?: string;
+  fetched_at?: number | null;
+}
+
+export interface Exchange {
+  code: string;
+  name: string;
+  open: boolean;
+  local_time: string;
+  hours: string;
+  tz: string;
+  indices: GlobalItem[];
+  stocks: GlobalItem[];
+}
+
+export interface Country {
+  code: string;
+  name: string;
+  flag: string;
+  open: boolean;
+  exchanges: Exchange[];
+}
+
+export interface GlobalState {
+  regions: { name: string; countries: Country[] }[];
+  any_open: boolean;
+  refreshing: boolean;
+  refresh_seconds: number | null;
+}
+
+export interface PortfolioState {
+  transactions: Transaction[];
+  holdings: Holding[];
+  closed: Holding[];
+  watchlist: WatchItem[];
+  totals: Totals;
+  problems: string[];
+  session: Session;
+  session_label: string;
+  refresh_seconds: number | null;
+  watch_refresh_seconds: number | null;
+  next_session_in: number | null;
+  us_time: string;
+  usd_cny: number | null;
+  tx_types: Record<Side, string>;
+  server_time: number;
+  refreshing: boolean;
+  global: GlobalState;
+}
+
+export interface Candle {
+  time: number | string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+  session?: Session;
+  partial?: boolean;
+}
+
+export interface ChartData {
+  symbol: string;
+  range: string;
+  interval: string;
+  candles: Candle[];
+  prev_close?: number | null;
+  stale?: boolean;
+}
+
+export interface BriefMeta {
+  id: number;
+  kind: "asia_europe" | "us";
+  session_date: string;
+  status: "running" | "done" | "failed";
+  attempts: number;
+  trigger: string;
+  started_at: number | null;
+  finished_at: number | null;
+  duration_s: number | null;
+  headline_zh: string | null;
+  headline_en: string | null;
+  error: string | null;
+  model: string | null;
+  cost_usd: number | null;
+}
+
+export interface Brief extends BriefMeta {
+  body_zh: string | null;
+  body_en: string | null;
+  sources: { title: string; url: string }[];
+}
+
+export interface BriefsResponse {
+  briefs: BriefMeta[];
+  kinds: Record<string, { title: string; due_session: string | null; running: boolean }>;
+  claude_found: boolean;
+}
+
+export interface MacroState {
+  groups: { name: string; items: GlobalItem[] }[];
+}
+
+async function call<T>(path: string, init?: RequestInit): Promise<T> {
+  let resp: Response;
+  try {
+    resp = await fetch(`${MARKETS_BASE}${path}`, init);
+  } catch {
+    throw new Error("quant_ai is not reachable on localhost:18000");
+  }
+  const body = await resp.json().catch(() => ({}));
+  if (!resp.ok || body.status !== "success") {
+    throw new Error(body.message || body.detail || `HTTP ${resp.status}`);
+  }
+  return body as T;
+}
+
+const post = <T>(path: string, payload: unknown) =>
+  call<T>(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+
+export const fetchPortfolio = (force = false) => call<PortfolioState>(`/portfolio/state${force ? "?force=1" : ""}`);
+export const fetchChart = (symbol: string, range: string) =>
+  call<ChartData>(`/portfolio/chart?symbol=${encodeURIComponent(symbol)}&range=${range}`);
+
+export interface SaveResult {
+  id: number;
+  budget?: { profit?: number; avg_cost?: number; entry_id?: number; pending?: boolean; error?: string };
+  state: PortfolioState;
+}
+export const saveTransaction = (data: Record<string, string>) => post<SaveResult>("/portfolio/tx/save", { data });
+export const deleteTransaction = (id: number) => post<{ state: PortfolioState }>("/portfolio/tx/delete", { id });
+export const addWatch = (symbol: string) => post<{ symbol: string; state: PortfolioState }>("/portfolio/watch/add", { symbol });
+export const removeWatch = (symbol: string) => post<{ state: PortfolioState }>("/portfolio/watch/remove", { symbol });
+
+export const fetchMacro = () => call<MacroState>("/macro");
+export const fetchBriefs = (kind = "") => call<BriefsResponse>(`/briefs${kind ? `?kind=${kind}` : ""}`);
+export const fetchBrief = (id: number) => call<{ brief: Brief }>(`/briefs/${id}`).then((r) => r.brief);
+export const runBrief = (kind: string) => post<BriefsResponse & { started: boolean }>("/briefs/run", { kind });

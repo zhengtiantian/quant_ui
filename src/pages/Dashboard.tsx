@@ -4,13 +4,20 @@ import StrategyStudio from "./StrategyStudio";
 import MarketCharts from "./MarketCharts";
 import AgentResearch from "./AgentResearch";
 import Holdings from "./Holdings";
+import Briefs from "./Briefs";
 import SignalsPanel from "../components/SignalsPanel";
 import PositionsPanel from "../components/PositionsPanel";
 import PerformancePanel from "../components/PerformancePanel";
 
 const Dashboard: React.FC = () => {
     const username = localStorage.getItem("username");
-    const [tab, setTab] = React.useState<"signals" | "holdings" | "positions" | "performance" | "strategy" | "market" | "scripts" | "agent">("signals");
+    type Tab = "signals" | "holdings" | "briefs" | "positions" | "performance" | "strategy" | "market" | "scripts" | "agent";
+    const TABS: Tab[] = ["signals", "holdings", "briefs", "positions", "performance", "strategy", "market", "scripts", "agent"];
+    // ?tab=briefs (the desktop widget links straight to a tab)
+    const [tab, setTab] = React.useState<Tab>(() => {
+        const wanted = new URLSearchParams(window.location.search).get("tab") as Tab | null;
+        return wanted && TABS.includes(wanted) ? wanted : "signals";
+    });
 
     const handleLogout = () => {
         localStorage.removeItem("token");
@@ -41,6 +48,7 @@ const Dashboard: React.FC = () => {
             <div style={{ display: "flex", gap: "10px", marginBottom: "16px" }}>
                 <button onClick={() => setTab("signals")}>Signals</button>
                 <button onClick={() => setTab("holdings")}>My Holdings</button>
+                <button onClick={() => setTab("briefs")}>Market Briefs</button>
                 <button onClick={() => setTab("positions")}>Positions</button>
                 <button onClick={() => setTab("performance")}>Performance</button>
                 <button onClick={() => setTab("strategy")}>Strategy Studio</button>
@@ -55,6 +63,8 @@ const Dashboard: React.FC = () => {
                     <SignalsPanel />
                 ) : tab === "holdings" ? (
                     <Holdings />
+                ) : tab === "briefs" ? (
+                    <Briefs />
                 ) : tab === "positions" ? (
                     <PositionsPanel />
                 ) : tab === "performance" ? (
