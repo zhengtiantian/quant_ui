@@ -21,8 +21,8 @@ import {
  * Trades are the source of truth: holdings, both average costs (the user's rule, where a sale
  * leaves the average unchanged, and FIFO, the Irish CGT basis) and P&L are derived server-side
  * from them. Prices come from Nasdaq including pre-market and after hours. The page polls at
- * the session's pace (5 s regular, 30 s pre/after-hours, not at all while closed) and only
- * while it is visible; the server answers from stored quotes at once and refreshes them in the
+ * the pace the server sends (5 s in any session from 10:00 to 22:00 Dublin, otherwise 5 s regular /
+ * 30 s pre and after hours, not at all while closed) and only while it is visible; the server answers from stored quotes at once and refreshes them in the
  * background, so "refreshing" means "look again in 2 s".
  */
 
