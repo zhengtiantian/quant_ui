@@ -1,6 +1,7 @@
 /** Asian and European markets: region -> country (foldable card) -> exchange -> indices and stocks. */
 import React from "react";
 import type { GlobalItem, GlobalState } from "../../api/markets";
+import Flag from "./Flag";
 import { cell, color, muted, num, panel, panelHead, panelTitle, pill, right } from "./format";
 
 const FOLD_KEY = "globalMarketsFolded";
@@ -48,7 +49,7 @@ const GlobalMarkets: React.FC<{ g: GlobalState | undefined }> = ({ g }) => {
                 <div key={c.code} style={{ border: "1px solid #e2e8f0", borderRadius: 10, padding: "8px 12px", background: "#fff" }}>
                   <div onClick={() => toggle(c.code)} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
                        title="Click to fold or unfold">
-                    <span style={{ fontSize: 18 }}>{c.flag}</span><b>{c.name}</b>
+                    <span style={{ fontSize: 18 }}><Flag code={c.code} emoji={c.flag} size={16} /></span><b>{c.name}</b>
                     {c.open ? <span style={pill("#15803d")}>Open</span> : null}
                     <span style={{ marginLeft: "auto", color: "#94a3b8" }}>{isFolded ? "▸" : "▾"}</span>
                   </div>
