@@ -1,7 +1,8 @@
 /**
  * Country flag for the global markets panel. Emoji flags are used everywhere except Taiwan:
- * macOS hides the 🇹🇼 emoji when the system region is mainland China (it renders as letters or
- * an empty box), so that one is drawn as an inline SVG instead.
+ * on Macs sold for mainland China (hardware region-info "CH/A") macOS hides the 🇹🇼 emoji
+ * whatever region the user picks (this Mac is set to Ireland and still shows an empty box),
+ * so that one is drawn as an inline SVG instead.
  */
 import React from "react";
 
