@@ -216,13 +216,18 @@ export interface AdviceOrder {
   issued_ts: number;
   issued_price: number | null;
   valid_until: string;
-  status: "open" | "filled" | "scored" | "expired" | "void";
+  /** waiting: a buy-back that becomes active once its sale (parent_id) fills. */
+  status: "open" | "waiting" | "filled" | "scored" | "expired" | "void";
   filled_date: string | null;
   eval_date: string | null;
   eval_close: number | null;
   edge_pct: number | null;
   zh: string | null;
   en: string | null;
+  /** The tested plan this order belongs to, and its backtest summary. */
+  plan: string | null;
+  note: string | null;
+  parent_id: number | null;
 }
 
 export interface AdvisorReason {

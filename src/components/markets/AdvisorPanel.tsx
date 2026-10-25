@@ -22,7 +22,7 @@ const SEEN_KEY = "advisorSeenUntil";
 const REASON_LABEL: Record<string, string> = {
   move: "Big move", limit: "Limit reached", earnings_prep: "Earnings tomorrow", earnings_out: "Earnings out", news: "News", manual: "Asked by hand",
 };
-const STATUS_STYLE: Record<string, string> = { open: "#2563eb", filled: "#0f766e", scored: "#15803d", expired: "#94a3b8", void: "#94a3b8" };
+const STATUS_STYLE: Record<string, string> = { open: "#2563eb", waiting: "#a16207", filled: "#0f766e", scored: "#15803d", expired: "#94a3b8", void: "#94a3b8" };
 const when = (ts: number | null) => (ts ? new Date(ts * 1000).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "");
 
 const size = (o: AdviceOrder) =>
@@ -44,7 +44,7 @@ const OrdersTable: React.FC<{ orders: AdviceOrder[]; holdings: Holding[]; lang: 
             <tr key={o.id}>
               <td style={{ ...cell, whiteSpace: "nowrap" }}>
                 <span style={pill(o.side === "sell" ? DOWN : UP)}>{o.side.toUpperCase()}</span> <b>{o.symbol}</b>
-                <span style={sub}>{o.tag}</span>
+                <span style={sub}>#{o.id} · {o.tag}</span>
               </td>
               <td style={{ ...cell, ...right }}><b>{usd(o.limit_price)}</b></td>
               <td style={{ ...cell, ...right }}>
@@ -55,8 +55,11 @@ const OrdersTable: React.FC<{ orders: AdviceOrder[]; holdings: Holding[]; lang: 
               <td style={cell}>{size(o)}</td>
               <td style={{ ...cell, whiteSpace: "nowrap" }}>{o.valid_until}</td>
               <td style={cell}><span style={pill(STATUS_STYLE[o.status] || "#64748b")}>{o.status}</span>
+                {o.status === "waiting" && o.parent_id ? <span style={sub}>after #{o.parent_id} fills</span> : null}
+                {o.status === "void" && o.parent_id ? <span style={sub}>#{o.parent_id} never filled</span> : null}
                 {o.filled_date ? <span style={sub}>reached {o.filled_date}</span> : null}</td>
-              <td style={{ ...cell, minWidth: 220 }}>{(lang === "zh" ? o.zh : o.en) || o.en || o.zh}</td>
+              <td style={{ ...cell, minWidth: 220 }}>{(lang === "zh" ? o.zh : o.en) || o.en || o.zh}
+                {o.note ? <span style={sub}>{o.note}</span> : null}</td>
             </tr>
           );
         })}</tbody>
