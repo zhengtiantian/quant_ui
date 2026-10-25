@@ -15,9 +15,9 @@ import { DOWN, UP, cell, color, ghostButton, muted, num, panel, panelHead, panel
  */
 
 const KIND_LABEL: Record<string, string> = {
-  asia_europe: "🌏 Asia & Europe", us: "🇺🇸 US markets", outlook: "🔭 Week ahead", flash: "⚡ Flash",
+  asia_europe: "🌏 Asia & Europe", us: "🇺🇸 US markets", outlook: "🔭 Week ahead", flash: "⚡ Flash", advisor: "🧭 Holdings advisor",
 };
-const KIND_GROUP: Record<string, string> = { asia_europe: "Summary", us: "Summary", outlook: "Forward", flash: "Forward" };
+const KIND_GROUP: Record<string, string> = { asia_europe: "Summary", us: "Summary", outlook: "Forward", flash: "Forward", advisor: "Advice" };
 const OP_TEXT: Record<string, string> = { ">=": "≥", "<=": "≤", "abs>=": "|move| ≥", "abs<=": "|move| ≤" };
 const STATUS_COLOR: Record<string, string> = { hit: "#15803d", miss: "#b91c1c", pending: "#64748b", void: "#94a3b8" };
 const store = {

@@ -141,6 +141,7 @@ export interface PortfolioState {
   server_time: number;
   refreshing: boolean;
   global: GlobalState;
+  cash: number;
 }
 
 export interface Candle {
@@ -163,7 +164,7 @@ export interface ChartData {
   stale?: boolean;
 }
 
-export type BriefKind = "asia_europe" | "us" | "outlook" | "flash";
+export type BriefKind = "asia_europe" | "us" | "outlook" | "flash" | "advisor";
 
 export interface BriefMeta {
   id: number;
@@ -201,11 +202,60 @@ export interface Prediction {
   note: string | null;
 }
 
+/** One limit order the holdings advisor recommended, with how it played out (scored from daily bars). */
+export interface AdviceOrder {
+  id: number;
+  brief_id: number;
+  symbol: string;
+  side: "buy" | "sell";
+  tag: "trim" | "rebuy" | "add" | "new" | "stop" | "exit";
+  pct: number | null;
+  shares: number | null;
+  amount_usd: number | null;
+  limit_price: number;
+  issued_ts: number;
+  issued_price: number | null;
+  valid_until: string;
+  status: "open" | "filled" | "scored" | "expired" | "void";
+  filled_date: string | null;
+  eval_date: string | null;
+  eval_close: number | null;
+  edge_pct: number | null;
+  zh: string | null;
+  en: string | null;
+}
+
+export interface AdvisorReason {
+  kind: "move" | "limit" | "earnings_prep" | "earnings_out" | "news" | "manual";
+  text: string;
+  urgent: boolean;
+}
+
+export interface AdvisorReport extends BriefMeta {
+  symbol: string | null;          // a focused update's holding; null for the daily report
+  urgent: boolean;
+  reasons: AdvisorReason[];
+}
+
+export interface AdvisorState {
+  reports: AdvisorReport[];
+  orders: AdviceOrder[];
+  scorecard: {
+    orders: number; open: number; filled_live: number; finished: number;
+    fill_rate: number | null; mean_edge_pct: number | null; win_rate: number | null; recent: AdviceOrder[];
+  };
+  cash: number;
+  running: boolean;
+  due_session: string | null;
+  schedule: string;
+}
+
 export interface Brief extends BriefMeta {
   body_zh: string | null;
   body_en: string | null;
   sources: { title: string; url: string }[];
   predictions: Prediction[];
+  orders?: AdviceOrder[];
   context: { symbol: string; name: string; move_pct: number | null; session: string | null } | null;
 }
 
@@ -274,3 +324,5 @@ export const fetchBriefs = (kind = "") => call<BriefsResponse>(`/briefs${kind ? 
 export const fetchBrief = (id: number) => call<{ brief: Brief }>(`/briefs/${id}`).then((r) => r.brief);
 export const runBrief = (kind: string, symbol = "") => post<BriefsResponse & { started: boolean }>("/briefs/run", { kind, symbol });
 export const fetchScorecard = () => call<Scorecard>("/predictions/scorecard");
+export const fetchAdvisor = () => call<AdvisorState>("/advisor");
+export const setCash = (cash: number) => post<{ cash: number; state: PortfolioState }>("/portfolio/cash/set", { cash });

@@ -6,8 +6,10 @@ import {
   fetchPortfolio,
   removeWatch,
   saveTransaction,
+  setCash,
 } from "../api/markets";
 import type { ChartData, Holding, PortfolioState, Side, Transaction, WatchItem } from "../api/markets";
+import AdvisorPanel from "../components/markets/AdvisorPanel";
 import GlobalMarkets from "../components/markets/GlobalMarkets";
 import PriceChart from "../components/markets/PriceChart";
 import {
@@ -71,6 +73,29 @@ const PriceCell: React.FC<{ q: Holding["quote"] }> = ({ q }) => {
         </span>
       ) : null}
     </div>
+  );
+};
+
+// Cash available to invest, entered by hand: the holdings advisor sizes its buy ideas with it.
+const CashKpi: React.FC<{ cash: number; onSaved: (s: PortfolioState) => void; onError: (m: string) => void }> = ({ cash, onSaved, onError }) => {
+  const [editing, setEditing] = React.useState(false);
+  const [value, setValue] = React.useState(String(cash));
+  const save = async () => {
+    const v = parseFloat(value);
+    if (!(v >= 0)) { onError("Cash must be a number of 0 or more"); return; }
+    try { onSaved((await setCash(v)).state); setEditing(false); } catch (e) { onError((e as Error).message); }
+  };
+  return (
+    <Kpi label="Cash available"
+         main={editing ? (
+           <span style={{ display: "flex", gap: 6, alignItems: "center" }}>
+             <input id="cash-input" type="number" step="any" min="0" value={value} autoFocus onChange={(e) => setValue(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") void save(); if (e.key === "Escape") setEditing(false); }}
+                    style={{ width: 130, padding: "4px 8px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 16 }} />
+             <button style={{ ...ghostButton, padding: "3px 10px" }} onClick={() => void save()}>Save</button>
+           </span>
+         ) : <>{usd(cash)} <button style={iconButton} title="Edit" onClick={() => { setValue(String(cash)); setEditing(true); }}>✎</button></>}
+         sub="Entered by hand · used by the advisor to size buys" />
   );
 };
 
@@ -376,11 +401,14 @@ const Holdings: React.FC = () => {
              sub={<><span style={{ color: color(t.unrealized) }}>{pct(t.unrealized_pct)}</span><br />FIFO <span style={{ color: color(t.fifo_unrealized) }}>{signed(t.fifo_unrealized)}</span></>} />
         <Kpi label="Today P&L" main={signed(t.day_pnl)} tint={color(t.day_pnl)}
              sub={<><span style={{ color: color(t.day_pnl) }}>{pct(t.day_pnl_pct)}</span> · vs prev close</>} />
+        <CashKpi cash={s.cash ?? 0} onSaved={(st) => { apply(st); flash("Cash saved"); }} onError={(m) => flash(m, true)} />
         {Math.abs(realized) > 1e-9 || Math.abs(t.fifo_realized) > 1e-9 ? (
           <Kpi label="Realised + dividends" main={signed(realized)} tint={color(realized)}
                sub={<>Sales {signed(t.realized)} · dividends {usd(t.dividends)}<br />FIFO sales <span style={{ color: color(t.fifo_realized) }}>{signed(t.fifo_realized)}</span></>} />
         ) : null}
       </div>
+
+      <AdvisorPanel holdings={s.holdings} />
 
       <div style={panel}>
         <div style={panelHead}><div style={panelTitle}>📈 Holdings · {s.holdings.length}</div>
