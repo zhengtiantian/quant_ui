@@ -316,7 +316,6 @@ export const fetchChart = (symbol: string, range: string) =>
 
 export interface SaveResult {
   id: number;
-  budget?: { profit?: number; avg_cost?: number; entry_id?: number; pending?: boolean; error?: string };
   state: PortfolioState;
 }
 export const saveTransaction = (data: Record<string, string>) => post<SaveResult>("/portfolio/tx/save", { data });

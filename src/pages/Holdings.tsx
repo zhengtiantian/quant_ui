@@ -103,7 +103,7 @@ const CashKpi: React.FC<{ cash: number; onSaved: (s: PortfolioState) => void; on
 
 interface FormState {
   id?: number; trade_date: string; symbol: string; side: Side; price: string; quantity: string; amount: string;
-  fee: string; note: string; budget_sync: boolean; entry_mode: "quantity" | "amount";
+  fee: string; note: string; entry_mode: "quantity" | "amount";
 }
 
 const TradeModal: React.FC<{
@@ -140,12 +140,9 @@ const TradeModal: React.FC<{
       const r = await saveTransaction({
         id: f.id ? String(f.id) : "", request_id: f.id ? "" : requestId.current, trade_date: f.trade_date,
         symbol: f.symbol, side: f.side, price: f.price, quantity: f.quantity, amount: f.amount, entry_mode: f.entry_mode,
-        fee: f.fee, note: f.note, budget_sync: f.budget_sync ? "1" : "0",
+        fee: f.fee, note: f.note,
       });
-      const b = r.budget;
-      if (b?.error) onSaved(r.state, `Saved. Budget: ${b.error}`, true);
-      else if (b?.profit != null) onSaved(r.state, `Saved · profit ${signed(b.profit)} recorded in the budget`);
-      else onSaved(r.state, "Saved");
+      onSaved(r.state, "Saved");
     } catch (err) {
       setError((err as Error).message);
       setBusy(false);
@@ -185,12 +182,6 @@ const TradeModal: React.FC<{
             <input style={input} type="number" step="any" min="0" required value={f.amount} onChange={(e) => set("amount", e.target.value)} /></label>
         ) : null}
         {preview ? <div style={{ ...muted, margin: "-4px 0 10px" }}>{preview}</div> : null}
-        {f.side === "sell" ? (
-          <label style={{ ...field, flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <input type="checkbox" checked={f.budget_sync} onChange={(e) => set("budget_sync", e.target.checked)} />
-            Record the profit of this sale in the budget stock item
-          </label>
-        ) : null}
         <label style={field}>Fee (USD, optional)<input style={input} type="number" step="any" min="0" value={f.fee} onChange={(e) => set("fee", e.target.value)} /></label>
         <label style={field}>Note (optional)<input style={input} value={f.note} onChange={(e) => set("note", e.target.value)} /></label>
         {error ? <div style={{ color: DOWN, fontSize: 13, marginBottom: 8 }}>{error}</div> : null}
@@ -332,10 +323,10 @@ const Holdings: React.FC = () => {
 
   const editTx = (tx: Transaction | null, preset = "") => setForm(tx ? {
     id: tx.id, trade_date: tx.trade_date, symbol: tx.symbol, side: tx.side, price: String(tx.price), quantity: tx.quantity ? String(tx.quantity) : "",
-    amount: "", fee: tx.fee ? String(tx.fee) : "", note: tx.note || "", budget_sync: !!tx.budget_sync, entry_mode: "quantity",
+    amount: "", fee: tx.fee ? String(tx.fee) : "", note: tx.note || "", entry_mode: "quantity",
   } : {
     trade_date: todayLocal(), symbol: preset || filter, side: "buy", price: "", quantity: "", amount: "", fee: "", note: "",
-    budget_sync: true, entry_mode: store.get("pfEntryMode", "quantity") === "amount" ? "amount" : "quantity",
+    entry_mode: store.get("pfEntryMode", "quantity") === "amount" ? "amount" : "quantity",
   });
   const delTx = async (tx: Transaction) => {
     if (!window.confirm(`Delete this trade?\n${tx.trade_date} ${tx.symbol} ${tx.quantity || ""} @ ${tx.price}`)) return;
