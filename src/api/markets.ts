@@ -68,6 +68,8 @@ export interface Transaction {
   note?: string;
   budget_sync?: number;
   budget_entry_id?: number | null;
+  sale_avg_cost?: number;           // sells: the average cost the sale realised against
+  sale_profit?: number;             // sells: (price - that average) x shares - fee
 }
 
 export interface Totals {

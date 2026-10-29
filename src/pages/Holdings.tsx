@@ -348,8 +348,8 @@ const Holdings: React.FC = () => {
   const txTable = (list: Transaction[]) => (
     <div style={{ overflowX: "auto" }}>
       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
-        <thead><tr>{["Date", "Symbol", "Type", "Qty", "Price / amount", "Total", "Fee", "Note", ""].map((h, i) =>
-          <th key={h + i} style={{ ...th, ...(i >= 3 && i <= 6 ? right : {}) }}>{h}</th>)}</tr></thead>
+        <thead><tr>{["Date", "Symbol", "Type", "Qty", "Price / amount", "Total", "Fee", "Avg cost", "Realised", "Note", ""].map((h, i) =>
+          <th key={h + i} style={{ ...th, ...(i >= 3 && i <= 8 ? right : {}) }}>{h}</th>)}</tr></thead>
         <tbody>{list.map((x) => {
           const total = x.side === "buy" || x.side === "sell" ? x.quantity * x.price : x.price;
           return (
@@ -359,7 +359,11 @@ const Holdings: React.FC = () => {
                 {x.budget_entry_id ? <span style={{ ...muted, marginLeft: 4 }} title="Profit recorded in the budget stock item">→budget</span> : null}</td>
               <td style={{ ...cell, ...right }}>{x.quantity ? qty(x.quantity) : "—"}</td>
               <td style={{ ...cell, ...right }}>{usd(x.price)}</td><td style={{ ...cell, ...right }}>{usd(total)}</td>
-              <td style={{ ...cell, ...right }}>{x.fee ? usd(x.fee) : "—"}</td><td style={cell}>{x.note}</td>
+              <td style={{ ...cell, ...right }}>{x.fee ? usd(x.fee) : "—"}</td>
+              <td style={{ ...cell, ...right }} title="Average cost at the time of the sale">{x.sale_avg_cost != null ? usd(x.sale_avg_cost) : "—"}</td>
+              <td style={{ ...cell, ...right, color: x.sale_profit == null ? undefined : x.sale_profit >= 0 ? UP : DOWN }}>
+                {x.sale_profit != null ? signed(x.sale_profit) : "—"}</td>
+              <td style={cell}>{x.note}</td>
               <td style={{ ...cell, whiteSpace: "nowrap" }}>
                 <button style={iconButton} title="Edit" onClick={() => editTx(x)}>✎</button>
                 <button style={iconButton} title="Delete" onClick={() => void delTx(x)}>🗑</button>
