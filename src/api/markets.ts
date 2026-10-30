@@ -588,3 +588,106 @@ export const queryCatalysts = (payload: {
 
 export const deleteCatalystHistory = (payload: { id?: number; clear_all?: boolean }) =>
   post<{ recent_queries: CatalystQueryRecord[] }>("/catalysts/history/delete", payload);
+
+// ---------------- Q.10 Lot- & Inventory-Aware Swing / Dip Guardrail ----------------
+
+export interface LotAdviceStats {
+  bars: number;
+  atr14: number | null;
+  atr14_pct: number | null;
+  rsi14: number | null;
+  sma20: number | null;
+  drop_1d_pct: number | null;
+  drop_1d_atr: number | null;
+  drop_3d_pct: number | null;
+  drop_3d_atr: number | null;
+  stabilized: boolean;
+}
+
+export interface LotAdviceCatalyst {
+  date: string;
+  days_away: number;
+  title: string;
+  category: string;
+  impact: string;
+  bucket: string;
+}
+
+export interface DipGuardrail {
+  verdict: "green" | "amber" | "red";
+  headline_zh: string;
+  reasons_zh: string[];
+  min_spacing_atr: number;
+  anchor_lot_id: number | null;
+  anchor_cost: number | null;
+  latest_lot_id: number | null;
+  latest_cost: number | null;
+  evaluated_buy_price: number | null;
+  spacing_vs_lowest_atr: number | null;
+  suggested_buy_limit: number | null;
+  recent_pair_tight: {
+    lot_a_id: number;
+    lot_a_cost: number;
+    lot_b_id: number;
+    lot_b_cost: number;
+    gap_usd: number;
+    gap_atr: number | null;
+  } | null;
+}
+
+export interface LotExitPlan {
+  buy_id: number;
+  trade_date: string;
+  unit_cost: number;
+  open_qty: number;
+  open_pnl: number | null;
+  open_pnl_pct: number | null;
+  pnl_atr: number | null;
+  tp1_price: number | null;
+  tp1_gain_usd: number | null;
+  tp2_price: number | null;
+  tp2_gain_usd: number | null;
+  trail_stop_price: number | null;
+  recommended_price: number | null;
+  status_code: "hit_tp2" | "hit_tp1" | "green_hold" | "underwater_swing" | "deep_hold";
+  advice_zh: string;
+}
+
+export interface LotAdviceResponse {
+  status: string;
+  symbol: string;
+  generated_at: string;
+  live_price: number | null;
+  cash: number;
+  symbol_weight_pct: number;
+  semi_cluster_weight_pct: number;
+  is_semi_cluster: boolean;
+  stats: LotAdviceStats;
+  empirical_oos: {
+    universe_stocks: number;
+    oos_years: string;
+    oos_2atr_drop_events: number;
+    follow_through_1atr_3d_pct: number;
+    follow_through_15atr_3d_pct: number;
+    immediate_tp15_hit_pct: number;
+    immediate_tp15_mean_pct: number;
+    spaced_15atr_fill_pct: number;
+    spaced_15atr_tp20_hit_pct: number;
+    spaced_15atr_mean_pct: number;
+  };
+  catalysts_7d: LotAdviceCatalyst[];
+  has_binary_7d: boolean;
+  dip_guardrail: DipGuardrail;
+  lot_exit_plans: LotExitPlan[];
+}
+
+export const fetchLotAdvice = (symbol: string, buyPrice?: number | string | null) => {
+  const qs = new URLSearchParams({ symbol });
+  if (buyPrice !== undefined && buyPrice !== null && String(buyPrice).trim() !== "") {
+    const n = Number(buyPrice);
+    if (Number.isFinite(n) && n > 0) {
+      qs.set("buy_price", String(n));
+    }
+  }
+  return call<LotAdviceResponse>(`/portfolio/lot-advice?${qs.toString()}`);
+};

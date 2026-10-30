@@ -1,9 +1,11 @@
 import React from "react";
-import { deleteTransaction, saveTransaction } from "../../api/markets";
+import { deleteTransaction, fetchLotAdvice, saveTransaction } from "../../api/markets";
 import type {
   BuyOrderLot,
   Holding,
+  LotAdviceResponse,
   LotAllocationInput,
+  LotExitPlan,
   LotOrderStatus,
   PortfolioState,
   SellOrderRecord,
@@ -190,6 +192,36 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
   const [quickQty, setQuickQty] = React.useState("");
   const sellReqId = React.useRef(newRequestId());
 
+  // Q.10 Inventory- & Lot-Aware Swing / Dip Guardrail state
+  const [lotAdvice, setLotAdvice] = React.useState<LotAdviceResponse | null>(null);
+  const [lotAdviceLoading, setLotAdviceLoading] = React.useState(false);
+
+  const evalBuyParam = tab === "buy" && editBuyId == null ? buyPrice : undefined;
+
+  React.useEffect(() => {
+    let cancelled = false;
+    const timer = window.setTimeout(
+      () => {
+        setLotAdviceLoading(true);
+        fetchLotAdvice(symbol, evalBuyParam)
+          .then((res) => {
+            if (!cancelled) setLotAdvice(res);
+          })
+          .catch(() => {
+            // non-blocking advisory
+          })
+          .finally(() => {
+            if (!cancelled) setLotAdviceLoading(false);
+          });
+      },
+      tab === "buy" ? 200 : 0,
+    );
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [symbol, evalBuyParam, tab, state.holdings]);
+
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -279,12 +311,21 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
     setTab("buy");
   };
 
-  const openNewSellTab = (preselectBuy?: BuyOrderLot) => {
+  const exitPlanByBuyId: Record<number, LotExitPlan> = {};
+  for (const pl of lotAdvice?.lot_exit_plans || []) {
+    exitPlanByBuyId[pl.buy_id] = pl;
+  }
+
+  const openNewSellTab = (preselectBuy?: BuyOrderLot, targetSellPrice?: number | null) => {
     setErrMsg(null);
     setEditSellId(null);
     const today = todayLocal();
     setSellDate(today);
-    setSellPrice(livePrice != null ? String(livePrice) : preselectBuy ? String(preselectBuy.price) : "");
+    if (targetSellPrice != null && targetSellPrice > 0) {
+      setSellPrice(String(targetSellPrice));
+    } else {
+      setSellPrice(livePrice != null ? String(livePrice) : preselectBuy ? String(preselectBuy.price) : "");
+    }
     setSellFee("");
     setSellNote("");
     setQuickQty("");
@@ -779,6 +820,62 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
           ) : null}
         </div>
 
+        {lotAdvice && lotAdvice.stats.atr14 != null ? (
+          <div
+            style={{
+              background: "#f8fafc",
+              border: "1px solid #e2e8f0",
+              borderRadius: 10,
+              padding: "7px 12px",
+              marginBottom: 12,
+              display: "flex",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: 8,
+              fontSize: 12.2,
+              color: "#334155",
+            }}
+          >
+            <span style={{ fontWeight: 700, color: "#0f172a" }}>⚡ 波段风控引擎</span>
+            <span style={pill("#0f766e")}>
+              ATR(14) {usd(lotAdvice.stats.atr14)}{" "}
+              {lotAdvice.stats.atr14_pct != null ? `(${lotAdvice.stats.atr14_pct.toFixed(1)}%)` : ""}
+            </span>
+            {lotAdvice.stats.rsi14 != null ? (
+              <span
+                style={pill(
+                  lotAdvice.stats.rsi14 < 30 ? "#b45309" : lotAdvice.stats.rsi14 > 70 ? "#be123c" : "#475569",
+                )}
+              >
+                RSI(14) {lotAdvice.stats.rsi14.toFixed(1)}
+                {lotAdvice.stats.rsi14 < 30 ? " · 超卖" : lotAdvice.stats.rsi14 > 70 ? " · 超买" : ""}
+              </span>
+            ) : null}
+            <span style={pill(lotAdvice.stats.stabilized ? "#15803d" : "#b91c1c")}>
+              {lotAdvice.stats.stabilized ? "🟢 日线已企稳" : "🟠 急跌未企稳"}
+              {lotAdvice.stats.drop_3d_pct != null ? ` (3日 ${pct(lotAdvice.stats.drop_3d_pct)})` : ""}
+            </span>
+            {lotAdvice.catalysts_7d.length > 0 ? (
+              <span
+                style={pill(lotAdvice.has_binary_7d ? "#7c3aed" : "#0369a1")}
+                title={lotAdvice.catalysts_7d.map((c) => `${c.date.slice(5)} ${c.title}`).join(" | ")}
+              >
+                🔭 7日内 {lotAdvice.catalysts_7d.length} 个事件：
+                {lotAdvice.catalysts_7d
+                  .slice(0, 2)
+                  .map((c) => `${c.date.slice(5)} ${c.title.slice(0, 14)}`)
+                  .join(" · ")}
+              </span>
+            ) : null}
+            {lotAdvice.is_semi_cluster ? (
+              <span style={{ marginLeft: "auto", fontSize: 11.5, color: "#64748b" }}>
+                芯片/存储总仓位 <b>{lotAdvice.semi_cluster_weight_pct.toFixed(1)}%</b> ({symbol}{" "}
+                {lotAdvice.symbol_weight_pct.toFixed(1)}%)
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+
         {errMsg ? (
           <div
             style={{
@@ -815,6 +912,77 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                 返回列表
               </button>
             </div>
+
+            {/* Q.10 Dip-Entry Guardrail Card */}
+            {editBuyId == null && lotAdvice ? (() => {
+              const dg = lotAdvice.dip_guardrail;
+              const palette =
+                dg.verdict === "green"
+                  ? { bg: "#ecfdf5", border: "#6ee7b7", fg: "#065f46" }
+                  : dg.verdict === "amber"
+                    ? { bg: "#fffbeb", border: "#fcd34d", fg: "#92400e" }
+                    : { bg: "#fef2f2", border: "#fca5a5", fg: "#991b1b" };
+              return (
+                <div
+                  style={{
+                    background: palette.bg,
+                    border: `1px solid ${palette.border}`,
+                    borderRadius: 10,
+                    padding: "10px 12px",
+                    marginBottom: 12,
+                    fontSize: 12.6,
+                    color: "#1e293b",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                      gap: 8,
+                      marginBottom: dg.reasons_zh.length > 0 ? 6 : 0,
+                    }}
+                  >
+                    <b style={{ color: palette.fg, fontSize: 13.5 }}>
+                      {dg.headline_zh}
+                      {lotAdviceLoading ? " (重算中…)" : ""}
+                    </b>
+                    {dg.suggested_buy_limit != null ? (
+                      <button
+                        type="button"
+                        onClick={() => setBuyPrice(String(dg.suggested_buy_limit))}
+                        style={{
+                          background: "#0f172a",
+                          color: "#fff",
+                          border: "none",
+                          borderRadius: 7,
+                          padding: "4px 10px",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                      >
+                        🎯 填入建议挂单价 {usd(dg.suggested_buy_limit)}
+                      </button>
+                    ) : null}
+                  </div>
+                  {dg.reasons_zh.length > 0 ? (
+                    <ul style={{ margin: "4px 0 6px 18px", padding: 0, lineHeight: 1.55 }}>
+                      {dg.reasons_zh.map((r, idx) => (
+                        <li key={idx}>{r}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  <div style={{ fontSize: 11.5, color: "#64748b" }}>
+                    📊 样本外基准（{lotAdvice.empirical_oos.universe_stocks}股 {lotAdvice.empirical_oos.oos_years} 共{" "}
+                    {lotAdvice.empirical_oos.oos_2atr_drop_events} 次 ≥2×ATR 急跌）：隔日直接抄底均值{" "}
+                    <b>+{lotAdvice.empirical_oos.immediate_tp15_mean_pct}%</b> vs 拉开 1.5×ATR 挂单波段均值{" "}
+                    <b style={{ color: "#15803d" }}>+{lotAdvice.empirical_oos.spaced_15atr_mean_pct}%</b>
+                  </div>
+                </div>
+              );
+            })() : null}
 
             <div
               style={{
@@ -1214,6 +1382,27 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                         </td>
                         <td style={{ ...cell, ...right }}>
                           <b>{usd(lot.unit_cost)}</b>
+                          {exitPlanByBuyId[lot.id]?.tp1_price != null ? (
+                            <span style={sub}>
+                              TP1 {usd(exitPlanByBuyId[lot.id].tp1_price!)}{" "}
+                              <button
+                                type="button"
+                                onClick={() => setSellPrice(String(exitPlanByBuyId[lot.id].tp1_price!))}
+                                style={{
+                                  border: "none",
+                                  background: "none",
+                                  color: "#0f766e",
+                                  cursor: "pointer",
+                                  padding: 0,
+                                  fontSize: 11,
+                                  textDecoration: "underline",
+                                }}
+                                title="将该笔 +1.5×ATR 波段目标价填入上方卖出单价"
+                              >
+                                填入
+                              </button>
+                            </span>
+                          ) : null}
                         </td>
                         <td style={{ ...cell, ...right }}>
                           <b>{qty(avail)}</b>
@@ -1271,7 +1460,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                   })}
                   {selectableLots.length === 0 ? (
                     <tr>
-                      <td colSpan={7} style={{ ...cell, textAlign: "center", color: "#64748b", padding: 20 }}>
+                      <td colSpan={8} style={{ ...cell, textAlign: "center", color: "#64748b", padding: 20 }}>
                         该卖出日期 ({sellDate}) 之前没有可平仓的买入批次。
                       </td>
                     </tr>
@@ -1460,6 +1649,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                     <th style={{ ...th, ...right }}>买入成本价</th>
                     <th style={{ ...th, ...right }}>剩余 / 买入股数</th>
                     <th style={{ ...th, ...right }}>单笔独立浮盈亏 (按现价)</th>
+                    <th style={{ ...th, ...right }}>波段目标 (ATR)</th>
                     <th style={{ ...th, ...right }}>已结清波段盈亏</th>
                     <th style={{ ...th, ...right }}>操作</th>
                   </tr>
@@ -1514,6 +1704,35 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                             <span style={muted}>—</span>
                           )}
                         </td>
+                        <td style={{ ...cell, ...right }}>
+                          {(() => {
+                            const pl = oq > 1e-8 ? exitPlanByBuyId[b.id] : undefined;
+                            if (!pl || pl.tp1_price == null) return <span style={muted}>—</span>;
+                            const hit = pl.status_code === "hit_tp1" || pl.status_code === "hit_tp2";
+                            return (
+                              <div title={pl.advice_zh}>
+                                <span
+                                  style={{
+                                    fontWeight: 700,
+                                    color: hit ? "#15803d" : "#0f766e",
+                                    fontVariantNumeric: "tabular-nums",
+                                  }}
+                                >
+                                  TP1 {usd(pl.tp1_price)}
+                                </span>
+                                {pl.tp1_gain_usd != null ? (
+                                  <span style={{ fontSize: 11.5, color: "#15803d", marginLeft: 4 }}>
+                                    (+{usd(pl.tp1_gain_usd)})
+                                  </span>
+                                ) : null}
+                                <span style={sub}>
+                                  TP2 {pl.tp2_price != null ? usd(pl.tp2_price) : "—"}
+                                  {pl.trail_stop_price != null ? ` · 🛡 保护 ${usd(pl.trail_stop_price)}` : ""}
+                                </span>
+                              </div>
+                            );
+                          })()}
+                        </td>
                         <td style={{ ...cell, ...right, color: cq > 1e-8 ? color(rpnl) : undefined }}>
                           {cq > 1e-8 ? (
                             <>
@@ -1531,6 +1750,26 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                           )}
                         </td>
                         <td style={{ ...cell, ...right, whiteSpace: "nowrap" }}>
+                          {b.open_qty > 1e-8 && exitPlanByBuyId[b.id]?.recommended_price != null ? (
+                            <button
+                              type="button"
+                              onClick={() => openNewSellTab(b, exitPlanByBuyId[b.id].recommended_price)}
+                              style={{
+                                background: "#f0fdfa",
+                                color: "#0f766e",
+                                border: "1px solid #99f6e4",
+                                borderRadius: 7,
+                                padding: "2px 7px",
+                                fontSize: 11.5,
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                marginRight: 4,
+                              }}
+                              title={`按本批波段目标价 ${usd(exitPlanByBuyId[b.id].recommended_price!)} 测算独立平仓盈亏`}
+                            >
+                              🎯 目标测算
+                            </button>
+                          ) : null}
                           {b.open_qty > 1e-8 ? (
                             <button
                               type="button"
@@ -1546,7 +1785,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                                 cursor: "pointer",
                                 marginRight: 4,
                               }}
-                              title="直接进入卖出页并默认勾选此笔批次"
+                              title="直接进入卖出页并默认勾选此笔批次（按现价）"
                             >
                               平这笔
                             </button>
