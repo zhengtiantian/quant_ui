@@ -691,3 +691,141 @@ export const fetchLotAdvice = (symbol: string, buyPrice?: number | string | null
   }
   return call<LotAdviceResponse>(`/portfolio/lot-advice?${qs.toString()}`);
 };
+
+export interface TaskMonitorSummary {
+  running_count: number;
+  success_today: number;
+  failed_today: number;
+  total_dags: number;
+  active_dags: number;
+  job_agent_online: boolean;
+  scheduler_running: boolean;
+}
+
+export interface RunningTaskItem {
+  source: string;
+  dag_id: string;
+  task_id: string;
+  run_id: string;
+  name: string;
+  state: string;
+  start_date: string | null;
+  duration_seconds: number | null;
+  can_view_log: boolean;
+}
+
+export interface JobAgentInfo {
+  name: string;
+  url: string;
+  port: number;
+  is_online: boolean;
+  is_scraping_now: boolean;
+  schedule: string;
+  next_run: {
+    next_run_iso: string;
+    next_run_display: string;
+    countdown: string;
+  };
+  last_success?: string | null;
+  last_full_sweep?: string | null;
+  launchd_status: string;
+  report?: {
+    exists: boolean;
+    path: string;
+    modified_at: string;
+    size_kb: number;
+    summary: string;
+  };
+  has_log: boolean;
+}
+
+export interface AirflowTaskInstanceItem {
+  task_id: string;
+  state: string;
+  start_date: string | null;
+  end_date: string | null;
+  duration: number | null;
+}
+
+export interface AirflowDagItem {
+  dag_id: string;
+  name: string;
+  category: string;
+  description: string;
+  is_paused: boolean;
+  schedule: string;
+  schedule_display: string;
+  next_run: string | null;
+  last_run: {
+    run_id: string;
+    state: string;
+    start_date: string | null;
+    end_date: string | null;
+    duration_seconds: number | null;
+    progress: {
+      total: number;
+      success: number;
+      running: number;
+      failed: number;
+      percent: number;
+    };
+  } | null;
+  tasks: AirflowTaskInstanceItem[];
+}
+
+export interface SystemDaemonItem {
+  id: string;
+  name: string;
+  type: string;
+  label: string;
+  port: number | null;
+  is_port_open: boolean | null;
+  pid: number | null;
+  status: string;
+  description: string;
+  log_path: string | null;
+}
+
+export interface TaskMonitorResponse {
+  status: string;
+  timestamp: string;
+  summary: TaskMonitorSummary;
+  running_tasks: RunningTaskItem[];
+  job_agent: JobAgentInfo;
+  airflow_dags: AirflowDagItem[];
+  system_daemons: SystemDaemonItem[];
+}
+
+export interface TaskLogResponse {
+  status: string;
+  source: string;
+  target_id: string;
+  run_id?: string | null;
+  task_id?: string | null;
+  path?: string;
+  total_lines?: number;
+  lines_returned?: number;
+  log?: string;
+  message?: string;
+}
+
+export const fetchTaskMonitorStatus = () => {
+  return call<TaskMonitorResponse>("/tasks/monitor");
+};
+
+export const fetchTaskLog = (
+  source: string,
+  target_id: string = "",
+  run_id: string = "",
+  task_id: string = "",
+  lines: number = 200
+) => {
+  const qs = new URLSearchParams({
+    source,
+    target_id,
+    run_id,
+    task_id,
+    lines: String(lines),
+  });
+  return call<TaskLogResponse>(`/tasks/log?${qs.toString()}`);
+};
