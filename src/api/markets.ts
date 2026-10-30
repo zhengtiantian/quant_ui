@@ -332,3 +332,177 @@ export const runBrief = (kind: string, symbol = "") => post<BriefsResponse & { s
 export const fetchScorecard = () => call<Scorecard>("/predictions/scorecard");
 export const fetchAdvisor = () => call<AdvisorState>("/advisor");
 export const setCash = (cash: number) => post<{ cash: number; state: PortfolioState }>("/portfolio/cash/set", { cash });
+// ------------------------------------------------------------------ 3-Layer Upcoming Catalysts & Query
+
+export type CatalystLayer = "L1_calendar" | "L2_extracted" | "L3_web";
+export type CatalystKind =
+  | "earnings"
+  | "dividend"
+  | "split"
+  | "macro"
+  | "product"
+  | "policy"
+  | "legal"
+  | "corporate"
+  | "analyst";
+export type CatalystBucket = "held" | "watchlist" | "macro" | "bellwether";
+
+export interface CatalystSymbolMeta {
+  symbol: string;
+  name: string;
+  bucket: "held" | "watchlist";
+  quantity: number;
+  weight_pct: number | null;
+  unrealized_pct: number | null;
+  price: number | null;
+  day_change_pct: number | null;
+}
+
+export interface CatalystEvent {
+  id: string;
+  layer: CatalystLayer;
+  kind: CatalystKind;
+  bucket: CatalystBucket;
+  symbol: string;
+  listed_as?: string;
+  name: string;
+  country?: string;
+  flag?: string;
+  date: string;
+  date_precision: "exact" | "approx" | string;
+  date_label?: string;
+  days_away: number;
+  when?: string;
+  eps_forecast?: number | null;
+  revenue_forecast?: number | null;
+  forecast_currency?: string;
+  implied_move_pct?: number | null;
+  estimates?: number | null;
+  fiscal_quarter?: string;
+  amount?: number | null;
+  pay_date?: string | null;
+  currency?: string;
+  estimated_payout_usd?: number | null;
+  ratio?: string;
+  gmt?: string;
+  consensus?: string;
+  previous?: string;
+  weight_pct?: number | null;
+  affected_symbols: string[];
+  related_holdings: string[];
+  impact_level: "high" | "medium" | "low";
+  title_zh: string;
+  title_en: string;
+  detail_zh: string;
+  detail_en: string;
+  source_title: string;
+  source_url: string;
+}
+
+export interface PerStockCatalysts extends CatalystSymbolMeta {
+  direct_count: number;
+  spillover_count: number;
+  macro_count: number;
+  total_count: number;
+  next_direct: CatalystEvent | null;
+  direct: CatalystEvent[];
+  spillover: CatalystEvent[];
+  macro: CatalystEvent[];
+}
+
+export interface CollectionLayerStatus {
+  layer?: string;
+  status?: string;
+  last_started_at?: number | null;
+  last_finished_at?: number | null;
+  items_saved?: number | null;
+  error?: string | null;
+  running: boolean;
+  stored_count: number;
+  claude_available?: boolean;
+}
+
+export interface CatalystQuerySource {
+  id?: number;
+  symbol?: string;
+  date?: string;
+  title: string;
+  url: string;
+}
+
+export interface CatalystQueryRecord {
+  id: number;
+  created_at: number;
+  question: string;
+  scope: string;
+  days: number;
+  symbols: string[];
+  mode: "fast" | "web";
+  lang: "zh" | "en";
+  answer: string;
+  sources: CatalystQuerySource[];
+  model: string | null;
+  elapsed_s: number;
+}
+
+export interface CatalystsFeedResponse {
+  from: string;
+  to: string;
+  days: number;
+  scope: string;
+  symbols_meta: CatalystSymbolMeta[];
+  per_stock: Record<string, PerStockCatalysts>;
+  collection: {
+    L2_extracted: CollectionLayerStatus;
+    L3_web: CollectionLayerStatus;
+  };
+  summary: {
+    total: number;
+    l1: number;
+    l2: number;
+    l3: number;
+    earnings: number;
+    macro: number;
+    dividends: number;
+    catalysts: number;
+    held_events: number;
+    watch_events: number;
+    next_held: CatalystEvent | null;
+    next_watch: CatalystEvent | null;
+  };
+  timeline: CatalystEvent[];
+  data_gaps: string[];
+  recent_queries: CatalystQueryRecord[];
+}
+
+export const fetchCatalysts = (opts?: {
+  scope?: string;
+  days?: number;
+  symbols?: string[];
+  bellwethers?: boolean;
+  force?: boolean;
+}) => {
+  const qs = new URLSearchParams();
+  if (opts?.scope) qs.set("scope", opts.scope);
+  if (opts?.days) qs.set("days", String(opts.days));
+  if (opts?.symbols?.length) qs.set("symbols", opts.symbols.join(","));
+  if (opts?.bellwethers === false) qs.set("bellwethers", "0");
+  if (opts?.force) qs.set("force", "1");
+  const q = qs.toString();
+  return call<CatalystsFeedResponse>(`/catalysts${q ? `?${q}` : ""}`);
+};
+
+export const triggerCatalystsCollect = (layer: "l2" | "l3" | "all" = "l2", days = 45) =>
+  post<{ started: string[]; layers: CatalystsFeedResponse["collection"] }>("/catalysts/collect", { layer, days });
+
+export const queryCatalysts = (payload: {
+  question: string;
+  scope?: string;
+  days?: number;
+  symbols?: string[];
+  mode?: "fast" | "web";
+  lang?: "zh" | "en";
+}) => post<{ result: CatalystQueryRecord; recent_queries: CatalystQueryRecord[] }>("/catalysts/query", payload);
+
+export const deleteCatalystHistory = (payload: { id?: number; clear_all?: boolean }) =>
+  post<{ recent_queries: CatalystQueryRecord[] }>("/catalysts/history/delete", payload);
