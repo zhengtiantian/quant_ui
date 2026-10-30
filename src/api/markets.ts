@@ -27,6 +27,75 @@ export interface Quote {
   fetched_at?: number;
 }
 
+export type LotOrderStatus = "open" | "partial" | "closed";
+
+export interface LotAllocationInput {
+  buy_id: number;
+  quantity: number;
+}
+
+export interface BuyOrderMatchSlice {
+  sell_id: number;
+  trade_date: string;
+  quantity: number;
+  sell_price: number;
+  pnl: number;
+  explicit: boolean;
+}
+
+export interface BuyOrderLot {
+  id: number;
+  trade_date: string;
+  symbol: string;
+  quantity: number;
+  price: number;
+  fee: number;
+  unit_cost: number;
+  note: string;
+  open_qty: number;
+  closed_qty: number;
+  status: LotOrderStatus;
+  realized_pnl: number;
+  matches: BuyOrderMatchSlice[];
+  fifo_open_qty: number;
+  fifo_closed_qty: number;
+  fifo_status: LotOrderStatus;
+  fifo_realized_pnl: number;
+  live_price?: number | null;
+  price_diff_pct?: number | null;
+  open_market_value?: number;
+  open_cost?: number;
+  open_pnl?: number;
+  open_pnl_pct?: number | null;
+}
+
+export interface MatchedBuyLotSlice {
+  buy_id: number;
+  buy_date: string;
+  buy_price: number;
+  unit_cost: number;
+  quantity: number;
+  pnl: number;
+  explicit: boolean;
+}
+
+export interface SellOrderRecord {
+  id: number;
+  trade_date: string;
+  symbol: string;
+  quantity: number;
+  price: number;
+  fee: number;
+  note: string;
+  avg_cost: number;
+  profit: number;
+  fifo_profit: number;
+  swing_unit_cost: number;
+  swing_profit: number;
+  lot_allocations: LotAllocationInput[] | null;
+  matched_lots: MatchedBuyLotSlice[];
+}
+
 export interface Holding {
   symbol: string;
   quantity: number;
@@ -47,6 +116,14 @@ export interface Holding {
   day_change_pct?: number | null;
   day_pnl?: number | null;
   weight?: number | null;
+  buy_orders?: BuyOrderLot[];
+  sell_orders?: SellOrderRecord[];
+  swing_realized?: number;
+  open_lots_cost?: number;
+  open_lots_avg?: number | null;
+  open_lots_unrealized?: number;
+  breakeven_price?: number | null;
+  raw_breakeven_price?: number | null;
 }
 
 export interface WatchItem {
@@ -70,6 +147,11 @@ export interface Transaction {
   budget_entry_id?: number | null;
   sale_avg_cost?: number;           // sells: the average cost the sale realised against
   sale_profit?: number;             // sells: (price - that average) x shares - fee
+  sale_fifo_profit?: number;
+  sale_swing_cost?: number;
+  sale_swing_profit?: number;
+  lot_allocations?: LotAllocationInput[] | null;
+  matched_lots?: MatchedBuyLotSlice[];
 }
 
 export interface Totals {
@@ -320,7 +402,7 @@ export interface SaveResult {
   id: number;
   state: PortfolioState;
 }
-export const saveTransaction = (data: Record<string, string>) => post<SaveResult>("/portfolio/tx/save", { data });
+export const saveTransaction = (data: Record<string, unknown>) => post<SaveResult>("/portfolio/tx/save", { data });
 export const deleteTransaction = (id: number) => post<{ state: PortfolioState }>("/portfolio/tx/delete", { id });
 export const addWatch = (symbol: string) => post<{ symbol: string; state: PortfolioState }>("/portfolio/watch/add", { symbol });
 export const removeWatch = (symbol: string) => post<{ state: PortfolioState }>("/portfolio/watch/remove", { symbol });

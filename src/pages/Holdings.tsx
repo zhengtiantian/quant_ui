@@ -11,6 +11,7 @@ import {
 import type { ChartData, Holding, PerStockCatalysts, PortfolioState, Side, Transaction, WatchItem } from "../api/markets";
 import AdvisorPanel from "../components/markets/AdvisorPanel";
 import CatalystsPanel, { StockCatalystButton } from "../components/markets/CatalystsPanel";
+import LotManagerModal, { StockLotButton } from "../components/markets/LotManagerModal";
 import GlobalMarkets from "../components/markets/GlobalMarkets";
 import PriceChart from "../components/markets/PriceChart";
 import {
@@ -197,7 +198,7 @@ const TradeModal: React.FC<{
 
 // ------------------------------------------------------------------ the chart
 
-const ChartModal: React.FC<{ symbol: string; state: PortfolioState; onClose: () => void; onOpenEvents: (sym: string) => void }> = ({ symbol, state, onClose, onOpenEvents }) => {
+const ChartModal: React.FC<{ symbol: string; state: PortfolioState; onClose: () => void; onOpenEvents: (sym: string) => void; onOpenLots: (sym: string) => void }> = ({ symbol, state, onClose, onOpenEvents, onOpenLots }) => {
   const [range, setRange] = React.useState(() => store.get("pfChartRange", "6m"));
   const [type, setType] = React.useState<"line" | "candle">(() => (store.get("pfChartType", "line") === "candle" ? "candle" : "line"));
   const [data, setData] = React.useState<ChartData | null>(null);
@@ -226,6 +227,7 @@ const ChartModal: React.FC<{ symbol: string; state: PortfolioState; onClose: () 
         <div style={panelHead}>
           <div><span style={{ fontSize: 20, fontWeight: 800 }}>{symbol}</span> <span style={muted}>{shortName(q.name)}</span></div>
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            {held ? <button style={{ ...ghostButton, padding: "3px 10px", fontSize: 12.5, borderRadius: 8 }} onClick={() => { onClose(); onOpenLots(symbol); }}>📦 批次/波段</button> : null}
             <button style={{ ...ghostButton, padding: "3px 10px", fontSize: 12.5, borderRadius: 8 }} onClick={() => { onClose(); onOpenEvents(symbol); }}>🔭 未来事件</button>
             <button style={iconButton} onClick={onClose} title="Close (Esc)">✕</button>
           </div>
@@ -271,6 +273,7 @@ const Holdings: React.FC = () => {
   const [form, setForm] = React.useState<FormState | null>(null);
   const [chart, setChart] = React.useState<string | null>(null);
   const [catalystModal, setCatalystModal] = React.useState<string | null>(null);
+  const [lotModal, setLotModal] = React.useState<string | null>(null);
   const [catalystMap, setCatalystMap] = React.useState<Record<string, PerStockCatalysts>>({});
   const [catalystLang, setCatalystLang] = React.useState<"zh" | "en">("zh");
   const handleCatalystSummary = React.useCallback((m: Record<string, PerStockCatalysts>, l: "zh" | "en") => {
@@ -373,7 +376,12 @@ const Holdings: React.FC = () => {
               <td style={{ ...cell, ...right }}>{x.fee ? usd(x.fee) : "—"}</td>
               <td style={{ ...cell, ...right }} title="Average cost at the time of the sale">{x.sale_avg_cost != null ? usd(x.sale_avg_cost) : "—"}</td>
               <td style={{ ...cell, ...right, color: x.sale_profit == null ? undefined : x.sale_profit >= 0 ? UP : DOWN }}>
-                {x.sale_profit != null ? signed(x.sale_profit) : "—"}</td>
+                {x.sale_profit != null ? signed(x.sale_profit) : "—"}
+                {x.lot_allocations?.length && x.sale_swing_profit != null ? (
+                  <span style={{ ...sub, color: color(x.sale_swing_profit) }} title="按所选买入批次计算的波段盈亏">
+                    波段 {signed(x.sale_swing_profit)}
+                  </span>
+                ) : null}</td>
               <td style={cell}>{x.note}</td>
               <td style={{ ...cell, whiteSpace: "nowrap" }}>
                 <button style={iconButton} title="Edit" onClick={() => editTx(x)}>✎</button>
@@ -427,7 +435,7 @@ const Holdings: React.FC = () => {
 
       <div style={panel}>
         <div style={panelHead}><div style={panelTitle}>📈 Holdings · {s.holdings.length}</div>
-          <span style={muted}>Mine: buys re-average, sales leave the average unchanged. FIFO: a sale takes the oldest shares first (the Irish CGT basis). Click a row for its chart, or click 🔭 事件 for upcoming catalysts</span></div>
+          <span style={muted}>Mine: buys re-average, sales leave the average unchanged. FIFO: a sale takes the oldest shares first (the Irish CGT basis). Click a row for its chart, 📦 批次 for per-order statuses & swing lot matching, or 🔭 事件 for upcoming catalysts</span></div>
         {s.holdings.length ? (
           <>
             <div style={{ display: "flex", height: 8, borderRadius: 4, overflow: "hidden", marginBottom: 8 }}>
@@ -436,7 +444,7 @@ const Holdings: React.FC = () => {
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
                 <thead><tr>
-                  <th style={th}>Stock</th><th style={th}>Price</th><th style={th}>Today</th><th style={th}>Events</th><th style={{ ...th, ...right }}>Shares</th>
+                  <th style={th}>Stock</th><th style={th}>Price</th><th style={th}>Today</th><th style={th}>Events</th><th style={th}>Lots / 波段</th><th style={{ ...th, ...right }}>Shares</th>
                   <th style={{ ...th, ...right }}>Avg cost (mine / FIFO)</th><th style={{ ...th, ...right }}>Value / weight</th><th style={{ ...th, ...right }}>Unrealised P&L</th>
                 </tr></thead>
                 <tbody>{s.holdings.map((h) => (
@@ -448,6 +456,9 @@ const Holdings: React.FC = () => {
                       <span style={{ ...sub, color: color(h.day_pnl) }}>{h.day_pnl != null ? signed(h.day_pnl) : ""}</span></td>
                     <td style={cell} onClick={(e) => e.stopPropagation()}>
                       <StockCatalystButton symbol={h.symbol} info={catalystMap[h.symbol]} lang={catalystLang} onOpen={setCatalystModal} />
+                    </td>
+                    <td style={cell} onClick={(e) => e.stopPropagation()}>
+                      <StockLotButton holding={h} onOpen={setLotModal} />
                     </td>
                     <td style={{ ...cell, ...right }}>{qty(h.quantity)}</td>
                     <td style={{ ...cell, ...right }}><Tag>Mine</Tag><b>{usd(h.avg_cost)}</b>
@@ -524,12 +535,13 @@ const Holdings: React.FC = () => {
           <summary style={{ cursor: "pointer", fontWeight: 700 }}>Closed positions · {s.closed.length}</summary>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5, marginTop: 8 }}>
             <thead><tr><th style={th}>Stock</th><th style={{ ...th, ...right }}>Realised P&L</th><th style={{ ...th, ...right }}>FIFO basis</th>
-              <th style={{ ...th, ...right }}>Dividends</th><th style={{ ...th, ...right }}>Trades</th></tr></thead>
+              <th style={{ ...th, ...right }}>Dividends</th><th style={{ ...th, ...right }}>Trades</th><th style={th} /></tr></thead>
             <tbody>{s.closed.map((p) => (
               <tr key={p.symbol}><td style={cell}><b>{p.symbol}</b></td>
                 <td style={{ ...cell, ...right, color: color(p.realized) }}>{signed(p.realized)}</td>
                 <td style={{ ...cell, ...right, color: color(p.fifo_realized) }}>{signed(p.fifo_realized)}</td>
-                <td style={{ ...cell, ...right }}>{usd(p.dividends)}</td><td style={{ ...cell, ...right }}>{p.trades}</td></tr>
+                <td style={{ ...cell, ...right }}>{usd(p.dividends)}</td><td style={{ ...cell, ...right }}>{p.trades}</td>
+                <td style={{ ...cell, ...right }}><button style={iconButton} onClick={() => setLotModal(p.symbol)}>📦 批次记录</button></td></tr>
             ))}</tbody>
           </table>
         </details>
@@ -537,7 +549,8 @@ const Holdings: React.FC = () => {
 
       {form ? <TradeModal initial={form} state={s} onClose={() => setForm(null)}
                           onSaved={(st, msg, err) => { apply(st); setForm(null); flash(msg, err); void load(); }} /> : null}
-      {chart ? <ChartModal symbol={chart} state={s} onClose={() => setChart(null)} onOpenEvents={(sym) => setCatalystModal(sym)} /> : null}
+      {chart ? <ChartModal symbol={chart} state={s} onClose={() => setChart(null)} onOpenEvents={(sym) => setCatalystModal(sym)} onOpenLots={(sym) => setLotModal(sym)} /> : null}
+      {lotModal ? <LotManagerModal symbol={lotModal} state={s} onClose={() => setLotModal(null)} onSaved={(st, msg) => { apply(st); flash(msg); void load(); }} onOpenChart={(sym) => setChart(sym)} /> : null}
       {toast ? (
         <div style={{ position: "fixed", bottom: 20, right: 20, background: toast.err ? "#7f1d1d" : "#0f172a", color: "#fff", padding: "10px 14px",
                       borderRadius: 10, fontSize: 13.5, zIndex: 60, maxWidth: 420 }}>{toast.msg}</div>

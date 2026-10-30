@@ -320,7 +320,7 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
   const [lang, setLang] = React.useState<"zh" | "en">(() =>
     store.get("briefLang", "zh") === "en" ? "en" : "zh"
   );
-  const [days, setDays] = React.useState<number>(() => Number(store.get("catDays", "30")) || 30);
+  const [days, setDays] = React.useState<number>(() => Number(store.get("catDaysV2", "90")) || 90);
   const [scope, setScope] = React.useState<ScopeFilter>("all");
   const [layerFilter, setLayerFilter] = React.useState<LayerFilter>("all");
   const [catFilter, setCatFilter] = React.useState<CategoryFilter>("all");
@@ -771,7 +771,7 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                       style={segBtn(days === h, "#0284c7")}
                       onClick={() => {
                         setDays(h);
-                        store.set("catDays", String(h));
+                        store.set("catDaysV2", String(h));
                       }}
                     >
                       {h}D
