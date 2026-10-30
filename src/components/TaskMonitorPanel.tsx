@@ -569,7 +569,7 @@ export const TaskMonitorPanel: React.FC = () => {
 
             let badgeBg = "#f1f5f9";
             let badgeColor = "#475569";
-            let badgeText = "未执行";
+            let badgeText = "⚪ 待触发 / 就绪";
 
             if (dag.is_paused) {
               badgeBg = "#f3f4f6";
