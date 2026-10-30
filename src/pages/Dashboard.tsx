@@ -1,8 +1,5 @@
 import React from "react";
-import ScriptRunner from "../pages/ScriptRunner";
 import StrategyStudio from "./StrategyStudio";
-import MarketCharts from "./MarketCharts";
-import AgentResearch from "./AgentResearch";
 import Holdings from "./Holdings";
 import Briefs from "./Briefs";
 import SignalsPanel from "../components/SignalsPanel";
@@ -12,8 +9,8 @@ import TaskMonitorPanel from "../components/TaskMonitorPanel";
 
 const Dashboard: React.FC = () => {
     const username = localStorage.getItem("username");
-    type Tab = "signals" | "holdings" | "briefs" | "positions" | "performance" | "strategy" | "market" | "tasks" | "scripts" | "agent";
-    const TABS: Tab[] = ["signals", "holdings", "briefs", "positions", "performance", "strategy", "market", "tasks", "scripts", "agent"];
+    type Tab = "signals" | "holdings" | "briefs" | "positions" | "performance" | "strategy" | "tasks";
+    const TABS: Tab[] = ["signals", "holdings", "briefs", "positions", "performance", "strategy", "tasks"];
     // ?tab=briefs (the desktop widget links straight to a tab)
     const [tab, setTab] = React.useState<Tab>(() => {
         const wanted = new URLSearchParams(window.location.search).get("tab") as Tab | null;
@@ -53,19 +50,7 @@ const Dashboard: React.FC = () => {
                 <button onClick={() => setTab("positions")} style={tab === "positions" ? { fontWeight: "bold" } : {}}>Positions</button>
                 <button onClick={() => setTab("performance")} style={tab === "performance" ? { fontWeight: "bold" } : {}}>Performance</button>
                 <button onClick={() => setTab("strategy")} style={tab === "strategy" ? { fontWeight: "bold" } : {}}>Strategy Studio</button>
-                <button onClick={() => setTab("market")} style={tab === "market" ? { fontWeight: "bold" } : {}}>Market</button>
-                <button
-                    onClick={() => setTab("tasks")}
-                    style={
-                        tab === "tasks"
-                            ? { fontWeight: "bold", background: "#2563eb", color: "#ffffff", borderColor: "#2563eb" }
-                            : { background: "#eff6ff", color: "#1d4ed8", borderColor: "#bfdbfe" }
-                    }
-                >
-                    ⏱️ Task Monitor
-                </button>
-                <button onClick={() => setTab("scripts")} style={tab === "scripts" ? { fontWeight: "bold" } : {}}>Script Runner</button>
-                <button onClick={() => setTab("agent")} style={tab === "agent" ? { fontWeight: "bold" } : {}}>AI Agent</button>
+                <button onClick={() => setTab("tasks")} style={tab === "tasks" ? { fontWeight: "bold" } : {}}>⏱️ Task Monitor</button>
             </div>
 
             {/* Main */}
@@ -82,14 +67,8 @@ const Dashboard: React.FC = () => {
                     <PerformancePanel />
                 ) : tab === "strategy" ? (
                     <StrategyStudio />
-                ) : tab === "market" ? (
-                    <MarketCharts />
-                ) : tab === "tasks" ? (
-                    <TaskMonitorPanel />
-                ) : tab === "agent" ? (
-                    <AgentResearch />
                 ) : (
-                    <ScriptRunner />
+                    <TaskMonitorPanel />
                 )}
             </main>
         </div>
