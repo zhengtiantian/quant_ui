@@ -6,7 +6,7 @@ const pct = (v: number | null | undefined): string =>
     v === null || v === undefined ? "—" : `${(v * 100).toFixed(1)}%`;
 
 const retColor = (v: number | null | undefined): string =>
-    (v ?? 0) > 0 ? "#1a7f37" : (v ?? 0) < 0 ? "#cf222e" : "#6e7781";
+    (v ?? 0) > 0 ? "#88d39d" : (v ?? 0) < 0 ? "#d6848a" : "#99a0a8";
 
 const W = 900;
 const H = 320;
@@ -44,7 +44,7 @@ function StatBlock({ title, color, s }: { title: string; color: string; s?: Perf
             <div style={{ fontWeight: 700, color, marginBottom: 6 }}>{title}</div>
             {rows.map(([k, v]) => (
                 <div key={k} style={{ display: "flex", justifyContent: "space-between", fontSize: "0.9rem", padding: "2px 0" }}>
-                    <span style={{ color: "#57606a" }}>{k}</span>
+                    <span style={{ color: "#a8aeb5" }}>{k}</span>
                     <b>{v}</b>
                 </div>
             ))}
@@ -72,45 +72,45 @@ export default function PerformancePanel() {
     const paths = useMemo(() => buildPaths(curve), [curve]);
 
     if (loading) return <p>Loading performance...</p>;
-    if (error) return <p style={{ color: "#cf222e" }}>Failed to load: {error}</p>;
-    if (!perf || curve.length === 0) return <p style={{ color: "#6e7781" }}>No backtest yet.</p>;
+    if (error) return <p style={{ color: "#d6848a" }}>Failed to load: {error}</p>;
+    if (!perf || curve.length === 0) return <p style={{ color: "#99a0a8" }}>No backtest yet.</p>;
 
     return (
         <div style={{ padding: "0.5rem" }}>
             <div style={{ display: "flex", alignItems: "baseline", gap: 16, marginBottom: 12 }}>
                 <h2 style={{ margin: 0 }}>Strategy Performance</h2>
-                <span style={{ color: "#57606a" }}>
+                <span style={{ color: "#a8aeb5" }}>
                     {perf.start_date} → {perf.end_date} · {perf.rebalances} rebalances · {perf.hold_days}d hold · top {perf.top_n}
                 </span>
             </div>
 
             <div style={{ display: "flex", gap: 40, marginBottom: 16, maxWidth: 520 }}>
-                <StatBlock title="Strategy" color="#1f6feb" s={perf.stats?.strategy} />
-                <StatBlock title="SPY (benchmark)" color="#6e7781" s={perf.stats?.benchmark} />
+                <StatBlock title="Strategy" color="#7ea3dd" s={perf.stats?.strategy} />
+                <StatBlock title="SPY (benchmark)" color="#99a0a8" s={perf.stats?.benchmark} />
             </div>
 
             <div style={{ display: "flex", gap: 16, marginBottom: 6, fontSize: "0.85rem" }}>
-                <span style={{ color: "#1f6feb" }}>■ Strategy</span>
-                <span style={{ color: "#8c959f" }}>■ SPY</span>
-                <span style={{ color: "#8c959f" }}>(log scale, growth of $1)</span>
+                <span style={{ color: "#7ea3dd" }}>■ Strategy</span>
+                <span style={{ color: "#858d97" }}>■ SPY</span>
+                <span style={{ color: "#858d97" }}>(log scale, growth of $1)</span>
             </div>
-            <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ background: "#fcfcfd", borderRadius: 8, border: "1px solid #eaeef2" }}>
+            <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ background: "#24292e", borderRadius: 8, border: "1px solid #434a51" }}>
                 {paths.yTicks.map((t, i) => (
                     <g key={i}>
-                        <line x1={PAD.l} y1={t.y} x2={W - PAD.r} y2={t.y} stroke="#eaeef2" />
-                        <text x={4} y={t.y + 4} fontSize="11" fill="#8c959f">{t.label}</text>
+                        <line x1={PAD.l} y1={t.y} x2={W - PAD.r} y2={t.y} stroke="#6c757f" />
+                        <text x={4} y={t.y + 4} fontSize="11" fill="#858d97">{t.label}</text>
                     </g>
                 ))}
-                <path d={paths.bench} fill="none" stroke="#8c959f" strokeWidth="1.5" />
-                <path d={paths.strat} fill="none" stroke="#1f6feb" strokeWidth="2" />
+                <path d={paths.bench} fill="none" stroke="#858d97" strokeWidth="1.5" />
+                <path d={paths.strat} fill="none" stroke="#7ea3dd" strokeWidth="2" />
             </svg>
 
             {/* Live paper-trading record (accumulates day by day) */}
             {paper?.summary && (paper.summary.closedCount > 0 || paper.summary.openCount > 0) && (
-                <div style={{ marginTop: 28, borderTop: "1px solid #eaeef2", paddingTop: 16 }}>
+                <div style={{ marginTop: 28, borderTop: "1px solid #434a51", paddingTop: 16 }}>
                     <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 10 }}>
                         <h3 style={{ margin: 0 }}>Paper Trading</h3>
-                        <span style={{ color: "#8c959f", fontSize: "0.85rem" }}>
+                        <span style={{ color: "#858d97", fontSize: "0.85rem" }}>
                             out-of-sample · live since {paper.summary.firstEntry ?? "—"}
                         </span>
                     </div>
@@ -125,28 +125,28 @@ export default function PerformancePanel() {
                             ["Avg hold", `${(paper.summary.avgDaysHeld ?? 0).toFixed(0)}d`, undefined],
                         ].map(([label, val, color]) => (
                             <div key={label as string}>
-                                <div style={{ fontSize: "0.78rem", color: "#8c959f" }}>{label}</div>
-                                <div style={{ fontSize: "1.05rem", fontWeight: 700, color: (color as string) ?? "#24292f" }}>{val}</div>
+                                <div style={{ fontSize: "0.78rem", color: "#858d97" }}>{label}</div>
+                                <div style={{ fontSize: "1.05rem", fontWeight: 700, color: (color as string) ?? "#cdd1d5" }}>{val}</div>
                             </div>
                         ))}
                     </div>
 
                     {paper.recentTrades && paper.recentTrades.length > 0 && (
                         <>
-                            <div style={{ fontSize: "0.85rem", color: "#57606a", marginBottom: 4 }}>Recent closed trades</div>
+                            <div style={{ fontSize: "0.85rem", color: "#a8aeb5", marginBottom: 4 }}>Recent closed trades</div>
                             <table style={{ borderCollapse: "collapse", width: "100%", maxWidth: 720 }}>
                                 <tbody>
                                     {paper.recentTrades.map((t, i) => (
-                                        <tr key={i} style={{ borderBottom: "1px solid #f0f2f4" }}>
+                                        <tr key={i} style={{ borderBottom: "1px solid #3f4751" }}>
                                             <td style={{ padding: "6px 10px", fontWeight: 600 }}>{t.symbol}</td>
-                                            <td style={{ padding: "6px 10px", color: "#57606a", fontSize: "0.85rem" }}>
+                                            <td style={{ padding: "6px 10px", color: "#a8aeb5", fontSize: "0.85rem" }}>
                                                 {t.entryDate} → {t.exitDate}
                                             </td>
-                                            <td style={{ padding: "6px 10px", textAlign: "right", color: "#8c959f" }}>{t.daysHeld}d</td>
+                                            <td style={{ padding: "6px 10px", textAlign: "right", color: "#858d97" }}>{t.daysHeld}d</td>
                                             <td style={{ padding: "6px 10px", textAlign: "right", fontWeight: 600, color: retColor(t.exitReturn) }}>
                                                 {pct(t.exitReturn)}
                                             </td>
-                                            <td style={{ padding: "6px 10px", color: "#8c959f", fontSize: "0.8rem" }}>{t.exitTrigger}</td>
+                                            <td style={{ padding: "6px 10px", color: "#858d97", fontSize: "0.8rem" }}>{t.exitTrigger}</td>
                                         </tr>
                                     ))}
                                 </tbody>

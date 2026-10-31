@@ -31,18 +31,18 @@ import {
  * background, so "refreshing" means "look again in 2 s".
  */
 
-const PALETTE = ["#0891b2", "#9333ea", "#d97706", "#059669", "#dc2626", "#2563eb", "#db2777", "#65a30d", "#ea580c", "#0d9488"];
+const PALETTE = ["#79cde2", "#b07fdc", "#e3b177", "#78e3c2", "#d78484", "#7e9cdd", "#d685a9", "#b6de7d", "#e19d7a", "#7eddd5"];
 const RANGES: [string, string][] = [["1d", "1D (5 min)"], ["1m", "1M"], ["3m", "3M"], ["6m", "6M"], ["1y", "1Y"], ["5y", "5Y"]];
-const TX_COLOR: Record<string, string> = { buy: "#15803d", sell: "#b91c1c", dividend: "#0891b2", fee: "#64748b" };
+const TX_COLOR: Record<string, string> = { buy: "#84d6a3", sell: "#d88383", dividend: "#79cde2", fee: "#99a0a8" };
 
 // Today's action (Q.13): one pill per holding; the orders under it; why, on click.
 const ACTION_STYLE: Record<string, [string, string]> = {
-  hold: ["Hold", "#64748b"], trim: ["Trim", "#d97706"], add: ["Add", "#15803d"], earnings: ["Earnings", "#7c3aed"], watch: ["Watch", "#64748b"],
+  hold: ["Hold", "#99a0a8"], trim: ["Trim", "#e3b177"], add: ["Add", "#84d6a3"], earnings: ["Earnings", "#a17edd"], watch: ["Watch", "#99a0a8"],
 };
 const ActionCell: React.FC<{ a?: DailyAction }> = ({ a }) => {
   const [open, setOpen] = React.useState(false);
   if (!a) return <span style={muted}>—</span>;
-  const [label, c] = ACTION_STYLE[a.action] || [a.action, "#64748b"];
+  const [label, c] = ACTION_STYLE[a.action] || [a.action, "#99a0a8"];
   return (
     <div style={{ minWidth: 150 }}>
       <button type="button" onClick={() => setOpen(!open)} title="Show why"
@@ -53,7 +53,7 @@ const ActionCell: React.FC<{ a?: DailyAction }> = ({ a }) => {
       ))}
       {open ? (
         <div style={{ ...muted, marginTop: 4, maxWidth: 340, whiteSpace: "normal", lineHeight: 1.45 }}>
-          <div style={{ color: "#334155" }}><b>{a.headline}</b></div>
+          <div style={{ color: "#bbc0c5" }}><b>{a.headline}</b></div>
           {a.reasons.map((r, i) => <div key={i}>• {r}</div>)}
           {a.blocks?.length ? <div style={{ marginTop: 4 }}>Buying is blocked: {a.blocks.join("; ")}</div> : null}
           <div style={{ marginTop: 4 }}>Basis: {a.evidence}</div>
@@ -85,7 +85,7 @@ const Kpi: React.FC<{ label: string; main: React.ReactNode; sub?: React.ReactNod
 );
 
 const Tag: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <span style={{ fontSize: 10.5, color: "#475569", background: "#f1f5f9", borderRadius: 4, padding: "0 4px", marginRight: 4 }}>{children}</span>
+  <span style={{ fontSize: 10.5, color: "#aeb4ba", background: "#272e34", borderRadius: 4, padding: "0 4px", marginRight: 4 }}>{children}</span>
 );
 
 const PriceCell: React.FC<{ q: Holding["quote"] }> = ({ q }) => {
@@ -96,8 +96,8 @@ const PriceCell: React.FC<{ q: Holding["quote"] }> = ({ q }) => {
   return (
     <div>
       <b>{usd(q.price)}</b>{" "}
-      {q.session ? <span style={pill(SESSION_COLOR[q.session] || "#64748b")}>{SESSION_LABEL[q.session] || q.session}</span> : null}
-      {q.stale ? <span style={{ ...pill("#be123c"), marginLeft: 4 }}>Stale quote</span> : null}
+      {q.session ? <span style={pill(SESSION_COLOR[q.session] || "#99a0a8")}>{SESSION_LABEL[q.session] || q.session}</span> : null}
+      {q.stale ? <span style={{ ...pill("#dd7e95"), marginLeft: 4 }}>Stale quote</span> : null}
       {ext && q.regular_price ? (
         <span style={sub}>Close {usd(q.regular_price)}
           {q.session_change_pct != null ? <> · {SESSION_LABEL[q.session!]} <span style={{ color: color(q.session_change) }}>{pct(q.session_change_pct)}</span></> : null}
@@ -122,7 +122,7 @@ const CashKpi: React.FC<{ cash: number; onSaved: (s: PortfolioState) => void; on
            <span style={{ display: "flex", gap: 6, alignItems: "center" }}>
              <input id="cash-input" type="number" step="any" min="0" value={value} autoFocus onChange={(e) => setValue(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter") void save(); if (e.key === "Escape") setEditing(false); }}
-                    style={{ width: 130, padding: "4px 8px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 16 }} />
+                    style={{ width: 130, padding: "4px 8px", borderRadius: 8, border: "1px solid #4b545f", fontSize: 16 }} />
              <button style={{ ...ghostButton, padding: "3px 10px" }} onClick={() => void save()}>Save</button>
            </span>
          ) : <>{usd(cash)} <button style={iconButton} title="Edit" onClick={() => { setValue(String(cash)); setEditing(true); }}>✎</button></>}
@@ -180,11 +180,11 @@ const TradeModal: React.FC<{
     }
   };
 
-  const field: React.CSSProperties = { display: "flex", flexDirection: "column", gap: 3, fontSize: 13, color: "#334155", marginBottom: 10 };
-  const input: React.CSSProperties = { padding: "7px 9px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 14 };
+  const field: React.CSSProperties = { display: "flex", flexDirection: "column", gap: 3, fontSize: 13, color: "#bbc0c5", marginBottom: 10 };
+  const input: React.CSSProperties = { padding: "7px 9px", borderRadius: 8, border: "1px solid #4b545f", fontSize: 14 };
   return (
     <div onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-         style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.35)", display: "grid", placeItems: "center", zIndex: 50 }}>
+         style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "grid", placeItems: "center", zIndex: 50 }}>
       <form onSubmit={submit} style={{ ...panel, width: "min(440px, 92vw)", maxHeight: "92vh", overflow: "auto", marginBottom: 0 }}>
         <div style={{ ...panelHead }}><div style={panelTitle}>{f.id ? "Edit trade" : "Add a trade"}</div>
           <button type="button" style={iconButton} onClick={onClose}>✕</button></div>
@@ -248,10 +248,10 @@ const ChartModal: React.FC<{ symbol: string; state: PortfolioState; onClose: () 
   const q = row?.quote || {};
   const chg = q.price != null && q.prev_close ? q.price - q.prev_close : null;
   const held = row && "quantity" in row ? (row as Holding) : null;
-  const seg = (on: boolean): React.CSSProperties => ({ ...ghostButton, padding: "3px 10px", background: on ? "#0f766e" : "#fff", color: on ? "#fff" : "#0f766e" });
+  const seg = (on: boolean): React.CSSProperties => ({ ...ghostButton, padding: "3px 10px", background: on ? "#2f746f" : "#23272c", color: on ? "#e4e5e7" : "#81dad3" });
   return (
     <div onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-         style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.35)", display: "grid", placeItems: "center", zIndex: 50 }}>
+         style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "grid", placeItems: "center", zIndex: 50 }}>
       <div style={{ ...panel, width: "min(860px, 96vw)", marginBottom: 0 }}>
         <div style={panelHead}>
           <div><span style={{ fontSize: 20, fontWeight: 800 }}>{symbol}</span> <span style={muted}>{shortName(q.name)}</span></div>
@@ -435,7 +435,7 @@ const Holdings: React.FC = () => {
   return (
     <div>
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 12 }}>
-        <span style={pill(SESSION_COLOR[s.session] || "#64748b")}>US market · {SESSION_LABEL[s.session] || s.session}</span>
+        <span style={pill(SESSION_COLOR[s.session] || "#99a0a8")}>US market · {SESSION_LABEL[s.session] || s.session}</span>
         <span style={muted}>ET {s.us_time} · {s.refresh_seconds ? (s.watch_refresh_seconds && s.watch_refresh_seconds !== s.refresh_seconds
           ? `Holdings every ${s.refresh_seconds} s, watchlist every ${s.watch_refresh_seconds} s` : `Every ${s.refresh_seconds} s auto-refresh`) : "Closed"}
           {age != null ? ` · Quotes ${age < 60 ? `${age} s` : `${Math.round(age / 60)} min`} ago` : ""} · {nextText}</span>
@@ -443,10 +443,10 @@ const Holdings: React.FC = () => {
         <button style={ghostButton} onClick={() => { void load(true); flash("Refreshing quotes…"); }}>🔄 Refresh</button>
       </div>
       {error ? <div style={{ ...panel, color: DOWN }}>Quote refresh failed: {error}</div> : null}
-      {s.problems.length ? <div style={{ ...panel, background: "#fff7ed", color: "#9a3412" }}>⚠️ {s.problems.join(" · ")}</div> : null}
+      {s.problems.length ? <div style={{ ...panel, background: "#3d2f1d", color: "#db9780" }}>⚠️ {s.problems.join(" · ")}</div> : null}
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12, marginBottom: 16 }}>
-        <Kpi label="Market value / cost" main={<>{usd(t.market_value)}<span style={{ fontSize: 14, color: "#64748b", fontWeight: 600 }}> / {usd(t.cost)}</span></>}
+        <Kpi label="Market value / cost" main={<>{usd(t.market_value)}<span style={{ fontSize: 14, color: "#99a0a8", fontWeight: 600 }}> / {usd(t.cost)}</span></>}
              sub={<>{t.cost > 0 ? <>Value is <span style={{ color: color(t.market_value - t.cost) }}>{(t.market_value / t.cost * 100).toFixed(1)}%</span></> : null}
                {cny(t.market_value) ? ` · ${cny(t.market_value)}` : ""}<br />FIFO cost {usd(t.fifo_cost)}</>} />
         <Kpi label="Unrealised P&L" main={signed(t.unrealized)} tint={color(t.unrealized)}
@@ -543,7 +543,7 @@ const Holdings: React.FC = () => {
         <div style={{ display: "flex", gap: 8, marginTop: 10, maxWidth: 420 }}>
           <input value={watchInput} onChange={(e) => setWatchInput(e.target.value)} placeholder="Type a symbol to watch, e.g. AAPL"
                  onKeyDown={(e) => { if (e.key === "Enter") void watch(); }}
-                 style={{ flex: 1, padding: "7px 9px", borderRadius: 8, border: "1px solid #cbd5e1", textTransform: "uppercase" }} />
+                 style={{ flex: 1, padding: "7px 9px", borderRadius: 8, border: "1px solid #4b545f", textTransform: "uppercase" }} />
           <button style={ghostButton} onClick={() => void watch()}>+ Add</button>
         </div>
       </div>
@@ -556,7 +556,7 @@ const Holdings: React.FC = () => {
             ? <>· only {filter} <a href="#" onClick={(e) => { e.preventDefault(); setFilter(""); }}>(show all)</a></>
             : `· ${s.transactions.length}`}</div>
           <div style={{ display: "flex", gap: 8 }}>
-            <select value={filter} onChange={(e) => setFilter(e.target.value)} style={{ borderRadius: 8, border: "1px solid #cbd5e1", padding: "4px 8px" }}>
+            <select value={filter} onChange={(e) => setFilter(e.target.value)} style={{ borderRadius: 8, border: "1px solid #4b545f", padding: "4px 8px" }}>
               <option value="">All symbols</option>
               {[...new Set(s.transactions.map((x) => x.symbol))].sort().map((x) => <option key={x} value={x}>{x}</option>)}
             </select>
@@ -591,7 +591,7 @@ const Holdings: React.FC = () => {
       {chart ? <ChartModal symbol={chart} state={s} onClose={() => setChart(null)} onOpenEvents={(sym) => setCatalystModal(sym)} onOpenLots={(sym) => setLotModal(sym)} /> : null}
       {lotModal ? <LotManagerModal symbol={lotModal} state={s} onClose={() => setLotModal(null)} onSaved={(st, msg) => { apply(st); flash(msg); void load(); }} onOpenChart={(sym) => setChart(sym)} /> : null}
       {toast ? (
-        <div style={{ position: "fixed", bottom: 20, right: 20, background: toast.err ? "#7f1d1d" : "#0f172a", color: "#fff", padding: "10px 14px",
+        <div style={{ position: "fixed", bottom: 20, right: 20, background: toast.err ? "#6e3535" : "#d6d9dc", color: "#e4e5e7", padding: "10px 14px",
                       borderRadius: 10, fontSize: 13.5, zIndex: 60, maxWidth: 420 }}>{toast.msg}</div>
       ) : null}
     </div>

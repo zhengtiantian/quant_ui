@@ -9,16 +9,16 @@ const fmtPct = (v: number | null | undefined): string =>
     v === null || v === undefined ? "—" : `${(v * 100).toFixed(2)}%`;
 
 const signedColor = (v: number | null | undefined): string =>
-    v === null || v === undefined ? "#6e7781" : v >= 0 ? "#1a7f37" : "#cf222e";
+    v === null || v === undefined ? "#99a0a8" : v >= 0 ? "#88d39d" : "#d6848a";
 
 const typeColor = (t: string | null): string => {
     switch ((t || "").toUpperCase()) {
         case "LONG":
-            return "#1a7f37";
+            return "#88d39d";
         case "SHORT":
-            return "#cf222e";
+            return "#d6848a";
         default:
-            return "#6e7781";
+            return "#99a0a8";
     }
 };
 
@@ -39,7 +39,7 @@ export default function SignalsPanel() {
     useEffect(load, []);
 
     if (loading) return <p>Loading signals...</p>;
-    if (error) return <p style={{ color: "#cf222e" }}>Failed to load: {error}</p>;
+    if (error) return <p style={{ color: "#d6848a" }}>Failed to load: {error}</p>;
 
     const tradeDate = signals[0]?.tradeDate;
     const publishedAt = signals[0]?.publishedAt;
@@ -49,14 +49,14 @@ export default function SignalsPanel() {
     const th: React.CSSProperties = {
         textAlign: "left",
         padding: "8px 12px",
-        borderBottom: "2px solid #d0d7de",
+        borderBottom: "2px solid #4a535e",
         fontSize: "0.85rem",
-        color: "#57606a",
+        color: "#a8aeb5",
         whiteSpace: "nowrap",
     };
     const td: React.CSSProperties = {
         padding: "8px 12px",
-        borderBottom: "1px solid #eaeef2",
+        borderBottom: "1px solid #434a51",
         fontSize: "0.95rem",
     };
 
@@ -72,20 +72,20 @@ export default function SignalsPanel() {
             >
                 <h2 style={{ margin: 0 }}>Daily Signals</h2>
                 {tradeDate && (
-                    <span style={{ color: "#57606a" }}>
+                    <span style={{ color: "#a8aeb5" }}>
                         Trade date <b>{tradeDate}</b>
                     </span>
                 )}
                 {publishedAt && (
-                    <span style={{ color: "#8c959f", fontSize: "0.85rem" }}>
+                    <span style={{ color: "#858d97", fontSize: "0.85rem" }}>
                         Generated {new Date(publishedAt).toLocaleString()}
                     </span>
                 )}
                 {regimeMult != null && (
                     <span
                         style={{
-                            color: "#fff",
-                            background: riskOn === 1 ? "#1a7f37" : "#9a6700",
+                            color: "#e4e5e7",
+                            background: riskOn === 1 ? "#88d39d" : "#e7c174",
                             padding: "2px 10px",
                             borderRadius: "10px",
                             fontSize: "0.8rem",
@@ -101,7 +101,7 @@ export default function SignalsPanel() {
             </div>
 
             {signals.length === 0 ? (
-                <p style={{ color: "#6e7781" }}>No signals available.</p>
+                <p style={{ color: "#99a0a8" }}>No signals available.</p>
             ) : (
                 <table style={{ borderCollapse: "collapse", width: "100%", maxWidth: "900px" }}>
                     <thead>
@@ -121,12 +121,12 @@ export default function SignalsPanel() {
                     <tbody>
                         {signals.map((s) => (
                             <tr key={s.id}>
-                                <td style={{ ...td, color: "#8c959f" }}>{s.signalRank ?? "—"}</td>
+                                <td style={{ ...td, color: "#858d97" }}>{s.signalRank ?? "—"}</td>
                                 <td style={{ ...td, fontWeight: 600 }}>{s.symbol}</td>
                                 <td style={td}>
                                     <span
                                         style={{
-                                            color: "#fff",
+                                            color: "#e4e5e7",
                                             background: typeColor(s.signalType),
                                             padding: "2px 8px",
                                             borderRadius: "10px",
@@ -141,7 +141,7 @@ export default function SignalsPanel() {
                                         ...td,
                                         textAlign: "right",
                                         fontWeight: 600,
-                                        color: (s.compositeScore ?? 0) >= 0 ? "#1a7f37" : "#cf222e",
+                                        color: (s.compositeScore ?? 0) >= 0 ? "#88d39d" : "#d6848a",
                                     }}
                                 >
                                     {fmt(s.compositeScore, 2)}

@@ -25,22 +25,22 @@ export default function NewsList() {
                         style={{
                             marginBottom: "1.5rem",
                             paddingBottom: "1rem",
-                            borderBottom: "1px solid #ddd",
+                            borderBottom: "1px solid #48515b",
                         }}
                     >
                         <a
                             href={n.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            style={{ fontSize: "1.1rem", fontWeight: "bold", color: "#007bff", textDecoration: "none" }}
+                            style={{ fontSize: "1.1rem", fontWeight: "bold", color: "#74abe7", textDecoration: "none" }}
                         >
                             {n.title}
                         </a>
-                        <div style={{ fontSize: "0.9rem", color: "#666", marginTop: "0.2rem" }}>
+                        <div style={{ fontSize: "0.9rem", color: "#a5abb2", marginTop: "0.2rem" }}>
                             {n.source?.platform || "Unknown"} ·{" "}
                             {new Date(n.publishedAt).toLocaleString()}
                         </div>
-                        <p style={{ marginTop: "0.5rem", color: "#333" }}>
+                        <p style={{ marginTop: "0.5rem", color: "#c7cbcf" }}>
                             {n.description || n.content || "No summary available."}
                         </p>
                     </li>

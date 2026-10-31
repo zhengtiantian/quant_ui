@@ -130,35 +130,35 @@ export const TaskMonitorPanel: React.FC = () => {
           gap: "12px",
           marginBottom: "20px",
           padding: "16px 20px",
-          background: "#ffffff",
+          background: "#23272c",
           borderRadius: "12px",
           boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-          border: "1px solid #e2e8f0",
+          border: "1px solid #434b56",
         }}
       >
         <div>
-          <h2 style={{ margin: "0 0 6px 0", fontSize: "20px", color: "#0f172a", display: "flex", alignItems: "center", gap: "8px" }}>
+          <h2 style={{ margin: "0 0 6px 0", fontSize: "20px", color: "#d6d9dc", display: "flex", alignItems: "center", gap: "8px" }}>
             ⏱️ 全系统定时任务与数据管道中控台
             <span
               style={{
                 fontSize: "12px",
                 padding: "2px 8px",
                 borderRadius: "12px",
-                background: data?.summary?.scheduler_running ? "#dcfce7" : "#fee2e2",
-                color: data?.summary?.scheduler_running ? "#166534" : "#991b1b",
+                background: data?.summary?.scheduler_running ? "#24422e" : "#402121",
+                color: data?.summary?.scheduler_running ? "#89d2a5" : "#d58585",
                 fontWeight: "normal",
               }}
             >
               {data?.summary?.scheduler_running ? "Airflow 调度器运行中" : "Airflow 调度器未运行"}
             </span>
           </h2>
-          <div style={{ fontSize: "13px", color: "#64748b" }}>
+          <div style={{ fontSize: "13px", color: "#99a0a8" }}>
             聚合监控 Airflow 量化与特征主管道、找工中控平台 (http://127.0.0.1:5050/) 及宿主机核心守护进程
           </div>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#475569", cursor: "pointer" }}>
+          <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#aeb4ba", cursor: "pointer" }}>
             <input
               type="checkbox"
               checked={autoRefresh}
@@ -171,8 +171,8 @@ export const TaskMonitorPanel: React.FC = () => {
             disabled={loading}
             style={{
               padding: "6px 14px",
-              background: "#2563eb",
-              color: "#ffffff",
+              background: "#354975",
+              color: "#e4e5e7",
               border: "none",
               borderRadius: "6px",
               cursor: loading ? "not-allowed" : "pointer",
@@ -192,9 +192,9 @@ export const TaskMonitorPanel: React.FC = () => {
         <div
           style={{
             padding: "12px 16px",
-            background: "#fef2f2",
-            border: "1px solid #fecaca",
-            color: "#b91c1c",
+            background: "#391f1f",
+            border: "1px solid #6d3030",
+            color: "#d88383",
             borderRadius: "8px",
             marginBottom: "16px",
             fontSize: "14px",
@@ -216,29 +216,29 @@ export const TaskMonitorPanel: React.FC = () => {
         <div
           style={{
             padding: "16px",
-            background: "#ffffff",
+            background: "#23272c",
             borderRadius: "10px",
-            border: "1px solid #e2e8f0",
+            border: "1px solid #434b56",
             boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
           }}
         >
-          <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "4px" }}>⚡ 当前正在运行</div>
-          <div style={{ fontSize: "24px", fontWeight: "bold", color: (data?.summary?.running_count || 0) > 0 ? "#16a34a" : "#0f172a" }}>
+          <div style={{ fontSize: "12px", color: "#99a0a8", marginBottom: "4px" }}>⚡ 当前正在运行</div>
+          <div style={{ fontSize: "24px", fontWeight: "bold", color: (data?.summary?.running_count || 0) > 0 ? "#82d9a2" : "#d6d9dc" }}>
             {data?.summary?.running_count || 0}
-            <span style={{ fontSize: "13px", fontWeight: "normal", color: "#64748b", marginLeft: "4px" }}>个任务</span>
+            <span style={{ fontSize: "13px", fontWeight: "normal", color: "#99a0a8", marginLeft: "4px" }}>个任务</span>
           </div>
         </div>
 
         <div
           style={{
             padding: "16px",
-            background: "#ffffff",
+            background: "#23272c",
             borderRadius: "10px",
-            border: "1px solid #e2e8f0",
+            border: "1px solid #434b56",
             boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
           }}
         >
-          <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "4px" }}>🎯 找工中控服务 (:5050)</div>
+          <div style={{ fontSize: "12px", color: "#99a0a8", marginBottom: "4px" }}>🎯 找工中控服务 (:5050)</div>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <span
               style={{
@@ -246,14 +246,14 @@ export const TaskMonitorPanel: React.FC = () => {
                 width: "10px",
                 height: "10px",
                 borderRadius: "50%",
-                background: data?.job_agent?.is_online ? "#22c55e" : "#ef4444",
+                background: data?.job_agent?.is_online ? "#3d7552" : "#dc7979",
               }}
             />
-            <span style={{ fontSize: "18px", fontWeight: "bold", color: "#0f172a" }}>
+            <span style={{ fontSize: "18px", fontWeight: "bold", color: "#d6d9dc" }}>
               {data?.job_agent?.is_online ? "在线运行" : "服务离线"}
             </span>
           </div>
-          <div style={{ fontSize: "11px", color: "#64748b", marginTop: "4px" }}>
+          <div style={{ fontSize: "11px", color: "#99a0a8", marginTop: "4px" }}>
             下次运行: {data?.job_agent?.next_run?.countdown || "--"}
           </div>
         </div>
@@ -261,16 +261,16 @@ export const TaskMonitorPanel: React.FC = () => {
         <div
           style={{
             padding: "16px",
-            background: "#ffffff",
+            background: "#23272c",
             borderRadius: "10px",
-            border: "1px solid #e2e8f0",
+            border: "1px solid #434b56",
             boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
           }}
         >
-          <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "4px" }}>🌊 Airflow 活跃管道</div>
-          <div style={{ fontSize: "24px", fontWeight: "bold", color: "#0f172a" }}>
+          <div style={{ fontSize: "12px", color: "#99a0a8", marginBottom: "4px" }}>🌊 Airflow 活跃管道</div>
+          <div style={{ fontSize: "24px", fontWeight: "bold", color: "#d6d9dc" }}>
             {data?.summary?.active_dags || 0}
-            <span style={{ fontSize: "13px", fontWeight: "normal", color: "#64748b", marginLeft: "4px" }}>
+            <span style={{ fontSize: "13px", fontWeight: "normal", color: "#99a0a8", marginLeft: "4px" }}>
               / {data?.summary?.total_dags || 0} DAGs
             </span>
           </div>
@@ -279,39 +279,39 @@ export const TaskMonitorPanel: React.FC = () => {
         <div
           style={{
             padding: "16px",
-            background: "#ffffff",
+            background: "#23272c",
             borderRadius: "10px",
-            border: "1px solid #e2e8f0",
+            border: "1px solid #434b56",
             boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
           }}
         >
-          <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "4px" }}>✅ 今日执行成功</div>
-          <div style={{ fontSize: "24px", fontWeight: "bold", color: "#16a34a" }}>
+          <div style={{ fontSize: "12px", color: "#99a0a8", marginBottom: "4px" }}>✅ 今日执行成功</div>
+          <div style={{ fontSize: "24px", fontWeight: "bold", color: "#82d9a2" }}>
             {data?.summary?.success_today || 0}
-            <span style={{ fontSize: "13px", fontWeight: "normal", color: "#64748b", marginLeft: "4px" }}>次</span>
+            <span style={{ fontSize: "13px", fontWeight: "normal", color: "#99a0a8", marginLeft: "4px" }}>次</span>
           </div>
         </div>
 
         <div
           style={{
             padding: "16px",
-            background: "#ffffff",
+            background: "#23272c",
             borderRadius: "10px",
-            border: "1px solid #e2e8f0",
+            border: "1px solid #434b56",
             boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
           }}
         >
-          <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "4px" }}>❌ 今日执行失败</div>
-          <div style={{ fontSize: "24px", fontWeight: "bold", color: (data?.summary?.failed_today || 0) > 0 ? "#dc2626" : "#0f172a" }}>
+          <div style={{ fontSize: "12px", color: "#99a0a8", marginBottom: "4px" }}>❌ 今日执行失败</div>
+          <div style={{ fontSize: "24px", fontWeight: "bold", color: (data?.summary?.failed_today || 0) > 0 ? "#d78484" : "#d6d9dc" }}>
             {data?.summary?.failed_today || 0}
-            <span style={{ fontSize: "13px", fontWeight: "normal", color: "#64748b", marginLeft: "4px" }}>次</span>
+            <span style={{ fontSize: "13px", fontWeight: "normal", color: "#99a0a8", marginLeft: "4px" }}>次</span>
           </div>
         </div>
       </div>
 
       {/* 1. Running Now Section */}
       <div style={{ marginBottom: "28px" }}>
-        <h3 style={{ fontSize: "16px", color: "#0f172a", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
+        <h3 style={{ fontSize: "16px", color: "#d6d9dc", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
           ⚡ 正在运行中的任务 (Running Now)
         </h3>
 
@@ -319,11 +319,11 @@ export const TaskMonitorPanel: React.FC = () => {
           <div
             style={{
               padding: "20px",
-              background: "#f8fafc",
-              border: "1px dashed #cbd5e1",
+              background: "#252a30",
+              border: "1px dashed #4b545f",
               borderRadius: "10px",
               textAlign: "center",
-              color: "#64748b",
+              color: "#99a0a8",
               fontSize: "14px",
             }}
           >
@@ -339,8 +339,8 @@ export const TaskMonitorPanel: React.FC = () => {
                   justifyContent: "space-between",
                   alignItems: "center",
                   padding: "14px 18px",
-                  background: "#f0fdf4",
-                  border: "1px solid #bbf7d0",
+                  background: "#213928",
+                  border: "1px solid #396e4b",
                   borderRadius: "8px",
                 }}
               >
@@ -350,14 +350,14 @@ export const TaskMonitorPanel: React.FC = () => {
                       width: "12px",
                       height: "12px",
                       borderRadius: "50%",
-                      background: "#22c55e",
-                      boxShadow: "0 0 8px #22c55e",
+                      background: "#3d7552",
+                      boxShadow: "0 0 8px #85d6a3",
                       display: "inline-block",
                     }}
                   />
                   <div>
-                    <div style={{ fontWeight: 600, color: "#166534", fontSize: "14px" }}>{task.name}</div>
-                    <div style={{ fontSize: "12px", color: "#4b7c59", marginTop: "2px" }}>
+                    <div style={{ fontWeight: 600, color: "#89d2a5", fontSize: "14px" }}>{task.name}</div>
+                    <div style={{ fontSize: "12px", color: "#a6acb3", marginTop: "2px" }}>
                       已运行: {task.duration_seconds !== null ? `${task.duration_seconds} 秒` : "计算中..."}
                       {task.start_date && ` | 开始于: ${new Date(task.start_date).toLocaleTimeString()}`}
                     </div>
@@ -377,8 +377,8 @@ export const TaskMonitorPanel: React.FC = () => {
                     }
                     style={{
                       padding: "6px 12px",
-                      background: "#166534",
-                      color: "#ffffff",
+                      background: "#356e4b",
+                      color: "#e4e5e7",
                       border: "none",
                       borderRadius: "6px",
                       fontSize: "12px",
@@ -396,14 +396,14 @@ export const TaskMonitorPanel: React.FC = () => {
 
       {/* 2. Job Agent Section */}
       <div style={{ marginBottom: "28px" }}>
-        <h3 style={{ fontSize: "16px", color: "#0f172a", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
+        <h3 style={{ fontSize: "16px", color: "#d6d9dc", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
           🎯 找工中控平台 (Job Agent · 5050 端口独立定时服务)
         </h3>
 
         <div
           style={{
-            background: "#ffffff",
-            border: "1px solid #e2e8f0",
+            background: "#23272c",
+            border: "1px solid #434b56",
             borderRadius: "12px",
             padding: "20px",
             boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
@@ -412,7 +412,7 @@ export const TaskMonitorPanel: React.FC = () => {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px" }}>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
-                <span style={{ fontSize: "18px", fontWeight: "bold", color: "#0f172a" }}>
+                <span style={{ fontSize: "18px", fontWeight: "bold", color: "#d6d9dc" }}>
                   {data?.job_agent?.name || "找工平台 (Job Agent)"}
                 </span>
                 <span
@@ -420,8 +420,8 @@ export const TaskMonitorPanel: React.FC = () => {
                     fontSize: "12px",
                     padding: "3px 10px",
                     borderRadius: "12px",
-                    background: data?.job_agent?.is_online ? "#dcfce7" : "#fee2e2",
-                    color: data?.job_agent?.is_online ? "#15803d" : "#b91c1c",
+                    background: data?.job_agent?.is_online ? "#24422e" : "#402121",
+                    color: data?.job_agent?.is_online ? "#84d6a3" : "#d88383",
                     fontWeight: 600,
                   }}
                 >
@@ -433,8 +433,8 @@ export const TaskMonitorPanel: React.FC = () => {
                       fontSize: "12px",
                       padding: "3px 10px",
                       borderRadius: "12px",
-                      background: "#fef3c7",
-                      color: "#b45309",
+                      background: "#6f5902",
+                      color: "#e1a67a",
                       fontWeight: 600,
                     }}
                   >
@@ -443,13 +443,13 @@ export const TaskMonitorPanel: React.FC = () => {
                 )}
               </div>
 
-              <div style={{ fontSize: "13px", color: "#475569", lineHeight: "1.6" }}>
+              <div style={{ fontSize: "13px", color: "#aeb4ba", lineHeight: "1.6" }}>
                 <div>
                   📅 <b>调度机制:</b> {data?.job_agent?.schedule || "每日 11:00 & 16:00 (macOS Launchd)"}
                 </div>
                 <div>
                   ⏳ <b>下次自动执行:</b>{" "}
-                  <span style={{ color: "#2563eb", fontWeight: 600 }}>
+                  <span style={{ color: "#7e9cdd", fontWeight: 600 }}>
                     {data?.job_agent?.next_run?.next_run_display} ({data?.job_agent?.next_run?.countdown})
                   </span>
                 </div>
@@ -458,9 +458,9 @@ export const TaskMonitorPanel: React.FC = () => {
                   {data?.job_agent?.last_full_sweep && ` (全网深度排查: ${data?.job_agent?.last_full_sweep})`}
                 </div>
                 {data?.job_agent?.report?.exists && (
-                  <div style={{ marginTop: "6px", color: "#0f172a", background: "#f8fafc", padding: "8px 12px", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
+                  <div style={{ marginTop: "6px", color: "#d6d9dc", background: "#252a30", padding: "8px 12px", borderRadius: "6px", border: "1px solid #434b56" }}>
                     📑 <b>最新产出报告 (Today_Jobs.md):</b> {data.job_agent.report.summary}
-                    <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
+                    <div style={{ fontSize: "11px", color: "#99a0a8", marginTop: "2px" }}>
                       文件大小: {data.job_agent.report.size_kb} KB | 更新时间: {data.job_agent.report.modified_at}
                     </div>
                   </div>
@@ -479,8 +479,8 @@ export const TaskMonitorPanel: React.FC = () => {
                   justifyContent: "center",
                   gap: "6px",
                   padding: "9px 16px",
-                  background: "#2563eb",
-                  color: "#ffffff",
+                  background: "#354975",
+                  color: "#e4e5e7",
                   borderRadius: "8px",
                   textDecoration: "none",
                   fontWeight: 600,
@@ -497,9 +497,9 @@ export const TaskMonitorPanel: React.FC = () => {
                 }
                 style={{
                   padding: "8px 14px",
-                  background: "#ffffff",
-                  color: "#475569",
-                  border: "1px solid #cbd5e1",
+                  background: "#23272c",
+                  color: "#aeb4ba",
+                  border: "1px solid #4b545f",
                   borderRadius: "8px",
                   fontSize: "13px",
                   cursor: "pointer",
@@ -515,9 +515,9 @@ export const TaskMonitorPanel: React.FC = () => {
                 }
                 style={{
                   padding: "6px 14px",
-                  background: "#ffffff",
-                  color: "#64748b",
-                  border: "1px solid #cbd5e1",
+                  background: "#23272c",
+                  color: "#99a0a8",
+                  border: "1px solid #4b545f",
                   borderRadius: "8px",
                   fontSize: "12px",
                   cursor: "pointer",
@@ -533,7 +533,7 @@ export const TaskMonitorPanel: React.FC = () => {
       {/* 3. Airflow DAGs Section */}
       <div style={{ marginBottom: "28px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px", marginBottom: "14px" }}>
-          <h3 style={{ fontSize: "16px", color: "#0f172a", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
+          <h3 style={{ fontSize: "16px", color: "#d6d9dc", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
             🌊 Airflow 定时工作流与数据管道 (Airflow Pipelines)
           </h3>
 
@@ -546,9 +546,9 @@ export const TaskMonitorPanel: React.FC = () => {
                 style={{
                   padding: "4px 10px",
                   borderRadius: "20px",
-                  border: categoryFilter === cat ? "1px solid #2563eb" : "1px solid #cbd5e1",
-                  background: categoryFilter === cat ? "#2563eb" : "#ffffff",
-                  color: categoryFilter === cat ? "#ffffff" : "#475569",
+                  border: categoryFilter === cat ? "1px solid #7e9cdd" : "1px solid #424549",
+                  background: categoryFilter === cat ? "#7e9cdd" : "#23272c",
+                  color: categoryFilter === cat ? "#23272c" : "#aeb4ba",
                   fontSize: "12px",
                   cursor: "pointer",
                   fontWeight: categoryFilter === cat ? 600 : "normal",
@@ -567,25 +567,25 @@ export const TaskMonitorPanel: React.FC = () => {
             const state = lastRun?.state || (dag.is_paused ? "paused" : "idle");
             const progress = lastRun?.progress;
 
-            let badgeBg = "#f1f5f9";
-            let badgeColor = "#475569";
+            let badgeBg = "#272e34";
+            let badgeColor = "#aeb4ba";
             let badgeText = "⚪ 待触发 / 就绪";
 
             if (dag.is_paused) {
-              badgeBg = "#f3f4f6";
-              badgeColor = "#6b7280";
+              badgeBg = "#282d33";
+              badgeColor = "#9aa1a9";
               badgeText = "⏸️ 已暂停";
             } else if (state === "success") {
-              badgeBg = "#dcfce7";
-              badgeColor = "#15803d";
+              badgeBg = "#24422e";
+              badgeColor = "#84d6a3";
               badgeText = "🟢 成功完成";
             } else if (state === "running") {
-              badgeBg = "#fef3c7";
-              badgeColor = "#b45309";
+              badgeBg = "#6f5902";
+              badgeColor = "#e1a67a";
               badgeText = "🟡 执行中";
             } else if (state === "failed") {
-              badgeBg = "#fee2e2";
-              badgeColor = "#b91c1c";
+              badgeBg = "#402121";
+              badgeColor = "#d88383";
               badgeText = "🔴 执行失败";
             }
 
@@ -593,8 +593,8 @@ export const TaskMonitorPanel: React.FC = () => {
               <div
                 key={dag.dag_id}
                 style={{
-                  background: "#ffffff",
-                  border: "1px solid #e2e8f0",
+                  background: "#23272c",
+                  border: "1px solid #434b56",
                   borderRadius: "10px",
                   padding: "16px 20px",
                   boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
@@ -603,7 +603,7 @@ export const TaskMonitorPanel: React.FC = () => {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px" }}>
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
-                      <span style={{ fontSize: "16px", fontWeight: 600, color: "#0f172a" }}>
+                      <span style={{ fontSize: "16px", fontWeight: 600, color: "#d6d9dc" }}>
                         {dag.name}
                       </span>
                       <span
@@ -611,8 +611,8 @@ export const TaskMonitorPanel: React.FC = () => {
                           fontSize: "11px",
                           padding: "2px 8px",
                           borderRadius: "6px",
-                          background: "#f1f5f9",
-                          color: "#475569",
+                          background: "#272e34",
+                          color: "#aeb4ba",
                         }}
                       >
                         {dag.category}
@@ -631,11 +631,11 @@ export const TaskMonitorPanel: React.FC = () => {
                       </span>
                     </div>
 
-                    <div style={{ fontSize: "13px", color: "#64748b", marginBottom: "8px" }}>
+                    <div style={{ fontSize: "13px", color: "#99a0a8", marginBottom: "8px" }}>
                       {dag.description}
                     </div>
 
-                    <div style={{ display: "flex", gap: "18px", flexWrap: "wrap", fontSize: "12px", color: "#475569" }}>
+                    <div style={{ display: "flex", gap: "18px", flexWrap: "wrap", fontSize: "12px", color: "#aeb4ba" }}>
                       <div>
                         ⏱️ <b>调度周期:</b> {dag.schedule_display}
                       </div>
@@ -666,9 +666,9 @@ export const TaskMonitorPanel: React.FC = () => {
                         }
                         style={{
                           padding: "6px 12px",
-                          background: "#ffffff",
-                          color: "#2563eb",
-                          border: "1px solid #bfdbfe",
+                          background: "#23272c",
+                          color: "#7e9cdd",
+                          border: "1px solid #324d70",
                           borderRadius: "6px",
                           fontSize: "12px",
                           cursor: "pointer",
@@ -684,9 +684,9 @@ export const TaskMonitorPanel: React.FC = () => {
                         onClick={() => toggleDagExpanded(dag.dag_id)}
                         style={{
                           padding: "6px 12px",
-                          background: "#f8fafc",
-                          color: "#475569",
-                          border: "1px solid #cbd5e1",
+                          background: "#252a30",
+                          color: "#aeb4ba",
+                          border: "1px solid #4b545f",
                           borderRadius: "6px",
                           fontSize: "12px",
                           cursor: "pointer",
@@ -701,16 +701,16 @@ export const TaskMonitorPanel: React.FC = () => {
                 {/* Progress Bar */}
                 {progress && progress.total > 0 && (
                   <div style={{ marginTop: "12px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", color: "#64748b", marginBottom: "4px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", color: "#99a0a8", marginBottom: "4px" }}>
                       <span>完成进度: {progress.success} / {progress.total} 步骤 ({progress.percent}%)</span>
-                      {progress.running > 0 && <span style={{ color: "#d97706" }}>⚡ {progress.running} 个任务运行中</span>}
-                      {progress.failed > 0 && <span style={{ color: "#dc2626" }}>❌ {progress.failed} 个步骤失败</span>}
+                      {progress.running > 0 && <span style={{ color: "#e3b177" }}>⚡ {progress.running} 个任务运行中</span>}
+                      {progress.failed > 0 && <span style={{ color: "#d78484" }}>❌ {progress.failed} 个步骤失败</span>}
                     </div>
                     <div
                       style={{
                         width: "100%",
                         height: "6px",
-                        background: "#e2e8f0",
+                        background: "#2f343b",
                         borderRadius: "3px",
                         overflow: "hidden",
                       }}
@@ -719,7 +719,7 @@ export const TaskMonitorPanel: React.FC = () => {
                         style={{
                           width: `${progress.percent}%`,
                           height: "100%",
-                          background: progress.failed > 0 ? "#ef4444" : progress.percent === 100 ? "#22c55e" : "#3b82f6",
+                          background: progress.failed > 0 ? "#703333" : progress.percent === 100 ? "#85d6a3" : "#769ee1",
                           transition: "width 0.3s ease",
                         }}
                       />
@@ -733,12 +733,12 @@ export const TaskMonitorPanel: React.FC = () => {
                     style={{
                       marginTop: "14px",
                       paddingTop: "14px",
-                      borderTop: "1px solid #f1f5f9",
+                      borderTop: "1px solid #3b4752",
                       display: "grid",
                       gap: "6px",
                     }}
                   >
-                    <div style={{ fontSize: "12px", fontWeight: 600, color: "#475569", marginBottom: "4px" }}>
+                    <div style={{ fontSize: "12px", fontWeight: 600, color: "#aeb4ba", marginBottom: "4px" }}>
                       执行步骤明细:
                     </div>
                     {dag.tasks.map((task) => (
@@ -749,7 +749,7 @@ export const TaskMonitorPanel: React.FC = () => {
                           justifyContent: "space-between",
                           alignItems: "center",
                           padding: "6px 12px",
-                          background: "#f8fafc",
+                          background: "#252a30",
                           borderRadius: "6px",
                           fontSize: "12px",
                         }}
@@ -762,18 +762,18 @@ export const TaskMonitorPanel: React.FC = () => {
                               borderRadius: "50%",
                               background:
                                 task.state === "success"
-                                  ? "#22c55e"
+                                  ? "#85d6a3"
                                   : task.state === "running"
-                                  ? "#f59e0b"
+                                  ? "#e2bb79"
                                   : task.state === "failed"
-                                  ? "#ef4444"
-                                  : "#94a3b8",
+                                  ? "#dc7979"
+                                  : "#7a838e",
                             }}
                           />
-                          <span style={{ fontFamily: "monospace", fontWeight: 500, color: "#1e293b" }}>
+                          <span style={{ fontFamily: "monospace", fontWeight: 500, color: "#cbcfd3" }}>
                             {task.task_id}
                           </span>
-                          <span style={{ color: "#64748b", fontSize: "11px" }}>
+                          <span style={{ color: "#99a0a8", fontSize: "11px" }}>
                             {task.duration !== null ? `${task.duration}s` : ""}
                           </span>
                         </div>
@@ -790,9 +790,9 @@ export const TaskMonitorPanel: React.FC = () => {
                           }
                           style={{
                             padding: "3px 8px",
-                            background: "#ffffff",
-                            color: "#475569",
-                            border: "1px solid #cbd5e1",
+                            background: "#23272c",
+                            color: "#aeb4ba",
+                            border: "1px solid #4b545f",
                             borderRadius: "4px",
                             fontSize: "11px",
                             cursor: "pointer",
@@ -812,14 +812,14 @@ export const TaskMonitorPanel: React.FC = () => {
 
       {/* 4. System & AI Background Daemons */}
       <div style={{ marginBottom: "28px" }}>
-        <h3 style={{ fontSize: "16px", color: "#0f172a", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
+        <h3 style={{ fontSize: "16px", color: "#d6d9dc", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
           🖥️ 核心系统与 AI 守护进程 (Daemons & Infrastructure)
         </h3>
 
         <div
           style={{
-            background: "#ffffff",
-            border: "1px solid #e2e8f0",
+            background: "#23272c",
+            border: "1px solid #434b56",
             borderRadius: "12px",
             overflow: "hidden",
             boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
@@ -827,7 +827,7 @@ export const TaskMonitorPanel: React.FC = () => {
         >
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", textAlign: "left" }}>
             <thead>
-              <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#475569" }}>
+              <tr style={{ background: "#252a30", borderBottom: "1px solid #434b56", color: "#aeb4ba" }}>
                 <th style={{ padding: "12px 16px" }}>服务名称</th>
                 <th style={{ padding: "12px 16px" }}>类型 / 标识</th>
                 <th style={{ padding: "12px 16px" }}>端口 / PID</th>
@@ -840,16 +840,16 @@ export const TaskMonitorPanel: React.FC = () => {
               {(data?.system_daemons || []).map((daemon) => {
                 const isOnline = daemon.status === "running" || daemon.status === "loaded";
                 return (
-                  <tr key={daemon.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                    <td style={{ padding: "12px 16px", fontWeight: 600, color: "#0f172a" }}>
+                  <tr key={daemon.id} style={{ borderBottom: "1px solid #3b4752" }}>
+                    <td style={{ padding: "12px 16px", fontWeight: 600, color: "#d6d9dc" }}>
                       {daemon.name}
                     </td>
-                    <td style={{ padding: "12px 16px", color: "#64748b" }}>
-                      <span style={{ fontSize: "11px", padding: "2px 6px", background: "#f1f5f9", borderRadius: "4px" }}>
+                    <td style={{ padding: "12px 16px", color: "#99a0a8" }}>
+                      <span style={{ fontSize: "11px", padding: "2px 6px", background: "#272e34", borderRadius: "4px" }}>
                         {daemon.type}
                       </span>
                     </td>
-                    <td style={{ padding: "12px 16px", fontFamily: "monospace", color: "#475569" }}>
+                    <td style={{ padding: "12px 16px", fontFamily: "monospace", color: "#aeb4ba" }}>
                       {daemon.port ? `:${daemon.port}` : "--"}
                       {daemon.pid && ` (PID: ${daemon.pid})`}
                     </td>
@@ -860,14 +860,14 @@ export const TaskMonitorPanel: React.FC = () => {
                           padding: "2px 8px",
                           borderRadius: "10px",
                           fontWeight: 600,
-                          background: isOnline ? "#dcfce7" : "#fee2e2",
-                          color: isOnline ? "#15803d" : "#b91c1c",
+                          background: isOnline ? "#24422e" : "#402121",
+                          color: isOnline ? "#84d6a3" : "#d88383",
                         }}
                       >
                         {isOnline ? "🟢 正常运行" : "🔴 停止/异常"}
                       </span>
                     </td>
-                    <td style={{ padding: "12px 16px", color: "#64748b", fontSize: "12px" }}>
+                    <td style={{ padding: "12px 16px", color: "#99a0a8", fontSize: "12px" }}>
                       {daemon.description}
                     </td>
                     <td style={{ padding: "12px 16px", textAlign: "right" }}>
@@ -882,18 +882,18 @@ export const TaskMonitorPanel: React.FC = () => {
                           }}
                           style={{
                             padding: "4px 10px",
-                            background: "#ffffff",
-                            border: "1px solid #cbd5e1",
+                            background: "#23272c",
+                            border: "1px solid #4b545f",
                             borderRadius: "4px",
                             fontSize: "12px",
-                            color: "#475569",
+                            color: "#aeb4ba",
                             cursor: "pointer",
                           }}
                         >
                           📜 日志
                         </button>
                       ) : (
-                        <span style={{ color: "#94a3b8", fontSize: "11px" }}>--</span>
+                        <span style={{ color: "#7a838e", fontSize: "11px" }}>--</span>
                       )}
                     </td>
                   </tr>
@@ -927,12 +927,12 @@ export const TaskMonitorPanel: React.FC = () => {
               width: "90%",
               maxWidth: "1000px",
               height: "85%",
-              background: "#0f172a",
+              background: "#343a42",
               borderRadius: "12px",
               display: "flex",
               flexDirection: "column",
               boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
-              border: "1px solid #334155",
+              border: "1px solid #515b67",
               overflow: "hidden",
             }}
           >
@@ -943,16 +943,16 @@ export const TaskMonitorPanel: React.FC = () => {
                 justifyContent: "space-between",
                 alignItems: "center",
                 padding: "14px 20px",
-                borderBottom: "1px solid #1e293b",
-                background: "#1e293b",
+                borderBottom: "1px solid #515b67",
+                background: "#343a42",
               }}
             >
               <div>
-                <div style={{ color: "#f8fafc", fontWeight: 600, fontSize: "15px" }}>
+                <div style={{ color: "#e4e5e7", fontWeight: 600, fontSize: "15px" }}>
                   {logTitle}
                 </div>
                 {logMeta?.path && (
-                  <div style={{ color: "#94a3b8", fontSize: "11px", marginTop: "2px", fontFamily: "monospace" }}>
+                  <div style={{ color: "#7a838e", fontSize: "11px", marginTop: "2px", fontFamily: "monospace" }}>
                     {logMeta.path} {logMeta.total_lines ? `(共 ${logMeta.total_lines} 行)` : ""}
                   </div>
                 )}
@@ -964,8 +964,8 @@ export const TaskMonitorPanel: React.FC = () => {
                   disabled={logLoading}
                   style={{
                     padding: "5px 12px",
-                    background: "#334155",
-                    color: "#f8fafc",
+                    background: "#343a42",
+                    color: "#e4e5e7",
                     border: "none",
                     borderRadius: "6px",
                     fontSize: "12px",
@@ -983,8 +983,8 @@ export const TaskMonitorPanel: React.FC = () => {
                   }}
                   style={{
                     padding: "5px 12px",
-                    background: "#334155",
-                    color: "#f8fafc",
+                    background: "#343a42",
+                    color: "#e4e5e7",
                     border: "none",
                     borderRadius: "6px",
                     fontSize: "12px",
@@ -997,8 +997,8 @@ export const TaskMonitorPanel: React.FC = () => {
                   onClick={() => setLogModalOpen(false)}
                   style={{
                     padding: "5px 12px",
-                    background: "#ef4444",
-                    color: "#ffffff",
+                    background: "#703333",
+                    color: "#e4e5e7",
                     border: "none",
                     borderRadius: "6px",
                     fontSize: "12px",
@@ -1020,14 +1020,14 @@ export const TaskMonitorPanel: React.FC = () => {
                 fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
                 fontSize: "12px",
                 lineHeight: "1.5",
-                color: "#cbd5e1",
-                background: "#090d16",
+                color: "#6c757f",
+                background: "#343a42",
                 whiteSpace: "pre-wrap",
                 wordBreak: "break-all",
               }}
             >
               {logLoading ? (
-                <div style={{ color: "#94a3b8", textAlign: "center", padding: "40px" }}>
+                <div style={{ color: "#7a838e", textAlign: "center", padding: "40px" }}>
                   ⏳ 正在拉取最新日志输出...
                 </div>
               ) : (

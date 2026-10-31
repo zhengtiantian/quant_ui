@@ -22,7 +22,7 @@ const SEEN_KEY = "advisorSeenUntil";
 const REASON_LABEL: Record<string, string> = {
   move: "Big move", limit: "Limit reached", earnings_prep: "Earnings tomorrow", earnings_out: "Earnings out", news: "News", manual: "Asked by hand",
 };
-const STATUS_STYLE: Record<string, string> = { open: "#2563eb", waiting: "#a16207", filled: "#0f766e", scored: "#15803d", expired: "#94a3b8", void: "#94a3b8" };
+const STATUS_STYLE: Record<string, string> = { open: "#7e9cdd", waiting: "#e2b779", filled: "#81dad3", scored: "#84d6a3", expired: "#7a838e", void: "#7a838e" };
 const when = (ts: number | null) => (ts ? new Date(ts * 1000).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "");
 
 const size = (o: AdviceOrder) =>
@@ -54,7 +54,7 @@ const OrdersTable: React.FC<{ orders: AdviceOrder[]; holdings: Holding[]; lang: 
               </td>
               <td style={cell}>{size(o)}</td>
               <td style={{ ...cell, whiteSpace: "nowrap" }}>{o.valid_until}</td>
-              <td style={cell}><span style={pill(STATUS_STYLE[o.status] || "#64748b")}>{o.status}</span>
+              <td style={cell}><span style={pill(STATUS_STYLE[o.status] || "#99a0a8")}>{o.status}</span>
                 {o.status === "waiting" && o.parent_id ? <span style={sub}>after #{o.parent_id} fills</span> : null}
                 {o.status === "void" && o.parent_id ? <span style={sub}>#{o.parent_id} never filled</span> : null}
                 {o.filled_date ? <span style={sub}>reached {o.filled_date}</span> : null}</td>
@@ -114,16 +114,16 @@ const AdvisorPanel: React.FC<{ holdings: Holding[] }> = ({ holdings }) => {
   const running = !!state?.running || (state?.reports || []).some((r) => r.status === "running");
 
   return (
-    <div style={{ ...panel, borderColor: urgent.length ? "#fca5a5" : undefined }}>
+    <div style={{ ...panel, borderColor: urgent.length ? "#783737" : undefined }}>
       <div style={panelHead}>
         <div style={panelTitle}>🧭 Holdings advisor
-          {unseen.length ? <span style={{ ...pill(urgent.length ? DOWN : "#2563eb"), marginLeft: 8 }}>{unseen.length} new</span> : null}
+          {unseen.length ? <span style={{ ...pill(urgent.length ? DOWN : "#7e9cdd"), marginLeft: 8 }}>{unseen.length} new</span> : null}
         </div>
         <span style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
           <span style={muted}>Full report weekdays 13:00 Dublin · updates when something moves · advice only</span>
           {(["zh", "en"] as const).map((l) => (
             <button key={l} onClick={() => { setLang(l); store.set("briefLang", l); }}
-                    style={{ ...ghostButton, padding: "3px 10px", background: lang === l ? "#0f766e" : "#fff", color: lang === l ? "#fff" : "#0f766e" }}>
+                    style={{ ...ghostButton, padding: "3px 10px", background: lang === l ? "#81dad3" : "#23272c", color: lang === l ? "#23272c" : "#81dad3" }}>
               {l === "zh" ? "中文" : "English"}</button>
           ))}
           <button style={ghostButton} disabled={asking || !!running} onClick={() => void ask()}>{running ? "Writing…" : "Run now"}</button>
@@ -132,9 +132,9 @@ const AdvisorPanel: React.FC<{ holdings: Holding[] }> = ({ holdings }) => {
 
       {error ? <div style={{ color: DOWN, fontSize: 13, marginBottom: 8 }}>{error}</div> : null}
       {urgent.length ? (
-        <div style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#991b1b", borderRadius: 8, padding: "8px 12px", marginBottom: 10, fontSize: 13.5 }}>
+        <div style={{ background: "#391f1f", border: "1px solid #6d3030", color: "#d58585", borderRadius: 8, padding: "8px 12px", marginBottom: 10, fontSize: 13.5 }}>
           ⚠️ Urgent: {urgent.map((r) => (
-            <a key={r.id} href="#" style={{ color: "#991b1b", fontWeight: 700, marginRight: 10 }} onClick={(e) => { e.preventDefault(); setSelected(r.id); }}>
+            <a key={r.id} href="#" style={{ color: "#d58585", fontWeight: 700, marginRight: 10 }} onClick={(e) => { e.preventDefault(); setSelected(r.id); }}>
               {r.symbol || "All"} · {r.reasons.map((x) => REASON_LABEL[x.kind] || x.kind).join(", ")} ({when(r.finished_at)})</a>
           ))}
         </div>

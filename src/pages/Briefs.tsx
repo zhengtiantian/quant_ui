@@ -19,7 +19,7 @@ const KIND_LABEL: Record<string, string> = {
 };
 const KIND_GROUP: Record<string, string> = { asia_europe: "Summary", us: "Summary", outlook: "Forward", flash: "Forward", advisor: "Advice" };
 const OP_TEXT: Record<string, string> = { ">=": "≥", "<=": "≤", "abs>=": "|move| ≥", "abs<=": "|move| ≤" };
-const STATUS_COLOR: Record<string, string> = { hit: "#15803d", miss: "#b91c1c", pending: "#64748b", void: "#94a3b8" };
+const STATUS_COLOR: Record<string, string> = { hit: "#84d6a3", miss: "#d88383", pending: "#99a0a8", void: "#7a838e" };
 const store = {
   get: (k: string, d: string) => { try { return localStorage.getItem(k) || d; } catch { return d; } },
   set: (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* per-viewer convenience only */ } },
@@ -35,7 +35,7 @@ const MacroBoard: React.FC<{ m: MacroState | null }> = ({ m }) => {
       <div style={panelHead}><div style={panelTitle}>📊 Macro board</div><span style={muted}>CNBC, refreshed when this page loads</span></div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))", gap: 10 }}>
         {m.groups.map((g) => (
-          <div key={g.name} style={{ border: "1px solid #e2e8f0", borderRadius: 10, padding: "8px 10px", background: "#fff" }}>
+          <div key={g.name} style={{ border: "1px solid #434b56", borderRadius: 10, padding: "8px 10px", background: "#23272c" }}>
             <div style={{ ...muted, fontWeight: 700, marginBottom: 4 }}>{g.name}</div>
             {g.items.map((i) => (
               <div key={i.symbol} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, gap: 8, fontVariantNumeric: "tabular-nums" }}>
@@ -74,9 +74,9 @@ const PredictionRows: React.FC<{ rows: Prediction[]; lang: "zh" | "en"; showBrie
 );
 
 const StatLine: React.FC<{ name: string; s: PredictionStats }> = ({ name, s }) => (
-  <div style={{ border: "1px solid #e2e8f0", borderRadius: 10, padding: "8px 12px", background: "#fff", minWidth: 170 }}>
+  <div style={{ border: "1px solid #434b56", borderRadius: 10, padding: "8px 12px", background: "#23272c", minWidth: 170 }}>
     <div style={{ ...muted, fontWeight: 700 }}>{name}</div>
-    <div style={{ fontSize: 20, fontWeight: 800, color: s.hit_rate == null ? "#334155" : s.hit_rate >= 0.5 ? UP : DOWN }}>{pctText(s.hit_rate)}</div>
+    <div style={{ fontSize: 20, fontWeight: 800, color: s.hit_rate == null ? "#bbc0c5" : s.hit_rate >= 0.5 ? UP : DOWN }}>{pctText(s.hit_rate)}</div>
     <div style={muted}>{s.hits}/{s.scored} hit · {s.pending} pending
       {s.brier != null ? <> · Brier <b>{s.brier.toFixed(3)}</b></> : null}
       {s.mean_confidence != null ? <> · avg conf {pctText(s.mean_confidence)}</> : null}</div>
@@ -95,7 +95,7 @@ const ScorecardPanel: React.FC<{ card: Scorecard | null; lang: "zh" | "en" }> = 
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
         <StatLine name="All briefs" s={card.overall} />
         {Object.entries(card.by_kind).map(([k, s]) => <StatLine key={k} name={KIND_LABEL[k] || k} s={s} />)}
-        <div style={{ border: "1px solid #e2e8f0", borderRadius: 10, padding: "8px 12px", background: "#fff" }}>
+        <div style={{ border: "1px solid #434b56", borderRadius: 10, padding: "8px 12px", background: "#23272c" }}>
           <div style={{ ...muted, fontWeight: 700 }}>Calibration (stated confidence → hit rate)</div>
           {card.calibration.map((b) => (
             <div key={b.range} style={{ fontSize: 12.5, fontVariantNumeric: "tabular-nums" }}>{b.range}: <b>{pctText(b.hit_rate)}</b> <span style={muted}>({b.scored})</span></div>
@@ -177,7 +177,7 @@ const Briefs: React.FC = () => {
             </button>
           ))}
           <input list="bellwethers" value={flashSymbol} onChange={(e) => setFlashSymbol(e.target.value.toUpperCase())} placeholder="LRCX"
-                 style={{ width: 80, padding: "4px 8px", borderRadius: 8, border: "1px solid #cbd5e1", textTransform: "uppercase" }} />
+                 style={{ width: 80, padding: "4px 8px", borderRadius: 8, border: "1px solid #4b545f", textTransform: "uppercase" }} />
           <datalist id="bellwethers">{bw.map((s) => <option key={s} value={s}>{list?.bellwethers[s]}</option>)}</datalist>
           <button style={ghostButton} disabled={!flashSymbol.trim() || list?.kinds.flash?.running} onClick={() => void generate("flash", flashSymbol.trim())}>
             {list?.kinds.flash?.running ? "Writing…" : "⚡ Flash now"}
@@ -192,17 +192,17 @@ const Briefs: React.FC = () => {
       <div style={{ display: "grid", gridTemplateColumns: "minmax(220px, 300px) 1fr", gap: 16, alignItems: "start" }}>
         <div style={{ ...panel, padding: 10 }}>
           <select value={kind} onChange={(e) => { setKind(e.target.value); setSelected(null); }}
-                  style={{ width: "100%", marginBottom: 8, borderRadius: 8, border: "1px solid #cbd5e1", padding: "5px 8px" }}>
+                  style={{ width: "100%", marginBottom: 8, borderRadius: 8, border: "1px solid #4b545f", padding: "5px 8px" }}>
             <option value="">All briefs</option>
             {Object.entries(KIND_LABEL).map(([k, l]) => <option key={k} value={k}>{KIND_GROUP[k]} · {l}</option>)}
           </select>
           {!list ? <div style={muted}>Loading…</div> : !list.briefs.length ? <div style={muted}>No briefs yet.</div> : list.briefs.map((b) => (
             <div key={b.id} onClick={() => setSelected(b.id)}
-                 style={{ padding: "8px 8px", borderRadius: 8, cursor: "pointer", marginBottom: 2, background: b.id === selected ? "#ecfdf5" : "transparent" }}>
+                 style={{ padding: "8px 8px", borderRadius: 8, cursor: "pointer", marginBottom: 2, background: b.id === selected ? "#213b2f" : "transparent" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 6, fontSize: 12.5 }}>
                 <b>{b.session_date}</b><span>{label(b)}</span>
               </div>
-              <div style={{ fontSize: 13, color: b.status === "failed" ? DOWN : "#334155", marginTop: 2 }}>
+              <div style={{ fontSize: 13, color: b.status === "failed" ? DOWN : "#bbc0c5", marginTop: 2 }}>
                 {b.status === "running" ? "⏳ Writing…" : b.status === "failed" ? `Failed (${b.attempts}×)` : (lang === "zh" ? b.headline_zh : b.headline_en)}
               </div>
             </div>
@@ -223,7 +223,7 @@ const Briefs: React.FC = () => {
                 <div style={{ display: "flex", gap: 4 }}>
                   {(["zh", "en"] as const).map((l) => (
                     <button key={l} onClick={() => { setLang(l); store.set("briefLang", l); }}
-                            style={{ ...ghostButton, padding: "3px 10px", background: lang === l ? "#0f766e" : "#fff", color: lang === l ? "#fff" : "#0f766e" }}>
+                            style={{ ...ghostButton, padding: "3px 10px", background: lang === l ? "#81dad3" : "#23272c", color: lang === l ? "#23272c" : "#81dad3" }}>
                       {l === "zh" ? "ZH" : "EN"}
                     </button>
                   ))}
@@ -246,7 +246,7 @@ const Briefs: React.FC = () => {
                 </div>
               ) : null}
               <div style={{ ...muted, marginTop: 12 }}>
-                {brief.trigger === "manual" ? <span style={pill("#7c3aed")}>Manual</span> : <span style={pill("#0f766e")}>{brief.kind === "flash" ? "Triggered" : "Scheduled"}</span>}{" "}
+                {brief.trigger === "manual" ? <span style={pill("#a17edd")}>Manual</span> : <span style={pill("#81dad3")}>{brief.kind === "flash" ? "Triggered" : "Scheduled"}</span>}{" "}
                 Written {when(brief.finished_at)}{brief.duration_s ? ` in ${Math.round(brief.duration_s)} s` : ""}
                 {brief.model ? ` · ${brief.model}` : ""}{brief.cost_usd ? ` · ≈ $${brief.cost_usd.toFixed(2)} at API prices (subscription)` : ""}
                 {" "}· numbers from a snapshot taken when it was written; reasons from the cited sources. Not investment advice.

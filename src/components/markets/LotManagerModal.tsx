@@ -44,9 +44,9 @@ const todayLocal = () => {
 const exactQtyStr = (n: number) => String(Number(n.toFixed(8)));
 
 const STATUS_META: Record<LotOrderStatus, { label: string; color: string; bg: string; border: string }> = {
-  open: { label: "🟢 持仓中", color: "#15803d", bg: "#f0fdf4", border: "#bbf7d0" },
-  partial: { label: "🟡 部分平仓", color: "#b45309", bg: "#fffbeb", border: "#fde68a" },
-  closed: { label: "⚪ 已结清", color: "#64748b", bg: "#f8fafc", border: "#cbd5e1" },
+  open: { label: "🟢 持仓中", color: "#84d6a3", bg: "#213928", border: "#396e4b" },
+  partial: { label: "🟡 部分平仓", color: "#e1a67a", bg: "#3d371e", border: "#817339" },
+  closed: { label: "⚪ 已结清", color: "#99a0a8", bg: "#252a30", border: "#4b545f" },
 };
 
 const StatusBadge: React.FC<{ status: LotOrderStatus }> = ({ status }) => {
@@ -109,9 +109,9 @@ export const StockLotButton: React.FC<{
         }}
         title={`打开 ${holding.symbol} 的订单状态与波段选批平仓窗口`}
         style={{
-          background: hasProf ? "#f0fdf4" : "#eef2ff",
-          color: hasProf ? "#15803d" : "#4338ca",
-          border: `1px solid ${hasProf ? "#86efac" : "#c7d2fe"}`,
+          background: hasProf ? "#213928" : "#1d243c",
+          color: hasProf ? "#84d6a3" : "#918cce",
+          border: `1px solid ${hasProf ? "#62d08a" : "#02186f"}`,
           borderRadius: 8,
           padding: "3px 9px",
           fontSize: 12,
@@ -130,7 +130,7 @@ export const StockLotButton: React.FC<{
           }}
           style={{
             fontSize: 11,
-            color: hasProf ? "#15803d" : "#64748b",
+            color: hasProf ? "#84d6a3" : "#99a0a8",
             fontWeight: hasProf ? 600 : 400,
             cursor: "pointer",
             whiteSpace: "nowrap",
@@ -244,7 +244,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
         style={{
           position: "fixed",
           inset: 0,
-          background: "rgba(15,23,42,0.45)",
+          background: "rgba(0,0,0,0.55)",
           display: "grid",
           placeItems: "center",
           zIndex: 55,
@@ -594,22 +594,22 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
   const q = holding.quote || {};
   const chg = q.price != null && q.prev_close ? q.price - q.prev_close : null;
 
-  const tabBtn = (active: boolean, accent = "#0f766e"): React.CSSProperties => ({
+  const tabBtn = (active: boolean, accent = "#81dad3"): React.CSSProperties => ({
     ...ghostButton,
     padding: "6px 13px",
     borderRadius: 9,
     fontWeight: 700,
     fontSize: 13,
-    background: active ? accent : "#fff",
-    color: active ? "#fff" : accent,
-    border: `1px solid ${active ? accent : "#cbd5e1"}`,
+    background: active ? accent : "#e4e5e7",
+    color: active ? "#e4e5e7" : accent,
+    border: `1px solid ${active ? accent : "#6c757f"}`,
     cursor: "pointer",
   });
 
   const chipBtn = (active = false): React.CSSProperties => ({
-    background: active ? "#0f172a" : "#f8fafc",
-    color: active ? "#fff" : "#334155",
-    border: `1px solid ${active ? "#0f172a" : "#cbd5e1"}`,
+    background: active ? "#343a42" : "#252a30",
+    color: active ? "#e4e5e7" : "#bbc0c5",
+    border: `1px solid ${active ? "#d6d9dc" : "#424549"}`,
     borderRadius: 999,
     padding: "3px 10px",
     fontSize: 12,
@@ -620,10 +620,10 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
   const inputStyle: React.CSSProperties = {
     padding: "6px 9px",
     borderRadius: 8,
-    border: "1px solid #cbd5e1",
+    border: "1px solid #4b545f",
     fontSize: 13.5,
-    background: "#fff",
-    color: "#0f172a",
+    background: "#23272c",
+    color: "#d6d9dc",
   };
 
   return (
@@ -634,7 +634,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(15,23,42,0.45)",
+        background: "rgba(0,0,0,0.55)",
         display: "grid",
         placeItems: "center",
         zIndex: 55,
@@ -648,7 +648,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
           maxHeight: "92vh",
           overflowY: "auto",
           marginBottom: 0,
-          background: "#ffffff",
+          background: "#23272c",
           padding: "16px 18px",
         }}
       >
@@ -660,13 +660,13 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
             alignItems: "center",
             gap: 10,
             flexWrap: "wrap",
-            borderBottom: "1px solid #e2e8f0",
+            borderBottom: "1px solid #434b56",
             paddingBottom: 10,
             marginBottom: 12,
           }}
         >
           <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 20, fontWeight: 800, color: "#0f172a" }}>📦 {symbol} 批次与波段订单簿</span>
+            <span style={{ fontSize: 20, fontWeight: 800, color: "#d6d9dc" }}>📦 {symbol} 批次与波段订单簿</span>
             <span style={muted}>{shortName(q.name)}</span>
             {q.price != null ? <b style={{ fontSize: 17 }}>{usd(q.price)}</b> : null}
             {chg != null && q.prev_close ? (
@@ -674,7 +674,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                 {signed(chg)} ({pct((chg / q.prev_close) * 100)})
               </span>
             ) : null}
-            {q.session ? <span style={pill(SESSION_COLOR[q.session] || "#64748b")}>{SESSION_LABEL[q.session]}</span> : null}
+            {q.session ? <span style={pill(SESSION_COLOR[q.session] || "#99a0a8")}>{SESSION_LABEL[q.session]}</span> : null}
           </div>
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
             {onOpenChart ? (
@@ -709,26 +709,26 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
             marginBottom: 12,
           }}
         >
-          <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "9px 12px" }}>
-            <div style={{ fontSize: 11.5, color: "#64748b" }}>当前总持仓 / 批次状态</div>
+          <div style={{ background: "#252a30", border: "1px solid #434b56", borderRadius: 10, padding: "9px 12px" }}>
+            <div style={{ fontSize: 11.5, color: "#99a0a8" }}>当前总持仓 / 批次状态</div>
             <div style={{ fontSize: 17, fontWeight: 800, margin: "2px 0", fontVariantNumeric: "tabular-nums" }}>
               {qty(holding.quantity)} 股
             </div>
-            <div style={{ fontSize: 11.5, color: "#475569" }}>
+            <div style={{ fontSize: 11.5, color: "#aeb4ba" }}>
               🟢 {openCount} 持仓 · 🟡 {partialCount} 部分平 · ⚪ {closedCount} 结清
             </div>
           </div>
 
-          <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "9px 12px" }}>
+          <div style={{ background: "#252a30", border: "1px solid #434b56", borderRadius: 10, padding: "9px 12px" }}>
             <div
-              style={{ fontSize: 11.5, color: "#64748b" }}
+              style={{ fontSize: 11.5, color: "#99a0a8" }}
               title="未平批次均价 = 当前未结清批次的加权买入价；净回本价 = (累计买入总额 - 累计卖出回笼 - 分红) ÷ 当前剩余股数"
             >
               未平批次均价 / 真实净回本价
             </div>
             <div style={{ fontSize: 17, fontWeight: 800, margin: "2px 0", fontVariantNumeric: "tabular-nums" }}>
               {usd(holding.open_lots_avg)}
-              <span style={{ fontSize: 12.5, fontWeight: 600, color: "#64748b" }}>
+              <span style={{ fontSize: 12.5, fontWeight: 600, color: "#99a0a8" }}>
                 {" "}
                 / 回本{" "}
                 {holding.raw_breakeven_price != null && holding.raw_breakeven_price <= 0
@@ -736,11 +736,11 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                   : usd(holding.breakeven_price)}
               </span>
             </div>
-            <div style={{ fontSize: 11.5, color: "#475569" }}>每做一笔盈利波段都会拉低真实净回本价</div>
+            <div style={{ fontSize: 11.5, color: "#aeb4ba" }}>每做一笔盈利波段都会拉低真实净回本价</div>
           </div>
 
-          <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "9px 12px" }}>
-            <div style={{ fontSize: 11.5, color: "#64748b" }}>波段已结清盈亏 (按选定批次)</div>
+          <div style={{ background: "#252a30", border: "1px solid #434b56", borderRadius: 10, padding: "9px 12px" }}>
+            <div style={{ fontSize: 11.5, color: "#99a0a8" }}>波段已结清盈亏 (按选定批次)</div>
             <div
               style={{
                 fontSize: 17,
@@ -752,19 +752,19 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
             >
               {signed(holding.swing_realized ?? 0)}
             </div>
-            <div style={{ fontSize: 11.5, color: profitableOrders.length > 0 ? UP : "#64748b" }}>
+            <div style={{ fontSize: 11.5, color: profitableOrders.length > 0 ? UP : "#99a0a8" }}>
               {profitableOrders.length > 0
                 ? `🟢 当前有 ${profitableOrders.length} 笔浮盈 (${signed(profitableSum)})`
                 : "当前暂无单笔浮盈批次"}
             </div>
           </div>
 
-          <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "9px 12px" }}>
-            <div style={{ fontSize: 11.5, color: "#64748b" }}>主表总成本 (保持不变)</div>
+          <div style={{ background: "#252a30", border: "1px solid #434b56", borderRadius: 10, padding: "9px 12px" }}>
+            <div style={{ fontSize: 11.5, color: "#99a0a8" }}>主表总成本 (保持不变)</div>
             <div style={{ fontSize: 17, fontWeight: 800, margin: "2px 0", fontVariantNumeric: "tabular-nums" }}>
               Mine {usd(holding.avg_cost)}
             </div>
-            <div style={{ fontSize: 11.5, color: "#475569" }}>
+            <div style={{ fontSize: 11.5, color: "#aeb4ba" }}>
               税法 FIFO {usd(holding.fifo_avg_cost)} · 选批卖出不影响总成本
             </div>
           </div>
@@ -782,7 +782,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
         >
           <button
             type="button"
-            style={tabBtn(tab === "list", "#0f172a")}
+            style={tabBtn(tab === "list", "#d6d9dc")}
             onClick={() => {
               setErrMsg(null);
               setTab("list");
@@ -790,12 +790,12 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
           >
             📋 订单与状态明细 ({buyOrders.length})
           </button>
-          <button type="button" style={tabBtn(tab === "buy", "#15803d")} onClick={openNewBuyTab}>
+          <button type="button" style={tabBtn(tab === "buy", "#84d6a3")} onClick={openNewBuyTab}>
             {tab === "buy" && editBuyId ? `✎ 编辑买入 #${editBuyId}` : "➕ 记一笔买入 (Buy)"}
           </button>
           <button
             type="button"
-            style={tabBtn(tab === "sell", "#b91c1c")}
+            style={tabBtn(tab === "sell", "#d88383")}
             onClick={() => openNewSellTab()}
             disabled={activeOrders.length === 0 && editSellId == null}
           >
@@ -808,9 +808,9 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                 marginLeft: "auto",
                 fontSize: 12.5,
                 fontWeight: 700,
-                color: "#15803d",
-                background: "#f0fdf4",
-                border: "1px solid #86efac",
+                color: "#84d6a3",
+                background: "#213928",
+                border: "1px solid #437f59",
                 borderRadius: 8,
                 padding: "4px 10px",
               }}
@@ -823,8 +823,8 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
         {lotAdvice && lotAdvice.stats.atr14 != null ? (
           <div
             style={{
-              background: "#f8fafc",
-              border: "1px solid #e2e8f0",
+              background: "#252a30",
+              border: "1px solid #434b56",
               borderRadius: 10,
               padding: "7px 12px",
               marginBottom: 12,
@@ -833,31 +833,31 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
               flexWrap: "wrap",
               gap: 8,
               fontSize: 12.2,
-              color: "#334155",
+              color: "#bbc0c5",
             }}
           >
-            <span style={{ fontWeight: 700, color: "#0f172a" }}>⚡ 波段风控引擎</span>
-            <span style={pill("#0f766e")}>
+            <span style={{ fontWeight: 700, color: "#d6d9dc" }}>⚡ 波段风控引擎</span>
+            <span style={pill("#81dad3")}>
               ATR(14) {usd(lotAdvice.stats.atr14)}{" "}
               {lotAdvice.stats.atr14_pct != null ? `(${lotAdvice.stats.atr14_pct.toFixed(1)}%)` : ""}
             </span>
             {lotAdvice.stats.rsi14 != null ? (
               <span
                 style={pill(
-                  lotAdvice.stats.rsi14 < 30 ? "#b45309" : lotAdvice.stats.rsi14 > 70 ? "#be123c" : "#475569",
+                  lotAdvice.stats.rsi14 < 30 ? "#e1a67a" : lotAdvice.stats.rsi14 > 70 ? "#dd7e95" : "#aeb4ba",
                 )}
               >
                 RSI(14) {lotAdvice.stats.rsi14.toFixed(1)}
                 {lotAdvice.stats.rsi14 < 30 ? " · 超卖" : lotAdvice.stats.rsi14 > 70 ? " · 超买" : ""}
               </span>
             ) : null}
-            <span style={pill(lotAdvice.stats.stabilized ? "#15803d" : "#b91c1c")}>
+            <span style={pill(lotAdvice.stats.stabilized ? "#84d6a3" : "#d88383")}>
               {lotAdvice.stats.stabilized ? "🟢 日线已企稳" : "🟠 急跌未企稳"}
               {lotAdvice.stats.drop_3d_pct != null ? ` (3日 ${pct(lotAdvice.stats.drop_3d_pct)})` : ""}
             </span>
             {lotAdvice.catalysts_7d.length > 0 ? (
               <span
-                style={pill(lotAdvice.has_binary_7d ? "#7c3aed" : "#0369a1")}
+                style={pill(lotAdvice.has_binary_7d ? "#a17edd" : "#76bde4")}
                 title={lotAdvice.catalysts_7d.map((c) => `${c.date.slice(5)} ${c.title}`).join(" | ")}
               >
                 🔭 7日内 {lotAdvice.catalysts_7d.length} 个事件：
@@ -868,7 +868,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
               </span>
             ) : null}
             {lotAdvice.is_semi_cluster ? (
-              <span style={{ marginLeft: "auto", fontSize: 11.5, color: "#64748b" }}>
+              <span style={{ marginLeft: "auto", fontSize: 11.5, color: "#99a0a8" }}>
                 芯片/存储总仓位 <b>{lotAdvice.semi_cluster_weight_pct.toFixed(1)}%</b> ({symbol}{" "}
                 {lotAdvice.symbol_weight_pct.toFixed(1)}%)
               </span>
@@ -879,8 +879,8 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
         {errMsg ? (
           <div
             style={{
-              background: "#fef2f2",
-              border: "1px solid #fecaca",
+              background: "#391f1f",
+              border: "1px solid #6d3030",
               color: DOWN,
               borderRadius: 10,
               padding: "8px 12px",
@@ -897,15 +897,15 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
           <form
             onSubmit={submitBuy}
             style={{
-              background: "#f0fdf4",
-              border: "1px solid #bbf7d0",
+              background: "#213928",
+              border: "1px solid #396e4b",
               borderRadius: 12,
               padding: "14px 16px",
               marginBottom: 12,
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-              <b style={{ fontSize: 15, color: "#14532d" }}>
+              <b style={{ fontSize: 15, color: "#8ad0a6" }}>
                 {editBuyId ? `✎ 修改买入批次 #${editBuyId} (${symbol})` : `➕ 新增 ${symbol} 买入批次 (创建后状态为 🟢 持仓中)`}
               </b>
               <button type="button" style={chipBtn(false)} onClick={() => setTab("list")}>
@@ -918,10 +918,10 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
               const dg = lotAdvice.dip_guardrail;
               const palette =
                 dg.verdict === "green"
-                  ? { bg: "#ecfdf5", border: "#6ee7b7", fg: "#065f46" }
+                  ? { bg: "#213b2f", border: "#3e8e6e", fg: "#7be0c3" }
                   : dg.verdict === "amber"
-                    ? { bg: "#fffbeb", border: "#fcd34d", fg: "#92400e" }
-                    : { bg: "#fef2f2", border: "#fca5a5", fg: "#991b1b" };
+                    ? { bg: "#3d371e", border: "#9c8330", fg: "#dda27e" }
+                    : { bg: "#391f1f", border: "#783737", fg: "#d58585" };
               return (
                 <div
                   style={{
@@ -931,7 +931,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                     padding: "10px 12px",
                     marginBottom: 12,
                     fontSize: 12.6,
-                    color: "#1e293b",
+                    color: "#cbcfd3",
                   }}
                 >
                   <div
@@ -953,8 +953,8 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                         type="button"
                         onClick={() => setBuyPrice(String(dg.suggested_buy_limit))}
                         style={{
-                          background: "#0f172a",
-                          color: "#fff",
+                          background: "#343a42",
+                          color: "#e4e5e7",
                           border: "none",
                           borderRadius: 7,
                           padding: "4px 10px",
@@ -974,11 +974,11 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                       ))}
                     </ul>
                   ) : null}
-                  <div style={{ fontSize: 11.5, color: "#64748b" }}>
+                  <div style={{ fontSize: 11.5, color: "#99a0a8" }}>
                     📊 样本外基准（{lotAdvice.empirical_oos.universe_stocks}股 {lotAdvice.empirical_oos.oos_years} 共{" "}
                     {lotAdvice.empirical_oos.oos_2atr_drop_events} 次 ≥2×ATR 急跌）：隔日直接抄底均值{" "}
                     <b>+{lotAdvice.empirical_oos.immediate_tp15_mean_pct}%</b> vs 拉开 1.5×ATR 挂单波段均值{" "}
-                    <b style={{ color: "#15803d" }}>+{lotAdvice.empirical_oos.spaced_15atr_mean_pct}%</b>
+                    <b style={{ color: "#84d6a3" }}>+{lotAdvice.empirical_oos.spaced_15atr_mean_pct}%</b>
                   </div>
                 </div>
               );
@@ -992,7 +992,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                 marginBottom: 10,
               }}
             >
-              <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#334155" }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#bbc0c5" }}>
                 交易日期
                 <input
                   style={inputStyle}
@@ -1003,7 +1003,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                 />
               </label>
 
-              <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#334155" }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#bbc0c5" }}>
                 <span>
                   买入单价 (USD/股){" "}
                   {livePrice != null ? (
@@ -1013,7 +1013,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                       style={{
                         border: "none",
                         background: "transparent",
-                        color: "#0f766e",
+                        color: "#81dad3",
                         fontSize: 11.5,
                         cursor: "pointer",
                         padding: 0,
@@ -1036,7 +1036,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                 />
               </label>
 
-              <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#334155" }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#bbc0c5" }}>
                 录入方式
                 <select
                   style={inputStyle}
@@ -1049,7 +1049,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
               </label>
 
               {buyMode === "quantity" ? (
-                <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#334155" }}>
+                <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#bbc0c5" }}>
                   买入股数 (支持碎股)
                   <input
                     style={inputStyle}
@@ -1063,7 +1063,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                   />
                 </label>
               ) : (
-                <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#334155" }}>
+                <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#bbc0c5" }}>
                   投入金额 (USD, 不含手续费)
                   <input
                     style={inputStyle}
@@ -1078,7 +1078,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                 </label>
               )}
 
-              <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#334155" }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#bbc0c5" }}>
                 手续费 (USD, 可选)
                 <input
                   style={inputStyle}
@@ -1091,7 +1091,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                 />
               </label>
 
-              <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#334155" }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#bbc0c5" }}>
                 备注 (可选)
                 <input
                   style={inputStyle}
@@ -1105,8 +1105,8 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
             {bSharesNum > 0 && bPriceNum > 0 ? (
               <div
                 style={{
-                  background: "#ffffff",
-                  border: "1px solid #bbf7d0",
+                  background: "#23272c",
+                  border: "1px solid #396e4b",
                   borderRadius: 8,
                   padding: "8px 12px",
                   fontSize: 13,
@@ -1131,8 +1131,8 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                 type="submit"
                 disabled={busy}
                 style={{
-                  background: "#15803d",
-                  color: "#fff",
+                  background: "#317249",
+                  color: "#e4e5e7",
                   border: "none",
                   borderRadius: 8,
                   padding: "7px 16px",
@@ -1151,8 +1151,8 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
           <form
             onSubmit={submitSell}
             style={{
-              background: "#fffafb",
-              border: "1px solid #fecdd3",
+              background: "#24292e",
+              border: "1px solid #6c3037",
               borderRadius: 12,
               padding: "14px 16px",
               marginBottom: 12,
@@ -1169,12 +1169,12 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
               }}
             >
               <div>
-                <b style={{ fontSize: 15, color: "#881337" }}>
+                <b style={{ fontSize: 15, color: "#d9829d" }}>
                   {editSellId
                     ? `🎯 修改卖出单 #${editSellId} 对应的买入批次 (${symbol})`
                     : `💰 选择要平仓的 ${symbol} 买入批次 (可勾选多笔、可填部分股数)`}
                 </b>
-                <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>
+                <div style={{ fontSize: 12, color: "#99a0a8", marginTop: 2 }}>
                   你也可以先修改上方「卖出单价」(例如填 85) 来实时测算平掉某几笔波段仓能赚多少，确认后再提交。
                 </div>
               </div>
@@ -1199,7 +1199,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                 marginBottom: 12,
               }}
             >
-              <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#334155" }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#bbc0c5" }}>
                 卖出日期
                 <input
                   style={inputStyle}
@@ -1210,7 +1210,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                 />
               </label>
 
-              <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#334155" }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#bbc0c5" }}>
                 <span style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
                   <span>卖出单价 (USD/股)</span>
                   {livePrice != null ? (
@@ -1221,7 +1221,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                         style={{
                           border: "none",
                           background: "transparent",
-                          color: "#0f766e",
+                          color: "#81dad3",
                           fontSize: 11,
                           cursor: "pointer",
                           padding: 0,
@@ -1236,7 +1236,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                         style={{
                           border: "none",
                           background: "transparent",
-                          color: "#4338ca",
+                          color: "#918cce",
                           fontSize: 11,
                           cursor: "pointer",
                           padding: 0,
@@ -1260,7 +1260,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                 />
               </label>
 
-              <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#334155" }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#bbc0c5" }}>
                 手续费 (USD, 可选)
                 <input
                   style={inputStyle}
@@ -1273,7 +1273,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                 />
               </label>
 
-              <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#334155" }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#bbc0c5" }}>
                 备注 (可选)
                 <input
                   style={inputStyle}
@@ -1291,18 +1291,18 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                 gap: 6,
                 alignItems: "center",
                 flexWrap: "wrap",
-                background: "#ffffff",
-                border: "1px solid #e2e8f0",
+                background: "#23272c",
+                border: "1px solid #434b56",
                 borderRadius: 10,
                 padding: "8px 10px",
                 marginBottom: 10,
               }}
             >
-              <span style={{ fontSize: 12, color: "#475569", fontWeight: 600 }}>快捷选批：</span>
+              <span style={{ fontSize: 12, color: "#aeb4ba", fontWeight: 600 }}>快捷选批：</span>
               <button type="button" style={chipBtn(false)} onClick={() => applyStrategy("profitable")}>
                 ✨ 全选该卖价下盈利批次
               </button>
-              <span style={{ color: "#cbd5e1" }}>|</span>
+              <span style={{ color: "#6c757f" }}>|</span>
               <input
                 type="number"
                 step="any"
@@ -1331,7 +1331,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
             </div>
 
             {/* Selectable Open Buy Orders Table */}
-            <div style={{ overflowX: "auto", background: "#fff", borderRadius: 10, border: "1px solid #e2e8f0" }}>
+            <div style={{ overflowX: "auto", background: "#23272c", borderRadius: 10, border: "1px solid #434b56" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                 <thead>
                   <tr>
@@ -1362,7 +1362,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                       <tr
                         key={lot.id}
                         style={{
-                          background: checked ? "#fff1f2" : diffPerShare != null && diffPerShare > 0 ? "#f0fdf455" : undefined,
+                          background: checked ? "#3b1c1f" : diffPerShare != null && diffPerShare > 0 ? "#21392855" : undefined,
                         }}
                       >
                         <td style={cell}>
@@ -1391,7 +1391,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                                 style={{
                                   border: "none",
                                   background: "none",
-                                  color: "#0f766e",
+                                  color: "#81dad3",
                                   cursor: "pointer",
                                   padding: 0,
                                   fontSize: 11,
@@ -1460,7 +1460,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                   })}
                   {selectableLots.length === 0 ? (
                     <tr>
-                      <td colSpan={8} style={{ ...cell, textAlign: "center", color: "#64748b", padding: 20 }}>
+                      <td colSpan={8} style={{ ...cell, textAlign: "center", color: "#99a0a8", padding: 20 }}>
                         该卖出日期 ({sellDate}) 之前没有可平仓的买入批次。
                       </td>
                     </tr>
@@ -1472,8 +1472,8 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
             {/* Live Settlement Preview Banner */}
             <div
               style={{
-                background: "#ffffff",
-                border: "1px solid #fda4af",
+                background: "#23272c",
+                border: "1px solid #79363e",
                 borderRadius: 10,
                 padding: "10px 14px",
                 marginTop: 10,
@@ -1509,7 +1509,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                       {signed(estSwingProfit)} ({pct(estSwingPct)})
                     </span>
                     {estAvgProfit != null ? (
-                      <span style={{ color: "#64748b", fontSize: 12, marginLeft: 10 }}>
+                      <span style={{ color: "#99a0a8", fontSize: 12, marginLeft: 10 }}>
                         [参考：主表总均价 {usd(holding.avg_cost)} 口径记账 {signed(estAvgProfit)}，主表总成本维持不变]
                       </span>
                     ) : null}
@@ -1518,7 +1518,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                   <div style={muted}>勾选上方批次并填写卖出单价后，这里会实时显示波段盈亏与新回本价。</div>
                 )}
                 {nextBreakeven !== null || (editSellId == null && totalSelectedQty > 0 && remSharesAfterSell <= 1e-8) ? (
-                  <div style={{ fontSize: 12, color: "#475569" }}>
+                  <div style={{ fontSize: 12, color: "#aeb4ba" }}>
                     卖后剩余 <b>{qty(remSharesAfterSell)} 股</b>
                     {remSharesAfterSell > 1e-8 && nextBreakeven != null ? (
                       <>
@@ -1547,8 +1547,8 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                   type="submit"
                   disabled={busy || totalSelectedQty <= 1e-8 || !(sPriceNum > 0)}
                   style={{
-                    background: totalSelectedQty > 1e-8 && sPriceNum > 0 ? "#b91c1c" : "#94a3b8",
-                    color: "#fff",
+                    background: totalSelectedQty > 1e-8 && sPriceNum > 0 ? "#793d3d" : "#7a838e",
+                    color: "#e4e5e7",
                     border: "none",
                     borderRadius: 8,
                     padding: "8px 16px",
@@ -1640,7 +1640,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
             </div>
 
             {/* Buy Orders Table */}
-            <div style={{ overflowX: "auto", border: "1px solid #e2e8f0", borderRadius: 10 }}>
+            <div style={{ overflowX: "auto", border: "1px solid #434b56", borderRadius: 10 }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.2 }}>
                 <thead>
                   <tr>
@@ -1671,7 +1671,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                         key={b.id}
                         style={{
                           opacity: st === "closed" ? 0.68 : 1,
-                          background: isProf ? "#f0fdf466" : undefined,
+                          background: isProf ? "#21392866" : undefined,
                         }}
                       >
                         <td style={cell}>
@@ -1689,7 +1689,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                           {b.fee > 0 ? <span style={sub}>含费 {usd(b.fee)}</span> : null}
                         </td>
                         <td style={{ ...cell, ...right }}>
-                          <b>{qty(oq)}</b> <span style={{ color: "#64748b" }}>/ {qty(b.quantity)}</span>
+                          <b>{qty(oq)}</b> <span style={{ color: "#99a0a8" }}>/ {qty(b.quantity)}</span>
                           {oq > 1e-8 ? <span style={sub}>成本 {usd(oq * b.unit_cost)}</span> : null}
                         </td>
                         <td style={{ ...cell, ...right, color: color(openPnl) }}>
@@ -1714,14 +1714,14 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                                 <span
                                   style={{
                                     fontWeight: 700,
-                                    color: hit ? "#15803d" : "#0f766e",
+                                    color: hit ? "#84d6a3" : "#81dad3",
                                     fontVariantNumeric: "tabular-nums",
                                   }}
                                 >
                                   TP1 {usd(pl.tp1_price)}
                                 </span>
                                 {pl.tp1_gain_usd != null ? (
-                                  <span style={{ fontSize: 11.5, color: "#15803d", marginLeft: 4 }}>
+                                  <span style={{ fontSize: 11.5, color: "#84d6a3", marginLeft: 4 }}>
                                     (+{usd(pl.tp1_gain_usd)})
                                   </span>
                                 ) : null}
@@ -1755,9 +1755,9 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                               type="button"
                               onClick={() => openNewSellTab(b, exitPlanByBuyId[b.id].recommended_price)}
                               style={{
-                                background: "#f0fdfa",
-                                color: "#0f766e",
-                                border: "1px solid #99f6e4",
+                                background: "#213933",
+                                color: "#81dad3",
+                                border: "1px solid #3d7a6e",
                                 borderRadius: 7,
                                 padding: "2px 7px",
                                 fontSize: 11.5,
@@ -1775,9 +1775,9 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                               type="button"
                               onClick={() => openNewSellTab(b)}
                               style={{
-                                background: isProf ? "#15803d" : "#fff1f2",
-                                color: isProf ? "#fff" : "#be123c",
-                                border: `1px solid ${isProf ? "#15803d" : "#fecdd3"}`,
+                                background: isProf ? "#317249" : "#3b1c1f",
+                                color: isProf ? "#e4e5e7" : "#dd7e95",
+                                border: `1px solid ${isProf ? "#84d6a3" : "#492429"}`,
                                 borderRadius: 7,
                                 padding: "2px 8px",
                                 fontSize: 11.5,
@@ -1817,7 +1817,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                   })}
                   {displayedBuyOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={7} style={{ ...cell, textAlign: "center", color: "#64748b", padding: 20 }}>
+                      <td colSpan={7} style={{ ...cell, textAlign: "center", color: "#99a0a8", padding: 20 }}>
                         当前筛选条件下没有匹配的买入订单。
                       </td>
                     </tr>
@@ -1829,10 +1829,10 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
             {/* Sell History & Matched Lots Section */}
             {sellOrders.length > 0 ? (
               <div style={{ marginTop: 14 }}>
-                <div style={{ fontWeight: 700, fontSize: 13.5, marginBottom: 6, color: "#334155" }}>
+                <div style={{ fontWeight: 700, fontSize: 13.5, marginBottom: 6, color: "#bbc0c5" }}>
                   📤 已卖出记录与平仓配对明细 ({sellOrders.length})
                 </div>
-                <div style={{ overflowX: "auto", border: "1px solid #e2e8f0", borderRadius: 10 }}>
+                <div style={{ overflowX: "auto", border: "1px solid #434b56", borderRadius: 10 }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.8 }}>
                     <thead>
                       <tr>
@@ -1858,13 +1858,13 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                           <td style={cell}>
                             <span
                               style={{
-                                ...pill(s.lot_allocations ? "#7c3aed" : "#64748b"),
+                                ...pill(s.lot_allocations ? "#a17edd" : "#99a0a8"),
                                 marginRight: 6,
                               }}
                             >
                               {s.lot_allocations ? "🎯 手动选批" : "⚙️ 默认FIFO"}
                             </span>
-                            <span style={{ fontSize: 12, color: "#334155" }}>
+                            <span style={{ fontSize: 12, color: "#bbc0c5" }}>
                               {s.matched_lots
                                 .map((m) => `#${m.buy_id} (${usd(m.unit_cost)}×${qty(m.quantity)}股)`)
                                 .join(" + ")}

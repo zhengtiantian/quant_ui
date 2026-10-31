@@ -56,21 +56,21 @@ type CategoryFilter = "all" | "earnings" | "catalysts" | "policy" | "macro" | "d
 const HORIZONS = [7, 14, 30, 60, 90, 120] as const;
 
 const LAYER_META: Record<CatalystLayer, { zh: string; en: string; short: string; color: string }> = {
-  L1_calendar: { zh: "L1 结构化日历", en: "L1 Calendar", short: "L1 日历", color: "#0284c7" },
-  L2_extracted: { zh: "L2 新闻/SEC抽取", en: "L2 News/SEC", short: "L2 抽取", color: "#7c3aed" },
-  L3_web: { zh: "L3 全网巡检", en: "L3 Web Sweep", short: "L3 全网", color: "#ea580c" },
+  L1_calendar: { zh: "L1 结构化日历", en: "L1 Calendar", short: "L1 日历", color: "#75bfe5" },
+  L2_extracted: { zh: "L2 新闻/SEC抽取", en: "L2 News/SEC", short: "L2 抽取", color: "#a17edd" },
+  L3_web: { zh: "L3 全网巡检", en: "L3 Web Sweep", short: "L3 全网", color: "#e19d7a" },
 };
 
 const KIND_META: Record<string, { icon: string; zh: string; en: string; color: string }> = {
-  earnings: { icon: "📊", zh: "财报", en: "Earnings", color: "#0f766e" },
-  product: { icon: "🚀", zh: "产品/大会", en: "Product / Conf", color: "#7c3aed" },
-  corporate: { icon: "🏢", zh: "公司事件", en: "Corporate", color: "#2563eb" },
-  policy: { icon: "⚖️", zh: "政策/关税", en: "Policy / Tariff", color: "#dc2626" },
-  legal: { icon: "🏛️", zh: "监管/诉讼", en: "Legal / Reg", color: "#b91c1c" },
-  analyst: { icon: "🎯", zh: "机构评级", en: "Analyst", color: "#0891b2" },
-  macro: { icon: "🏦", zh: "宏观日历", en: "Macro", color: "#b45309" },
-  dividend: { icon: "💰", zh: "除息分红", en: "Dividend", color: "#15803d" },
-  split: { icon: "✂️", zh: "拆股", en: "Split", color: "#0d9488" },
+  earnings: { icon: "📊", zh: "财报", en: "Earnings", color: "#81dad3" },
+  product: { icon: "🚀", zh: "产品/大会", en: "Product / Conf", color: "#a17edd" },
+  corporate: { icon: "🏢", zh: "公司事件", en: "Corporate", color: "#7e9cdd" },
+  policy: { icon: "⚖️", zh: "政策/关税", en: "Policy / Tariff", color: "#d78484" },
+  legal: { icon: "🏛️", zh: "监管/诉讼", en: "Legal / Reg", color: "#d88383" },
+  analyst: { icon: "🎯", zh: "机构评级", en: "Analyst", color: "#79cde2" },
+  macro: { icon: "🏦", zh: "宏观日历", en: "Macro", color: "#e1a67a" },
+  dividend: { icon: "💰", zh: "除息分红", en: "Dividend", color: "#84d6a3" },
+  split: { icon: "✂️", zh: "拆股", en: "Split", color: "#7eddd5" },
 };
 
 function fmtTimeAgo(ts?: number | null, lang: "zh" | "en" = "zh"): string {
@@ -160,9 +160,9 @@ export const StockCatalystButton: React.FC<{
         }}
         title={lang === "zh" ? `点击弹窗查看 ${symbol} 的未来三层事件与 AI 分析` : `Open upcoming catalysts modal for ${symbol}`}
         style={{
-          background: urgent ? "#fff1f2" : "#f0fdfa",
-          color: urgent ? "#be123c" : "#0f766e",
-          border: `1px solid ${urgent ? "#fecdd3" : "#99f6e4"}`,
+          background: urgent ? "#3b1c1f" : "#213933",
+          color: urgent ? "#dd7e95" : "#81dad3",
+          border: `1px solid ${urgent ? "#492429" : "#5dd5be"}`,
           borderRadius: 8,
           padding: "3px 9px",
           fontSize: 12,
@@ -181,7 +181,7 @@ export const StockCatalystButton: React.FC<{
           }}
           style={{
             fontSize: 11,
-            color: urgent ? "#be123c" : "#64748b",
+            color: urgent ? "#dd7e95" : "#99a0a8",
             cursor: "pointer",
             whiteSpace: "nowrap",
           }}
@@ -211,19 +211,19 @@ const EventCard: React.FC<{
       style={{
         padding: "10px 12px",
         borderRadius: 10,
-        border: `1px solid ${cd.urgent && ev.impact_level === "high" ? "#fecdd3" : "#e2e8f0"}`,
-        background: cd.urgent && ev.impact_level === "high" ? "#fffafb" : "#ffffff",
+        border: `1px solid ${cd.urgent && ev.impact_level === "high" ? "#492429" : "#2f343b"}`,
+        background: cd.urgent && ev.impact_level === "high" ? "#24292e" : "#23272c",
         display: "flex",
         flexDirection: "column",
         gap: 5,
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-        <span style={{ fontWeight: 700, fontSize: 13, fontVariantNumeric: "tabular-nums", color: "#0f172a" }}>
+        <span style={{ fontWeight: 700, fontSize: 13, fontVariantNumeric: "tabular-nums", color: "#d6d9dc" }}>
           {ev.date}
           {ev.date_precision === "approx" ? " ~" : ""}
         </span>
-        <span style={pill(cd.urgent ? "#be123c" : "#475569")}>{cd.text}</span>
+        <span style={pill(cd.urgent ? "#dd7e95" : "#aeb4ba")}>{cd.text}</span>
         <span style={pill(km.color)}>
           {km.icon} {lang === "zh" ? km.zh : km.en}
         </span>
@@ -236,8 +236,8 @@ const EventCard: React.FC<{
               ...iconButton,
               marginLeft: 0,
               fontWeight: 700,
-              color: heldSet.has(ev.symbol) ? "#0f766e" : "#1e293b",
-              background: heldSet.has(ev.symbol) ? "#f0fdfa" : "#f8fafc",
+              color: heldSet.has(ev.symbol) ? "#81dad3" : "#cbcfd3",
+              background: heldSet.has(ev.symbol) ? "#213933" : "#252a30",
             }}
           >
             {ev.symbol}
@@ -245,7 +245,7 @@ const EventCard: React.FC<{
           </button>
         ) : null}
         {ev.implied_move_pct != null ? (
-          <span style={pill("#7c2d12")} title="Options ATM straddle implied move">
+          <span style={pill("#d89883")} title="Options ATM straddle implied move">
             {lang === "zh" ? `期权隐含 ±${ev.implied_move_pct.toFixed(1)}%` : `Implied ±${ev.implied_move_pct.toFixed(1)}%`}
           </span>
         ) : null}
@@ -257,7 +257,7 @@ const EventCard: React.FC<{
             href={ev.source_url}
             target="_blank"
             rel="noreferrer"
-            style={{ marginLeft: "auto", fontSize: 12, color: "#0284c7", textDecoration: "none" }}
+            style={{ marginLeft: "auto", fontSize: 12, color: "#75bfe5", textDecoration: "none" }}
             title={ev.source_title || ev.source_url}
           >
             🔗 {ev.source_title ? ev.source_title.slice(0, 26) : lang === "zh" ? "查看来源" : "Source"} ↗
@@ -265,14 +265,14 @@ const EventCard: React.FC<{
         ) : null}
       </div>
 
-      <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", lineHeight: 1.4 }}>{title}</div>
+      <div style={{ fontSize: 14, fontWeight: 700, color: "#d6d9dc", lineHeight: 1.4 }}>{title}</div>
       {detail && detail !== title ? (
-        <div style={{ fontSize: 13, color: "#475569", lineHeight: 1.5 }}>{detail}</div>
+        <div style={{ fontSize: 13, color: "#aeb4ba", lineHeight: 1.5 }}>{detail}</div>
       ) : null}
 
       {spilloverHeld.length > 0 && ev.symbol !== "MACRO" ? (
         <div style={{ display: "flex", gap: 5, alignItems: "center", flexWrap: "wrap", marginTop: 2 }}>
-          <span style={{ fontSize: 11.5, color: "#64748b" }}>
+          <span style={{ fontSize: 11.5, color: "#99a0a8" }}>
             {lang === "zh" ? "传导影响持仓:" : "Impacts holdings:"}
           </span>
           {spilloverHeld.map((s) => (
@@ -285,9 +285,9 @@ const EventCard: React.FC<{
                 marginLeft: 0,
                 padding: "1px 7px",
                 fontSize: 11.5,
-                color: "#0f766e",
-                borderColor: "#99f6e4",
-                background: "#f0fdfa",
+                color: "#81dad3",
+                borderColor: "#3d7a6e",
+                background: "#213933",
               }}
             >
               {s}
@@ -539,14 +539,14 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
     });
   }, [feed, scope, layerFilter, catFilter, allKw, watchSet]);
 
-  const segBtn = (active: boolean, accent = "#0f766e"): React.CSSProperties => ({
+  const segBtn = (active: boolean, accent = "#81dad3"): React.CSSProperties => ({
     ...ghostButton,
     padding: "3px 9px",
     fontSize: 12,
     borderRadius: 8,
-    borderColor: active ? accent : "#cbd5e1",
-    background: active ? accent : "#ffffff",
-    color: active ? "#ffffff" : "#334155",
+    borderColor: active ? accent : "#6c757f",
+    background: active ? accent : "#e4e5e7",
+    color: active ? "#e4e5e7" : "#bbc0c5",
     fontWeight: active ? 700 : 500,
     cursor: "pointer",
   });
@@ -590,19 +590,19 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
         style={{
           ...panel,
           padding: "10px 14px",
-          background: "linear-gradient(90deg, #f0fdfa 0%, #ffffff 60%, #f8fafc 100%)",
-          borderColor: "#99f6e4",
+          background: "linear-gradient(90deg, #213933 0%, #23272c 60%, #252a30 100%)",
+          borderColor: "#3d7a6e",
           display: "flex",
           alignItems: "center",
           gap: 8,
           flexWrap: "wrap",
         }}
       >
-        <span style={{ fontWeight: 800, fontSize: 14.5, color: "#0f172a", whiteSpace: "nowrap" }}>
+        <span style={{ fontWeight: 800, fontSize: 14.5, color: "#d6d9dc", whiteSpace: "nowrap" }}>
           🔭 {lang === "zh" ? "未来事件三层雷达" : "3-Layer Catalysts"}
         </span>
         {feed ? (
-          <span style={pill("#0f766e")}>
+          <span style={pill("#81dad3")}>
             L1 {feed.summary.l1} · L2 {l2?.stored_count ?? 0} · L3 {l3?.stored_count ?? 0}
           </span>
         ) : null}
@@ -625,9 +625,9 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
             flex: "1 1 260px",
             padding: "7px 11px",
             borderRadius: 8,
-            border: "1px solid #cbd5e1",
+            border: "1px solid #4b545f",
             fontSize: 13,
-            background: "#ffffff",
+            background: "#23272c",
           }}
         />
 
@@ -638,9 +638,9 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
             ...ghostButton,
             padding: "6px 12px",
             borderRadius: 8,
-            background: "#0f766e",
-            color: "#ffffff",
-            borderColor: "#0f766e",
+            background: "#2f746f",
+            color: "#e4e5e7",
+            borderColor: "#3b918b",
             fontWeight: 700,
             fontSize: 12.5,
           }}
@@ -672,7 +672,7 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(15, 23, 42, 0.45)",
+            background: "rgba(0, 0, 0, 0.55)",
             backdropFilter: "blur(2px)",
             display: "grid",
             placeItems: "center",
@@ -687,7 +687,7 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
               maxHeight: "90vh",
               marginBottom: 0,
               padding: 0,
-              background: "#ffffff",
+              background: "#23272c",
               display: "flex",
               flexDirection: "column",
               overflow: "hidden",
@@ -698,8 +698,8 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
             <div
               style={{
                 padding: "14px 18px 10px",
-                borderBottom: "1px solid #e2e8f0",
-                background: "#f8fafc",
+                borderBottom: "1px solid #434b56",
+                background: "#252a30",
                 display: "flex",
                 flexDirection: "column",
                 gap: 8,
@@ -709,13 +709,13 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                   {activeStockSym ? (
                     <>
-                      <span style={{ fontSize: 20, fontWeight: 800, color: "#0f172a" }}>
+                      <span style={{ fontSize: 20, fontWeight: 800, color: "#d6d9dc" }}>
                         🔭 {activeStockSym}
                       </span>
                       {activeStock ? (
                         <span style={muted}>{shortName(activeStock.name)}</span>
                       ) : null}
-                      <span style={pill(heldSet.has(activeStockSym) ? "#0f766e" : "#475569")}>
+                      <span style={pill(heldSet.has(activeStockSym) ? "#81dad3" : "#aeb4ba")}>
                         {heldSet.has(activeStockSym)
                           ? lang === "zh"
                             ? `我的持仓${activeStock?.weight_pct != null ? ` · 仓位 ${activeStock.weight_pct.toFixed(1)}%` : ""}`
@@ -750,11 +750,11 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                     </>
                   ) : (
                     <>
-                      <span style={{ fontSize: 18, fontWeight: 800, color: "#0f172a" }}>
+                      <span style={{ fontSize: 18, fontWeight: 800, color: "#d6d9dc" }}>
                         🔭 {lang === "zh" ? "全部持仓与观察池 · 未来事件总览" : "All Holdings & Watchlist · Upcoming Events"}
                       </span>
                       {feed ? (
-                        <span style={pill("#0f766e")}>
+                        <span style={pill("#81dad3")}>
                           {feed.from.slice(5)} → {feed.to.slice(5)} ({filteredTimeline.length})
                         </span>
                       ) : null}
@@ -768,7 +768,7 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                     <button
                       key={h}
                       type="button"
-                      style={segBtn(days === h, "#0284c7")}
+                      style={segBtn(days === h, "#75bfe5")}
                       onClick={() => {
                         setDays(h);
                         store.set("catDaysV2", String(h));
@@ -789,8 +789,8 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                     onClick={() => onChangeModalTarget(null)}
                     title="Close (Esc)"
                     style={{
-                      background: "#0f172a",
-                      color: "#ffffff",
+                      background: "#343a42",
+                      color: "#e4e5e7",
                       border: "none",
                       borderRadius: 8,
                       padding: "5px 12px",
@@ -816,8 +816,8 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                       padding: "2px 8px",
                       fontSize: 11.5,
                       fontWeight: 700,
-                      background: modalTarget === "ALL" ? "#0f172a" : "#ffffff",
-                      color: modalTarget === "ALL" ? "#ffffff" : "#334155",
+                      background: modalTarget === "ALL" ? "#d6d9dc" : "#23272c",
+                      color: modalTarget === "ALL" ? "#23272c" : "#bbc0c5",
                     }}
                   >
                     🌐 {lang === "zh" ? "全部时间轴" : "All Timeline"}
@@ -838,9 +838,9 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                           padding: "2px 7px",
                           fontSize: 11.5,
                           fontWeight: isHeld || isSel ? 700 : 500,
-                          borderColor: isSel ? "#0f766e" : isHeld ? "#99f6e4" : "#e2e8f0",
-                          background: isSel ? "#0f766e" : isHeld ? "#f0fdfa" : "#ffffff",
-                          color: isSel ? "#ffffff" : isHeld ? "#0f766e" : "#475569",
+                          borderColor: isSel ? "#3b918b" : isHeld ? "#5dd5be" : "#2f343b",
+                          background: isSel ? "#2f746f" : isHeld ? "#213933" : "#23272c",
+                          color: isSel ? "#e4e5e7" : isHeld ? "#81dad3" : "#aeb4ba",
                         }}
                       >
                         {isHeld ? "★" : ""}
@@ -867,7 +867,7 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                     type="button"
                     style={segBtn(
                       layerFilter === lk,
-                      lk === "all" ? "#475569" : LAYER_META[lk].color
+                      lk === "all" ? "#aeb4ba" : LAYER_META[lk].color
                     )}
                     onClick={() => setLayerFilter(lk)}
                   >
@@ -880,10 +880,10 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                   onChange={(e) => setCatFilter(e.target.value as CategoryFilter)}
                   style={{
                     borderRadius: 8,
-                    border: "1px solid #cbd5e1",
+                    border: "1px solid #4b545f",
                     padding: "3px 8px",
                     fontSize: 12,
-                    background: "#ffffff",
+                    background: "#23272c",
                   }}
                 >
                   <option value="all">{lang === "zh" ? "全部事件类型" : "All Event Types"}</option>
@@ -900,10 +900,10 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                     onChange={(e) => setScope(e.target.value as ScopeFilter)}
                     style={{
                       borderRadius: 8,
-                      border: "1px solid #cbd5e1",
+                      border: "1px solid #4b545f",
                       padding: "3px 8px",
                       fontSize: 12,
-                      background: "#ffffff",
+                      background: "#23272c",
                     }}
                   >
                     <option value="all">{lang === "zh" ? "范围: 持仓 + 观察池" : "Scope: All"}</option>
@@ -921,8 +921,8 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                 style={{
                   padding: "10px 12px",
                   borderRadius: 10,
-                  background: "#f0fdfa",
-                  border: "1px solid #99f6e4",
+                  background: "#213933",
+                  border: "1px solid #3d7a6e",
                 }}
               >
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
@@ -949,9 +949,9 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                         width: "100%",
                         padding: "8px 28px 8px 10px",
                         borderRadius: 8,
-                        border: "1px solid #94a3b8",
+                        border: "1px solid #515b67",
                         fontSize: 13,
-                        background: "#ffffff",
+                        background: "#23272c",
                       }}
                     />
                     {modalSearch ? (
@@ -963,7 +963,7 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                           right: 4,
                           background: "transparent",
                           border: "none",
-                          color: "#64748b",
+                          color: "#99a0a8",
                           cursor: "pointer",
                           padding: "2px 6px",
                         }}
@@ -979,9 +979,9 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                     onClick={() => void handleAsk("fast")}
                     style={{
                       ...ghostButton,
-                      background: "#0f766e",
-                      color: "#ffffff",
-                      borderColor: "#0f766e",
+                      background: "#2f746f",
+                      color: "#e4e5e7",
+                      borderColor: "#3b918b",
                       fontWeight: 700,
                       borderRadius: 8,
                       padding: "7px 12px",
@@ -1004,9 +1004,9 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                     onClick={() => void handleAsk("web")}
                     style={{
                       ...ghostButton,
-                      background: "#ffffff",
-                      color: "#c2410c",
-                      borderColor: "#fdba74",
+                      background: "#23272c",
+                      color: "#e0987b",
+                      borderColor: "#88633c",
                       fontWeight: 700,
                       borderRadius: 8,
                       padding: "7px 12px",
@@ -1026,7 +1026,7 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
 
                 {/* Preset 1-click questions */}
                 <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 7, alignItems: "center" }}>
-                  <span style={{ fontSize: 11.5, color: "#475569", fontWeight: 600 }}>
+                  <span style={{ fontSize: 11.5, color: "#aeb4ba", fontWeight: 600 }}>
                     {lang === "zh" ? "一键提问:" : "Quick ask:"}
                   </span>
                   {quickPrompts.map((pText, i) => (
@@ -1036,12 +1036,12 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                       disabled={askingMode !== null}
                       onClick={() => void handleAsk("fast", pText)}
                       style={{
-                        background: "#ffffff",
-                        border: "1px solid #cbd5e1",
+                        background: "#23272c",
+                        border: "1px solid #4b545f",
                         borderRadius: 999,
                         padding: "2px 9px",
                         fontSize: 11.5,
-                        color: "#334155",
+                        color: "#bbc0c5",
                         cursor: "pointer",
                       }}
                     >
@@ -1053,7 +1053,7 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                 {/* Recent Query History */}
                 {recentQueries.length > 0 ? (
                   <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 6, alignItems: "center" }}>
-                    <span style={{ fontSize: 11, color: "#64748b" }}>
+                    <span style={{ fontSize: 11, color: "#99a0a8" }}>
                       {lang === "zh" ? "历史记录:" : "History:"}
                     </span>
                     {recentQueries.slice(0, 5).map((rq) => {
@@ -1065,8 +1065,8 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                             display: "inline-flex",
                             alignItems: "center",
                             gap: 3,
-                            background: isSel ? "#ccfbf1" : "#ffffff",
-                            border: `1px solid ${isSel ? "#14b8a6" : "#e2e8f0"}`,
+                            background: isSel ? "#274942" : "#23272c",
+                            border: `1px solid ${isSel ? "#7fdbd1" : "#2f343b"}`,
                             borderRadius: 999,
                             padding: "1px 8px",
                             fontSize: 11,
@@ -1074,14 +1074,14 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                         >
                           <span
                             onClick={() => setActiveQuery(isSel ? null : rq)}
-                            style={{ cursor: "pointer", color: "#0f172a" }}
+                            style={{ cursor: "pointer", color: "#d6d9dc" }}
                             title={rq.question}
                           >
                             {rq.question.length > 20 ? `${rq.question.slice(0, 20)}…` : rq.question}
                           </span>
                           <span
                             onClick={() => void handleDeleteQuery(rq.id)}
-                            style={{ cursor: "pointer", color: "#94a3b8" }}
+                            style={{ cursor: "pointer", color: "#7a838e" }}
                           >
                             ×
                           </span>
@@ -1101,14 +1101,14 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                       marginTop: 8,
                       padding: "10px 12px",
                       borderRadius: 8,
-                      background: "#ffffff",
-                      border: "1px solid #cbd5e1",
+                      background: "#23272c",
+                      border: "1px solid #4b545f",
                     }}
                   >
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 4 }}>
                       <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
                         <b>🤖 {activeQuery.question}</b>
-                        <span style={pill("#0f766e")}>{activeQuery.model || activeQuery.mode}</span>
+                        <span style={pill("#81dad3")}>{activeQuery.model || activeQuery.mode}</span>
                         <span style={muted}>{activeQuery.elapsed_s}s</span>
                       </div>
                       <button type="button" style={iconButton} onClick={() => setActiveQuery(null)}>
@@ -1117,7 +1117,7 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                     </div>
                     <Markdown text={activeQuery.answer} />
                     {activeQuery.sources && activeQuery.sources.length > 0 ? (
-                      <div style={{ marginTop: 8, paddingTop: 6, borderTop: "1px solid #eef2f7", display: "flex", gap: 5, flexWrap: "wrap" }}>
+                      <div style={{ marginTop: 8, paddingTop: 6, borderTop: "1px solid #3e4752", display: "flex", gap: 5, flexWrap: "wrap" }}>
                         {activeQuery.sources.map((src, idx) => (
                           <a
                             key={idx}
@@ -1126,9 +1126,9 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                             rel="noreferrer"
                             style={{
                               fontSize: 11,
-                              color: "#0284c7",
-                              background: "#f0f9ff",
-                              border: "1px solid #bae6fd",
+                              color: "#75bfe5",
+                              background: "#1d2f3b",
+                              border: "1px solid #335c71",
                               borderRadius: 6,
                               padding: "2px 6px",
                               textDecoration: "none",
@@ -1159,7 +1159,7 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                   <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                     {/* 1. Direct Events */}
                     <div>
-                      <div style={{ fontWeight: 800, fontSize: 14, color: "#0f172a", marginBottom: 8 }}>
+                      <div style={{ fontWeight: 800, fontSize: 14, color: "#d6d9dc", marginBottom: 8 }}>
                         🎯 {lang === "zh" ? `${activeStockSym} 本公司直接事件 (${stockDirect.length})` : `${activeStockSym} Direct Company Events (${stockDirect.length})`}
                       </div>
                       {stockDirect.length > 0 ? (
@@ -1178,11 +1178,11 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                         <div
                           style={{
                             fontSize: 13,
-                            color: "#64748b",
-                            background: "#f8fafc",
+                            color: "#99a0a8",
+                            background: "#252a30",
                             borderRadius: 8,
                             padding: "10px 12px",
-                            border: "1px dashed #cbd5e1",
+                            border: "1px dashed #4b545f",
                           }}
                         >
                           {lang === "zh"
@@ -1194,7 +1194,7 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
 
                     {/* 2. Supply-Chain & Peer Spillover */}
                     <div>
-                      <div style={{ fontWeight: 800, fontSize: 14, color: "#6d28d9", marginBottom: 8 }}>
+                      <div style={{ fontWeight: 800, fontSize: 14, color: "#a585d5", marginBottom: 8 }}>
                         🔗 {lang === "zh" ? `影响 ${activeStockSym} 的上下游与同行传导事件 (${stockSpill.length})` : `Supply-Chain & Peer Spillover Affecting ${activeStockSym} (${stockSpill.length})`}
                       </div>
                       {stockSpill.length > 0 ? (
@@ -1219,7 +1219,7 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                     {/* 3. High-Impact Macro */}
                     {stockMacro.length > 0 ? (
                       <div>
-                        <div style={{ fontWeight: 800, fontSize: 14, color: "#b45309", marginBottom: 8 }}>
+                        <div style={{ fontWeight: 800, fontSize: 14, color: "#e1a67a", marginBottom: 8 }}>
                           🏦 {lang === "zh" ? `重点宏观与政策节点 (${stockMacro.length})` : `Key Macro & Policy Dates (${stockMacro.length})`}
                         </div>
                         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -1269,7 +1269,7 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                               <td style={{ ...cell, whiteSpace: "nowrap" }}>
                                 <b>{ev.date}</b>
                                 <span style={sub}>
-                                  <span style={pill(cd.urgent ? "#be123c" : "#64748b")}>{cd.text}</span>
+                                  <span style={pill(cd.urgent ? "#dd7e95" : "#99a0a8")}>{cd.text}</span>
                                 </span>
                               </td>
                               <td style={{ ...cell, whiteSpace: "nowrap" }}>
@@ -1282,7 +1282,7 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                               </td>
                               <td style={cell}>
                                 {ev.symbol === "MACRO" ? (
-                                  <span style={pill("#b45309")}>MACRO</span>
+                                  <span style={pill("#e1a67a")}>MACRO</span>
                                 ) : (
                                   <button
                                     type="button"
@@ -1291,7 +1291,7 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                                       ...iconButton,
                                       marginLeft: 0,
                                       fontWeight: 700,
-                                      color: heldSet.has(ev.symbol) ? "#0f766e" : "#0f172a",
+                                      color: heldSet.has(ev.symbol) ? "#81dad3" : "#d6d9dc",
                                     }}
                                   >
                                     {ev.symbol}
@@ -1305,7 +1305,7 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                                 <div style={{ fontWeight: 600 }}>
                                   {title}{" "}
                                   {ev.implied_move_pct != null ? (
-                                    <span style={pill("#7c2d12")}>±{ev.implied_move_pct.toFixed(1)}%</span>
+                                    <span style={pill("#d89883")}>±{ev.implied_move_pct.toFixed(1)}%</span>
                                   ) : null}{" "}
                                   {ev.estimated_payout_usd != null ? (
                                     <span style={pill(UP)}>+{usd(ev.estimated_payout_usd)}</span>
@@ -1319,7 +1319,7 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                                     href={ev.source_url}
                                     target="_blank"
                                     rel="noreferrer"
-                                    style={{ color: "#0284c7", fontSize: 12, textDecoration: "none" }}
+                                    style={{ color: "#75bfe5", fontSize: 12, textDecoration: "none" }}
                                   >
                                     {ev.source_title ? ev.source_title.slice(0, 20) : "Link"} ↗
                                   </a>
@@ -1345,8 +1345,8 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
             <div
               style={{
                 padding: "9px 18px",
-                borderTop: "1px solid #e2e8f0",
-                background: "#f8fafc",
+                borderTop: "1px solid #434b56",
+                background: "#252a30",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
@@ -1366,7 +1366,7 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                   type="button"
                   disabled={Boolean(l2?.running)}
                   onClick={() => void handleCollect("l2")}
-                  style={{ ...iconButton, marginLeft: 0, fontSize: 11.5, color: "#6d28d9" }}
+                  style={{ ...iconButton, marginLeft: 0, fontSize: 11.5, color: "#a585d5" }}
                 >
                   {l2?.running ? "⏳ L2…" : lang === "zh" ? "⚡ 更新L2" : "⚡ Sync L2"}
                 </button>
@@ -1377,7 +1377,7 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
                   type="button"
                   disabled={Boolean(l3?.running)}
                   onClick={() => void handleCollect("l3")}
-                  style={{ ...iconButton, marginLeft: 0, fontSize: 11.5, color: "#c2410c" }}
+                  style={{ ...iconButton, marginLeft: 0, fontSize: 11.5, color: "#e0987b" }}
                 >
                   {l3?.running ? "⏳ L3…" : lang === "zh" ? "🌐 更新L3" : "🌐 Sync L3"}
                 </button>

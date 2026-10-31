@@ -18,11 +18,11 @@ function taiwanSun(cx: number, cy: number, outer: number, inner: number): string
 
 export const TaiwanFlag: React.FC<{ height?: number }> = ({ height = 14 }) => (
   <svg viewBox="0 0 30 20" height={height} style={{ verticalAlign: "-0.15em", borderRadius: 2 }} role="img" aria-label="Taiwan">
-    <rect width="30" height="20" fill="#FE0000" />
-    <rect width="15" height="10" fill="#000095" />
-    <polygon points={taiwanSun(7.5, 5, 3.75, 2.05)} fill="#fff" />
-    <circle cx="7.5" cy="5" r="2.05" fill="#000095" />
-    <circle cx="7.5" cy="5" r="1.75" fill="#fff" />
+    <rect width="30" height="20" fill="#e77474" />
+    <rect width="15" height="10" fill="#7474e7" />
+    <polygon points={taiwanSun(7.5, 5, 3.75, 2.05)} fill="#23272c" />
+    <circle cx="7.5" cy="5" r="2.05" fill="#7474e7" />
+    <circle cx="7.5" cy="5" r="1.75" fill="#23272c" />
   </svg>
 );
 

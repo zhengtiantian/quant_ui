@@ -23,7 +23,7 @@ const PriceChart: React.FC<{ candles: Candle[]; type: "line" | "candle"; prevClo
   candles, type, prevClose, intraday,
 }) => {
   const [hover, setHover] = React.useState<number | null>(null);
-  if (!candles.length) return <div style={{ padding: 40, color: "#64748b" }}>No data</div>;
+  if (!candles.length) return <div style={{ padding: 40, color: "#99a0a8" }}>No data</div>;
   const lows = candles.map((c) => (type === "line" ? c.close : c.low));
   const highs = candles.map((c) => (type === "line" ? c.close : c.high));
   if (prevClose) { lows.push(prevClose); highs.push(prevClose); }
@@ -62,19 +62,19 @@ const PriceChart: React.FC<{ candles: Candle[]; type: "line" | "candle"; prevClo
       <svg viewBox={`0 0 ${W} ${H}`} width="100%" onMouseMove={onMove} onMouseLeave={() => setHover(null)}
            style={{ display: "block", fontFamily: "inherit" }}>
         {shades.map(([a, b]) => (
-          <rect key={a} x={PAD.l + step * a} y={PAD.t} width={step * (b - a + 1)} height={ih} fill="#94a3b8" opacity={0.09} />
+          <rect key={a} x={PAD.l + step * a} y={PAD.t} width={step * (b - a + 1)} height={ih} fill="#7a838e" opacity={0.09} />
         ))}
         {ticks.map((v) => (
           <g key={v}>
-            <line x1={PAD.l} x2={W - PAD.r} y1={y(v)} y2={y(v)} stroke="#e2e8f0" strokeWidth={0.6} />
-            <text x={W - PAD.r + 6} y={y(v) + 4} fontSize={11} fill="#64748b">{num(v)}</text>
+            <line x1={PAD.l} x2={W - PAD.r} y1={y(v)} y2={y(v)} stroke="#6c747f" strokeWidth={0.6} />
+            <text x={W - PAD.r + 6} y={y(v) + 4} fontSize={11} fill="#99a0a8">{num(v)}</text>
           </g>
         ))}
         {prevClose ? (
-          <line x1={PAD.l} x2={W - PAD.r} y1={y(prevClose)} y2={y(prevClose)} stroke="#94a3b8" strokeDasharray="4 4" strokeWidth={0.8} />
+          <line x1={PAD.l} x2={W - PAD.r} y1={y(prevClose)} y2={y(prevClose)} stroke="#7a838e" strokeDasharray="4 4" strokeWidth={0.8} />
         ) : null}
         {xTicks.map((i) => (
-          <text key={i} x={x(i)} y={H - 6} fontSize={11} fill="#64748b" textAnchor="middle">{label(candles[i].time, intraday)}</text>
+          <text key={i} x={x(i)} y={H - 6} fontSize={11} fill="#99a0a8" textAnchor="middle">{label(candles[i].time, intraday)}</text>
         ))}
         {type === "line" ? (
           <polyline fill="none" stroke={lineColor} strokeWidth={1.3} strokeLinejoin="round"
@@ -87,16 +87,16 @@ const PriceChart: React.FC<{ candles: Candle[]; type: "line" | "candle"; prevClo
               <g key={i}>
                 <line x1={x(i)} x2={x(i)} y1={y(c.high)} y2={y(c.low)} stroke={col} strokeWidth={0.8} />
                 <rect x={x(i) - bw / 2} width={bw} y={y(Math.max(c.open, c.close))}
-                      height={Math.max(0.8, Math.abs(y(c.open) - y(c.close)))} fill={up ? "#fff" : col} stroke={col} strokeWidth={0.8} />
+                      height={Math.max(0.8, Math.abs(y(c.open) - y(c.close)))} fill={up ? "#23272c" : col} stroke={col} strokeWidth={0.8} />
               </g>
             );
           })
         )}
-        {h ? <line x1={x(hover!)} x2={x(hover!)} y1={PAD.t} y2={PAD.t + ih} stroke="#334155" strokeWidth={0.5} /> : null}
+        {h ? <line x1={x(hover!)} x2={x(hover!)} y1={PAD.t} y2={PAD.t + ih} stroke="#bbc0c5" strokeWidth={0.5} /> : null}
       </svg>
       {h ? (
-        <div style={{ position: "absolute", top: 4, left: 8, fontSize: 12, background: "rgba(255,255,255,0.9)", padding: "2px 8px",
-                      borderRadius: 6, border: "1px solid #e2e8f0", fontVariantNumeric: "tabular-nums" }}>
+        <div style={{ position: "absolute", top: 4, left: 8, fontSize: 12, background: "rgba(35,39,44,0.9)", padding: "2px 8px",
+                      borderRadius: 6, border: "1px solid #434b56", fontVariantNumeric: "tabular-nums" }}>
           {label(h.time, intraday)}{intraday && h.session && h.session !== "regular" ? ` · ${h.session === "pre" ? "pre-market" : "after hours"}` : ""}
           {type === "line" ? ` · ${num(h.close)}` : ` · O ${num(h.open)} H ${num(h.high)} L ${num(h.low)} C ${num(h.close)}`}
           {h.partial ? " · today so far" : ""}

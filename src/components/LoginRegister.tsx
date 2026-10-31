@@ -130,7 +130,7 @@ const LoginRegister: React.FC = () => {
             <a
                 href="#"
                 onClick={() => setMode(mode === "login" ? "register" : "login")}
-                style={{ color: "#007bff" }}
+                style={{ color: "#74abe7" }}
             >
                 {mode === "login" ? "No account? Sign up" : "Already have an account? Sign in"}
             </a>

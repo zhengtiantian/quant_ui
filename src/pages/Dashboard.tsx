@@ -7,15 +7,34 @@ import PositionsPanel from "../components/PositionsPanel";
 import PerformancePanel from "../components/PerformancePanel";
 import TaskMonitorPanel from "../components/TaskMonitorPanel";
 
+// The Jobs / Budget / Time dashboard (job_agent, kept running by launchd on :5050) shown inside this
+// one: its own page in embed mode, which drops its module switch and uses this palette.
+const AGENT_URL = (import.meta.env.VITE_JOB_AGENT_URL as string | undefined) ?? "http://127.0.0.1:5050";
+type AgentModule = "jobs" | "budget" | "time";
+const AGENT_TABS: { id: AgentModule; label: string }[] = [
+    { id: "jobs", label: "🎯 Jobs" },
+    { id: "budget", label: "💰 Budget" },
+    { id: "time", label: "⏱ Time" },
+];
+
+const tabStyle = (active: boolean): React.CSSProperties =>
+    active ? {} : { background: "#262b31", borderColor: "#434b56", color: "#aeb4ba", fontWeight: 600 };
+
 const Dashboard: React.FC = () => {
     const username = localStorage.getItem("username");
-    type Tab = "signals" | "holdings" | "briefs" | "positions" | "performance" | "strategy" | "tasks";
-    const TABS: Tab[] = ["signals", "holdings", "briefs", "positions", "performance", "strategy", "tasks"];
+    type Tab = "signals" | "holdings" | "briefs" | "positions" | "performance" | "strategy" | "tasks" | AgentModule;
+    const TABS: Tab[] = ["signals", "holdings", "briefs", "positions", "performance", "strategy", "tasks", "jobs", "budget", "time"];
     // ?tab=briefs (the desktop widget links straight to a tab)
     const [tab, setTab] = React.useState<Tab>(() => {
         const wanted = new URLSearchParams(window.location.search).get("tab") as Tab | null;
         return wanted && TABS.includes(wanted) ? wanted : "signals";
     });
+    // An agent tab's frame is loaded on first visit and kept, so switching back does not reload it.
+    const [visited, setVisited] = React.useState<Set<AgentModule>>(() => new Set());
+    React.useEffect(() => {
+        if (AGENT_TABS.some((t) => t.id === tab)) setVisited((v) => (v.has(tab as AgentModule) ? v : new Set(v).add(tab as AgentModule)));
+    }, [tab]);
+    const isAgent = AGENT_TABS.some((t) => t.id === tab);
 
     const handleLogout = () => {
         localStorage.removeItem("token");
@@ -31,7 +50,7 @@ const Dashboard: React.FC = () => {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    borderBottom: "1px solid #ccc",
+                    borderBottom: "1px solid #4f5864",
                     paddingBottom: "10px",
                     marginBottom: "20px",
                 }}
@@ -44,18 +63,31 @@ const Dashboard: React.FC = () => {
             </header>
 
             <div style={{ display: "flex", gap: "10px", marginBottom: "16px", flexWrap: "wrap" }}>
-                <button onClick={() => setTab("signals")} style={tab === "signals" ? { fontWeight: "bold" } : {}}>Signals</button>
-                <button onClick={() => setTab("holdings")} style={tab === "holdings" ? { fontWeight: "bold" } : {}}>My Holdings</button>
-                <button onClick={() => setTab("briefs")} style={tab === "briefs" ? { fontWeight: "bold" } : {}}>Market Briefs</button>
-                <button onClick={() => setTab("positions")} style={tab === "positions" ? { fontWeight: "bold" } : {}}>Positions</button>
-                <button onClick={() => setTab("performance")} style={tab === "performance" ? { fontWeight: "bold" } : {}}>Performance</button>
-                <button onClick={() => setTab("strategy")} style={tab === "strategy" ? { fontWeight: "bold" } : {}}>Strategy Studio</button>
-                <button onClick={() => setTab("tasks")} style={tab === "tasks" ? { fontWeight: "bold" } : {}}>⏱️ Task Monitor</button>
+                <button onClick={() => setTab("signals")} style={tabStyle(tab === "signals")}>Signals</button>
+                <button onClick={() => setTab("holdings")} style={tabStyle(tab === "holdings")}>My Holdings</button>
+                <button onClick={() => setTab("briefs")} style={tabStyle(tab === "briefs")}>Market Briefs</button>
+                <button onClick={() => setTab("positions")} style={tabStyle(tab === "positions")}>Positions</button>
+                <button onClick={() => setTab("performance")} style={tabStyle(tab === "performance")}>Performance</button>
+                <button onClick={() => setTab("strategy")} style={tabStyle(tab === "strategy")}>Strategy Studio</button>
+                <button onClick={() => setTab("tasks")} style={tabStyle(tab === "tasks")}>⏱️ Task Monitor</button>
+                <span style={{ width: 1, background: "#434b56", margin: "0 4px" }} />
+                {AGENT_TABS.map((t) => (
+                    <button key={t.id} onClick={() => setTab(t.id)} style={tabStyle(tab === t.id)}>{t.label}</button>
+                ))}
             </div>
 
             {/* Main */}
             <main>
-                {tab === "signals" ? (
+                {AGENT_TABS.filter((t) => visited.has(t.id)).map((t) => (
+                    <iframe
+                        key={t.id}
+                        title={t.label}
+                        src={`${AGENT_URL}/?embed=1&module=${t.id}`}
+                        style={{ display: tab === t.id ? "block" : "none", width: "100%", height: "calc(100vh - 150px)",
+                                 border: "1px solid #434b56", borderRadius: 12, background: "#16191d" }}
+                    />
+                ))}
+                {isAgent ? null : tab === "signals" ? (
                     <SignalsPanel />
                 ) : tab === "holdings" ? (
                     <Holdings />

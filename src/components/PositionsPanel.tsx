@@ -6,7 +6,7 @@ const pct = (v: number | null | undefined): string =>
     v === null || v === undefined ? "—" : `${(v * 100).toFixed(2)}%`;
 
 const retColor = (v: number | null | undefined): string =>
-    (v ?? 0) > 0 ? "#1a7f37" : (v ?? 0) < 0 ? "#cf222e" : "#6e7781";
+    (v ?? 0) > 0 ? "#88d39d" : (v ?? 0) < 0 ? "#d6848a" : "#99a0a8";
 
 const triggerLabel: Record<string, string> = {
     max_hold: "Max hold",
@@ -36,7 +36,7 @@ export default function PositionsPanel() {
     useEffect(load, []);
 
     if (loading) return <p>Loading portfolio...</p>;
-    if (error) return <p style={{ color: "#cf222e" }}>Failed to load: {error}</p>;
+    if (error) return <p style={{ color: "#d6848a" }}>Failed to load: {error}</p>;
 
     const open = positions.filter((p) => p.status === "open");
     const closed = positions.filter((p) => p.status === "closed");
@@ -48,14 +48,14 @@ export default function PositionsPanel() {
     const th: React.CSSProperties = {
         textAlign: "left",
         padding: "8px 12px",
-        borderBottom: "2px solid #d0d7de",
+        borderBottom: "2px solid #4a535e",
         fontSize: "0.85rem",
-        color: "#57606a",
+        color: "#a8aeb5",
         whiteSpace: "nowrap",
     };
     const td: React.CSSProperties = {
         padding: "8px 12px",
-        borderBottom: "1px solid #eaeef2",
+        borderBottom: "1px solid #434a51",
         fontSize: "0.95rem",
     };
 
@@ -63,7 +63,7 @@ export default function PositionsPanel() {
         <div style={{ padding: "0.5rem" }}>
             <div style={{ display: "flex", alignItems: "baseline", gap: "16px", marginBottom: "12px" }}>
                 <h2 style={{ margin: 0 }}>Paper Portfolio</h2>
-                <span style={{ color: "#57606a" }}>
+                <span style={{ color: "#a8aeb5" }}>
                     {open.length} open · {closed.length} closed
                 </span>
                 <span style={{ color: retColor(avgOpen), fontWeight: 600 }}>
@@ -78,8 +78,8 @@ export default function PositionsPanel() {
             {alerts.length > 0 && (
                 <div
                     style={{
-                        background: "#fff8f0",
-                        border: "1px solid #ffd8a8",
+                        background: "#3b2d1d",
+                        border: "1px solid #785934",
                         borderRadius: "6px",
                         padding: "10px 14px",
                         marginBottom: "16px",
@@ -89,7 +89,7 @@ export default function PositionsPanel() {
                         🔔 Exit alerts ({alerts.length})
                     </div>
                     {alerts.slice(0, 6).map((a, i) => (
-                        <div key={i} style={{ fontSize: "0.9rem", color: "#57606a", padding: "2px 0" }}>
+                        <div key={i} style={{ fontSize: "0.9rem", color: "#a8aeb5", padding: "2px 0" }}>
                             <b>{a.alertDate}</b> · {a.message}
                         </div>
                     ))}
@@ -97,7 +97,7 @@ export default function PositionsPanel() {
             )}
 
             {open.length === 0 && closed.length === 0 ? (
-                <p style={{ color: "#6e7781" }}>No positions yet.</p>
+                <p style={{ color: "#99a0a8" }}>No positions yet.</p>
             ) : (
                 <table style={{ borderCollapse: "collapse", width: "100%", maxWidth: "960px" }}>
                     <thead>
@@ -123,8 +123,8 @@ export default function PositionsPanel() {
                                         <span
                                             style={{
                                                 fontSize: "0.78rem",
-                                                color: p.status === "open" ? "#1a7f37" : "#6e7781",
-                                                border: `1px solid ${p.status === "open" ? "#1a7f37" : "#6e7781"}`,
+                                                color: p.status === "open" ? "#88d39d" : "#99a0a8",
+                                                border: `1px solid ${p.status === "open" ? "#88d39d" : "#99a0a8"}`,
                                                 borderRadius: "10px",
                                                 padding: "1px 8px",
                                             }}
@@ -132,14 +132,14 @@ export default function PositionsPanel() {
                                             {p.status}
                                         </span>
                                     </td>
-                                    <td style={{ ...td, color: "#57606a" }}>{p.entryDate}</td>
+                                    <td style={{ ...td, color: "#a8aeb5" }}>{p.entryDate}</td>
                                     <td style={{ ...td, textAlign: "right" }}>{p.entryPrice ?? "—"}</td>
                                     <td style={{ ...td, textAlign: "right" }}>{nowPrice ?? "—"}</td>
                                     <td style={{ ...td, textAlign: "right" }}>{p.daysHeld ?? "—"}d</td>
                                     <td style={{ ...td, textAlign: "right", fontWeight: 600, color: retColor(ret) }}>
                                         {pct(ret)}
                                     </td>
-                                    <td style={{ ...td, color: "#57606a", fontSize: "0.85rem" }}>
+                                    <td style={{ ...td, color: "#a8aeb5", fontSize: "0.85rem" }}>
                                         {p.exitTrigger ? triggerLabel[p.exitTrigger] || p.exitTrigger : "—"}
                                     </td>
                                 </tr>
