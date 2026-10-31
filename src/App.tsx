@@ -25,7 +25,9 @@ const isTokenValid = (token: string | null): boolean => {
 
 const App: React.FC = () => {
     const token = localStorage.getItem("token");
-    const isValid = isTokenValid(token);
+    // A lapsed access token with a refresh token left is still a session: the dashboard renews it
+    // (auth.useSession), e.g. on a tablet that slept.
+    const isValid = isTokenValid(token) || !!localStorage.getItem("refresh_token");
 
     if (!isValid) {
         localStorage.removeItem("token");

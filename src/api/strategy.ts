@@ -1,3 +1,4 @@
+import { hostUrl } from "../auth";
 export interface StrategyTaskCode {
   taskId: string;
   code: string;
@@ -11,7 +12,7 @@ export interface StrategyChatResponse {
   [key: string]: unknown;
 }
 
-const AGENT_BASE = "http://localhost:18000";
+const AGENT_BASE = hostUrl(18000);
 
 async function postJsonWithFallback<T>(
   paths: string[],
@@ -103,7 +104,7 @@ export async function chatStrategy(payload: {
   userId: string;
   strategySpec?: Record<string, unknown>;
 }) {
-  // Try quant_ai /api/ask directly first (browser → localhost:18000)
+  // Try quant_ai /api/ask directly first (browser → quant_ai on this host, :18000)
   try {
     const contextNote = payload.strategySpec
       ? `\n\nCurrent strategy context: ${JSON.stringify(payload.strategySpec, null, 2)}`

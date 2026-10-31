@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { syncTokenCookie } from "../auth";
 
 const API_BASE = "/api/auth";
 const KEYCLOAK_TOKEN_URL = `${window.location.protocol}//${window.location.hostname}:18082/realms/quant/protocol/openid-connect/token`;
@@ -55,6 +56,7 @@ const LoginRegister: React.FC = () => {
                 localStorage.setItem("token", data.access_token);
                 localStorage.setItem("refresh_token", data.refresh_token);
                 localStorage.setItem("username", username);
+                syncTokenCookie();
                 window.location.replace("/dashboard");
             } else {
                 alert(

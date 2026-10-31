@@ -1,3 +1,4 @@
+import { authHeaders, hostUrl } from "../auth";
 /**
  * The user's portfolio, global markets and daily briefs, served by quant_ai's markets routes
  * on the host (/api/markets/...). Those routes answer only requests from this machine, which
@@ -7,7 +8,7 @@
  * portfolio moved from job_agent's dashboard into quant_ai on 2026-10-22.
  */
 
-export const MARKETS_BASE = "http://localhost:18000/api/markets";
+export const MARKETS_BASE = `${hostUrl(18000)}/api/markets`;
 
 export type Session = "pre" | "regular" | "post" | "closed";
 export type Side = "buy" | "sell" | "dividend" | "fee";
@@ -380,9 +381,9 @@ export interface MacroState {
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
   let resp: Response;
   try {
-    resp = await fetch(`${MARKETS_BASE}${path}`, init);
+    resp = await fetch(`${MARKETS_BASE}${path}`, { ...init, headers: { ...authHeaders(), ...(init?.headers as Record<string, string> | undefined) } });
   } catch {
-    throw new Error("quant_ai is not reachable on localhost:18000");
+    throw new Error(`quant_ai is not reachable on ${hostUrl(18000)}`);
   }
   const body = await resp.json().catch(() => ({}));
   if (!resp.ok || body.status !== "success") {

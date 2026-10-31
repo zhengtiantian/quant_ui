@@ -6,10 +6,11 @@ import SignalsPanel from "../components/SignalsPanel";
 import PositionsPanel from "../components/PositionsPanel";
 import PerformancePanel from "../components/PerformancePanel";
 import TaskMonitorPanel from "../components/TaskMonitorPanel";
+import { hostUrl, signOut, useSession } from "../auth";
 
 // The Jobs / Budget / Time dashboard (job_agent, kept running by launchd on :5050) shown inside this
 // one: its own page in embed mode, which drops its module switch and uses this palette.
-const AGENT_URL = (import.meta.env.VITE_JOB_AGENT_URL as string | undefined) ?? "http://127.0.0.1:5050";
+const AGENT_URL = (import.meta.env.VITE_JOB_AGENT_URL as string | undefined) ?? hostUrl(5050);
 type AgentModule = "jobs" | "budget" | "time";
 const AGENT_TABS: { id: AgentModule; label: string }[] = [
     { id: "jobs", label: "🎯 Jobs" },
@@ -36,9 +37,10 @@ const Dashboard: React.FC = () => {
     }, [tab]);
     const isAgent = AGENT_TABS.some((t) => t.id === tab);
 
+    const ready = useSession();
+
     const handleLogout = () => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("username");
+        signOut();
         window.location.href = "/";
     };
 
@@ -78,7 +80,8 @@ const Dashboard: React.FC = () => {
 
             {/* Main */}
             <main>
-                {AGENT_TABS.filter((t) => visited.has(t.id)).map((t) => (
+                {!ready ? <div style={{ color: "#99a0a8" }}>Signing in…</div> : null}
+                {ready && AGENT_TABS.filter((t) => visited.has(t.id)).map((t) => (
                     <iframe
                         key={t.id}
                         title={t.label}
@@ -87,7 +90,7 @@ const Dashboard: React.FC = () => {
                                  border: "1px solid #434b56", borderRadius: 12, background: "#16191d" }}
                     />
                 ))}
-                {isAgent ? null : tab === "signals" ? (
+                {!ready || isAgent ? null : tab === "signals" ? (
                     <SignalsPanel />
                 ) : tab === "holdings" ? (
                     <Holdings />

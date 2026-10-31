@@ -1,3 +1,4 @@
+import { hostUrl } from "../auth";
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
   fetchTaskMonitorStatus,
@@ -470,7 +471,7 @@ export const TaskMonitorPanel: React.FC = () => {
 
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               <a
-                href="http://127.0.0.1:5050/"
+                href={`${hostUrl(5050)}/`}
                 target="_blank"
                 rel="noreferrer"
                 style={{
