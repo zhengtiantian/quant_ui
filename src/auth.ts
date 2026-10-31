@@ -5,7 +5,9 @@
 import React from "react";
 import { jwtDecode } from "jwt-decode";
 
-const KEYCLOAK_TOKEN_URL = `${window.location.protocol}//${window.location.hostname}:18082/realms/quant/protocol/openid-connect/token`;
+// Refreshed through quant_api like login: Keycloak only accepts a refresh token on the address that
+// issued it (http://quant_keycloak:8080 inside Docker), never on :18082 from the browser.
+const REFRESH_URL = "/api/auth/refresh";
 const REFRESH_EVERY_MS = 4 * 60 * 1000;
 
 /** quant_ai and the job_agent dashboard on the host this page was opened from. */
@@ -46,12 +48,11 @@ export function signOut(): void {
 export async function refreshToken(): Promise<boolean> {
     const refresh = localStorage.getItem("refresh_token");
     if (!refresh) return false;
-    const params = new URLSearchParams({ grant_type: "refresh_token", client_id: "quant-ui", refresh_token: refresh });
     try {
-        const res = await fetch(KEYCLOAK_TOKEN_URL, {
+        const res = await fetch(REFRESH_URL, {
             method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: params,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refresh_token: refresh }),
         });
         if (!res.ok) return false;
         const data = await res.json();

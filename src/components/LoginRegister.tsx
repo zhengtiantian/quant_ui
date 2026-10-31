@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { syncTokenCookie } from "../auth";
 
 const API_BASE = "/api/auth";
-const KEYCLOAK_TOKEN_URL = `${window.location.protocol}//${window.location.hostname}:18082/realms/quant/protocol/openid-connect/token`;
 
 const LoginRegister: React.FC = () => {
     const [mode, setMode] = useState<"login" | "register">("login");
@@ -10,36 +9,7 @@ const LoginRegister: React.FC = () => {
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
 
-    // === Auto-refresh token (keep session alive) ===
-    useEffect(() => {
-        const refresh = async () => {
-            const refresh_token = localStorage.getItem("refresh_token");
-            if (!refresh_token) return;
-
-            const params = new URLSearchParams();
-            params.append("grant_type", "refresh_token");
-            params.append("client_id", "quant-ui");
-            params.append("refresh_token", refresh_token);
-
-            try {
-                const res = await fetch(KEYCLOAK_TOKEN_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                    body: params,
-                });
-                if (!res.ok) throw new Error("refresh failed");
-                const data = await res.json();
-                localStorage.setItem("token", data.access_token);
-                localStorage.setItem("refresh_token", data.refresh_token);
-            } catch (e) {
-                console.warn("refresh failed", e);
-                localStorage.clear();
-                window.location.replace("/");
-            }
-        };
-        const interval = setInterval(refresh, 4 * 60 * 1000);
-        return () => clearInterval(interval);
-    }, []);
+    // The session is kept alive on the dashboard (auth.useSession), which refreshes through quant_api.
 
     // === Login ===
     const handleLogin = async () => {
