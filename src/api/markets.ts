@@ -829,3 +829,32 @@ export const fetchTaskLog = (
   });
   return call<TaskLogResponse>(`/tasks/log?${qs.toString()}`);
 };
+
+// ------------------------------------------------------------------ today's action (Q.12 risk gate / Q.13, pilot on INTC)
+
+export interface DailyActionOrder {
+  symbol: string;
+  side: "buy" | "sell";
+  shares: number;
+  limit: number;
+  atr_multiple?: number;
+  hit_pct?: number;              // % of past large drops whose high reached this limit within valid_sessions
+  valid_sessions?: number;
+}
+export interface DailyAction {
+  symbol: string;
+  action: "hold" | "trim" | "add" | "earnings" | "watch";
+  headline: string;
+  evidence: string;              // what the action rests on: a tested model, a rule, or the default
+  orders: DailyActionOrder[];
+  reasons: string[];
+  blocks?: string[];             // what a buy would meet today
+  weight_pct?: number;
+}
+export interface DailyActionReply {
+  generated_at: string;
+  symbols: string[];
+  actions: DailyAction[];
+  portfolio: { total: number; cash: number; cluster_pct: number; max_symbol_pct: number; max_cluster_pct: number; breaches: string[] };
+}
+export const fetchDailyAction = (force = false) => call<DailyActionReply>(`/portfolio/daily-action${force ? "?force=1" : ""}`);

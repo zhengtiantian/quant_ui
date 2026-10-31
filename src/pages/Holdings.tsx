@@ -3,12 +3,13 @@ import {
   addWatch,
   deleteTransaction,
   fetchChart,
+  fetchDailyAction,
   fetchPortfolio,
   removeWatch,
   saveTransaction,
   setCash,
 } from "../api/markets";
-import type { ChartData, Holding, PerStockCatalysts, PortfolioState, Side, Transaction, WatchItem } from "../api/markets";
+import type { ChartData, DailyAction, Holding, PerStockCatalysts, PortfolioState, Side, Transaction, WatchItem } from "../api/markets";
 import AdvisorPanel from "../components/markets/AdvisorPanel";
 import CatalystsPanel, { StockCatalystButton } from "../components/markets/CatalystsPanel";
 import LotManagerModal, { StockLotButton } from "../components/markets/LotManagerModal";
@@ -33,6 +34,34 @@ import {
 const PALETTE = ["#0891b2", "#9333ea", "#d97706", "#059669", "#dc2626", "#2563eb", "#db2777", "#65a30d", "#ea580c", "#0d9488"];
 const RANGES: [string, string][] = [["1d", "1D (5 min)"], ["1m", "1M"], ["3m", "3M"], ["6m", "6M"], ["1y", "1Y"], ["5y", "5Y"]];
 const TX_COLOR: Record<string, string> = { buy: "#15803d", sell: "#b91c1c", dividend: "#0891b2", fee: "#64748b" };
+
+// Today's action (Q.13): one pill per holding; the orders under it; why, on click.
+const ACTION_STYLE: Record<string, [string, string]> = {
+  hold: ["Hold", "#64748b"], trim: ["Trim", "#d97706"], add: ["Add", "#15803d"], earnings: ["Earnings", "#7c3aed"], watch: ["Watch", "#64748b"],
+};
+const ActionCell: React.FC<{ a?: DailyAction }> = ({ a }) => {
+  const [open, setOpen] = React.useState(false);
+  if (!a) return <span style={muted}>—</span>;
+  const [label, c] = ACTION_STYLE[a.action] || [a.action, "#64748b"];
+  return (
+    <div style={{ minWidth: 150 }}>
+      <button type="button" onClick={() => setOpen(!open)} title="Show why"
+              style={{ ...pill(c), cursor: "pointer", background: "transparent" }}>{label} {open ? "▴" : "▾"}</button>
+      {a.orders.map((o, i) => (
+        <span key={i} style={sub}>{o.side === "sell" ? "Sell" : "Buy"} {o.shares} @ {usd(o.limit)}
+          {o.hit_pct != null ? <span style={muted}> · reached {o.hit_pct}% of the time</span> : null}</span>
+      ))}
+      {open ? (
+        <div style={{ ...muted, marginTop: 4, maxWidth: 340, whiteSpace: "normal", lineHeight: 1.45 }}>
+          <div style={{ color: "#334155" }}><b>{a.headline}</b></div>
+          {a.reasons.map((r, i) => <div key={i}>• {r}</div>)}
+          {a.blocks?.length ? <div style={{ marginTop: 4 }}>Buying is blocked: {a.blocks.join("; ")}</div> : null}
+          <div style={{ marginTop: 4 }}>Basis: {a.evidence}</div>
+        </div>
+      ) : null}
+    </div>
+  );
+};
 
 const store = {
   get: (k: string, d: string) => { try { return localStorage.getItem(k) || d; } catch { return d; } },
@@ -301,6 +330,15 @@ const Holdings: React.FC = () => {
 
   React.useEffect(() => { void load(); }, [load]);
 
+  // Today's action changes slowly (the server caches it 10 minutes): fetched on open and every 10 minutes.
+  const [actions, setActions] = React.useState<Record<string, DailyAction>>({});
+  React.useEffect(() => {
+    const get = () => fetchDailyAction().then((r) => setActions(Object.fromEntries(r.actions.map((a) => [a.symbol, a])))).catch(() => undefined);
+    void get();
+    const id = window.setInterval(() => { if (!document.hidden) void get(); }, 600000);
+    return () => window.clearInterval(id);
+  }, []);
+
   // Poll at the session's pace; the global markets keep a minute's pace while any exchange is open.
   React.useEffect(() => {
     if (!s) return;
@@ -444,7 +482,7 @@ const Holdings: React.FC = () => {
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
                 <thead><tr>
-                  <th style={th}>Stock</th><th style={th}>Price</th><th style={th}>Today</th><th style={th}>Events</th><th style={th}>Lots / 波段</th><th style={{ ...th, ...right }}>Shares</th>
+                  <th style={th}>Stock</th><th style={th}>Price</th><th style={th}>Today</th><th style={th}>Action</th><th style={th}>Events</th><th style={th}>Lots / 波段</th><th style={{ ...th, ...right }}>Shares</th>
                   <th style={{ ...th, ...right }}>Avg cost (mine / FIFO)</th><th style={{ ...th, ...right }}>Value / weight</th><th style={{ ...th, ...right }}>Unrealised P&L</th>
                 </tr></thead>
                 <tbody>{s.holdings.map((h) => (
@@ -454,6 +492,7 @@ const Holdings: React.FC = () => {
                     <td style={cell}><PriceCell q={h.quote || {}} /></td>
                     <td style={{ ...cell, color: color(h.day_change) }}><b>{pct(h.day_change_pct) || "—"}</b>
                       <span style={{ ...sub, color: color(h.day_pnl) }}>{h.day_pnl != null ? signed(h.day_pnl) : ""}</span></td>
+                    <td style={cell} onClick={(e) => e.stopPropagation()}><ActionCell a={actions[h.symbol]} /></td>
                     <td style={cell} onClick={(e) => e.stopPropagation()}>
                       <StockCatalystButton symbol={h.symbol} info={catalystMap[h.symbol]} lang={catalystLang} onOpen={setCatalystModal} />
                     </td>
