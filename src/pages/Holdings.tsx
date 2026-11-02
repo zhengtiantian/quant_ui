@@ -39,33 +39,62 @@ const TX_COLOR: Record<string, string> = { buy: "#84d6a3", sell: "#d88383", divi
 const ACTION_STYLE: Record<string, [string, string]> = {
   hold: ["Hold", "#99a0a8"], trim: ["Trim", "#e3b177"], add: ["Add", "#84d6a3"], earnings: ["Earnings", "#a17edd"], watch: ["Watch", "#99a0a8"],
 };
+const store = {
+  get: (k: string, d: string) => { try { return localStorage.getItem(k) || d; } catch { return d; } },
+  set: (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* per-viewer convenience only */ } },
+};
+
+// The language is the advisor's and the briefs' (briefLang), so one switch sets every panel.
+// All text comes from the server in both languages; key lines show first, the rest under "More".
 const ActionCell: React.FC<{ a?: DailyAction }> = ({ a }) => {
   const [open, setOpen] = React.useState(false);
+  const [more, setMore] = React.useState(false);
+  const [lang, setLang] = React.useState<"zh" | "en">(() => (store.get("briefLang", "zh") === "en" ? "en" : "zh"));
   if (!a) return <span style={muted}>—</span>;
-  const [label, c] = ACTION_STYLE[a.action] || [a.action, "#99a0a8"];
+  const [enLabel, c] = ACTION_STYLE[a.action] || [a.action, "#99a0a8"];
+  const t = (b: { en: string; zh: string } | undefined, fallback: string) => (b ? b[lang] : fallback);
+  const label = t(a.action_label, enLabel);
+  const notes: { en: string; zh: string; key: boolean; section?: string }[] = a.notes ?? a.reasons.map((r) => ({ en: r, zh: r, key: true }));
+  const shown = notes.filter((n) => more || n.key);
+  const blocks = lang === "zh" && a.blocks_zh ? a.blocks_zh : a.blocks;
+  const choose = (l: "zh" | "en") => { setLang(l); store.set("briefLang", l); };
   return (
     <div style={{ minWidth: 150 }}>
       <button type="button" onClick={() => setOpen(!open)} title="Show why"
               style={{ ...pill(c), cursor: "pointer", background: "transparent" }}>{label} {open ? "▴" : "▾"}</button>
       {a.orders.map((o, i) => (
-        <span key={i} style={sub}>{o.side === "sell" ? "Sell" : "Buy"} {o.shares} @ {usd(o.limit)}
-          {o.hit_pct != null ? <span style={muted}> · reached {o.hit_pct}% of the time</span> : null}</span>
+        <span key={i} style={sub}>{o.text ? o.text[lang] : <>{o.side === "sell" ? "Sell" : "Buy"} {o.shares} @ {usd(o.limit)}
+          {o.hit_pct != null ? <span style={muted}> · reached {o.hit_pct}% of the time</span> : null}</>}</span>
       ))}
       {open ? (
-        <div style={{ ...muted, marginTop: 4, maxWidth: 340, whiteSpace: "normal", lineHeight: 1.45 }}>
-          <div style={{ color: "#bbc0c5" }}><b>{a.headline}</b></div>
-          {a.reasons.map((r, i) => <div key={i}>• {r}</div>)}
-          {a.blocks?.length ? <div style={{ marginTop: 4 }}>Buying is blocked: {a.blocks.join("; ")}</div> : null}
-          <div style={{ marginTop: 4 }}>Basis: {a.evidence}</div>
+        <div style={{ ...muted, marginTop: 4, maxWidth: 360, whiteSpace: "normal", lineHeight: 1.45 }}>
+          <div style={{ display: "flex", gap: 4, marginBottom: 4 }}>
+            {(["zh", "en"] as const).map((l) => (
+              <button key={l} type="button" onClick={() => choose(l)}
+                      style={{ ...pill(lang === l ? "#81dad3" : "#6b7178"), cursor: "pointer", background: "transparent", fontSize: 11 }}>
+                {l === "zh" ? "中文" : "EN"}</button>
+            ))}
+          </div>
+          <div style={{ color: "#bbc0c5" }}><b>{lang === "zh" && a.headline_zh ? a.headline_zh : a.headline}</b></div>
+          {shown.map((n, i) => (
+            <React.Fragment key={i}>
+              {n.section && n.section !== shown[i - 1]?.section && a.labels?.[n.section] ? (
+                <div style={{ color: "#81dad3", marginTop: i ? 6 : 2, fontSize: 12 }}>{a.labels[n.section][lang]}</div>
+              ) : null}
+              <div style={n.key ? undefined : { opacity: 0.8 }}>• {n[lang]}</div>
+            </React.Fragment>
+          ))}
+          {more && blocks?.length ? <div style={{ marginTop: 4 }}>{t(a.labels?.blocked, "Buying is blocked")}: {blocks.join(lang === "zh" ? "；" : "; ")}</div> : null}
+          {more ? <div style={{ marginTop: 4 }}>{t(a.labels?.basis, "Basis")}: {lang === "zh" && a.evidence_zh ? a.evidence_zh : a.evidence}</div> : null}
+          {notes.some((n) => !n.key) || blocks?.length ? (
+            <button type="button" onClick={() => setMore(!more)}
+                    style={{ marginTop: 4, background: "transparent", border: 0, padding: 0, color: "#81dad3", cursor: "pointer", fontSize: 12 }}>
+              {more ? `${t(a.labels?.less, "Less")} ▴` : `${t(a.labels?.more, "More")} ▾`}</button>
+          ) : null}
         </div>
       ) : null}
     </div>
   );
-};
-
-const store = {
-  get: (k: string, d: string) => { try { return localStorage.getItem(k) || d; } catch { return d; } },
-  set: (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* per-viewer convenience only */ } },
 };
 
 const newRequestId = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);

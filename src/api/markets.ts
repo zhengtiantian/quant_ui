@@ -833,6 +833,8 @@ export const fetchTaskLog = (
 
 // ------------------------------------------------------------------ today's action (Q.12 risk gate / Q.13, pilot on INTC)
 
+/** A line the server writes in both languages (the page holds no Chinese of its own). */
+export interface Bilingual { en: string; zh: string }
 export interface DailyActionOrder {
   symbol: string;
   side: "buy" | "sell";
@@ -841,15 +843,22 @@ export interface DailyActionOrder {
   atr_multiple?: number;
   hit_pct?: number;              // % of past large drops whose high reached this limit within valid_sessions
   valid_sessions?: number;
+  text?: Bilingual;              // the order as one line
 }
 export interface DailyAction {
   symbol: string;
   action: "hold" | "trim" | "add" | "earnings" | "watch";
+  action_label?: Bilingual;
   headline: string;
+  headline_zh?: string;
   evidence: string;              // what the action rests on: a tested model, a rule, or the default
+  evidence_zh?: string;
   orders: DailyActionOrder[];
-  reasons: string[];
+  reasons: string[];             // the English lines (older replies have only these)
+  notes?: (Bilingual & { key: boolean; section?: string })[];   // key lines show first, the rest under "More"
   blocks?: string[];             // what a buy would meet today
+  blocks_zh?: string[];
+  labels?: Record<string, Bilingual>;            // blocked / basis / more / less, and the section headings
   weight_pct?: number;
 }
 export interface DailyActionReply {
