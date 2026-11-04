@@ -409,6 +409,24 @@ export const addWatch = (symbol: string) => post<{ symbol: string; state: Portfo
 export const removeWatch = (symbol: string) => post<{ state: PortfolioState }>("/portfolio/watch/remove", { symbol });
 
 export const fetchMacro = () => call<MacroState>("/macro");
+
+/** Indices module on the Holdings page (2026-11-04): picked from a catalog, kept server-side. */
+export interface IndexItem extends GlobalItem {
+  group: string;
+}
+export interface IndexCatalogEntry {
+  symbol: string;
+  name: string;
+  group: string;
+  shown: boolean;
+}
+export interface IndicesState {
+  items: IndexItem[];
+  catalog: IndexCatalogEntry[];
+  refresh_seconds: number;
+}
+export const fetchIndices = () => call<IndicesState>("/indices");
+export const setIndexShown = (symbol: string, shown: boolean) => post<IndicesState>("/indices", { symbol, shown });
 export const fetchBriefs = (kind = "") => call<BriefsResponse>(`/briefs${kind ? `?kind=${kind}` : ""}`);
 export const fetchBrief = (id: number) => call<{ brief: Brief }>(`/briefs/${id}`).then((r) => r.brief);
 export const runBrief = (kind: string, symbol = "") => post<BriefsResponse & { started: boolean }>("/briefs/run", { kind, symbol });

@@ -14,6 +14,7 @@ import AdvisorPanel from "../components/markets/AdvisorPanel";
 import CatalystsPanel, { StockCatalystButton } from "../components/markets/CatalystsPanel";
 import LotManagerModal, { StockLotButton } from "../components/markets/LotManagerModal";
 import GlobalMarkets from "../components/markets/GlobalMarkets";
+import IndicesPanel from "../components/markets/IndicesPanel";
 import PriceChart from "../components/markets/PriceChart";
 import {
   DOWN, SESSION_COLOR, SESSION_LABEL, UP, cell, color, ghostButton, iconButton, muted, panel, panelHead, panelTitle,
@@ -543,6 +544,8 @@ const Holdings: React.FC = () => {
           </>
         ) : <div style={muted}>No holdings.</div>}
       </div>
+
+      <IndicesPanel />
 
       <div style={panel}>
         <div style={panelHead}><div style={panelTitle}>👀 Watchlist · {s.watchlist.length}</div><span style={muted}>Stocks you follow without holding · click 🔭 事件 to open upcoming catalysts modal</span></div>
