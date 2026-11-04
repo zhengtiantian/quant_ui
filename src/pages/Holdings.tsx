@@ -545,7 +545,7 @@ const Holdings: React.FC = () => {
         ) : <div style={muted}>No holdings.</div>}
       </div>
 
-      <IndicesPanel />
+      <IndicesPanel live={s.indices} />
 
       <div style={panel}>
         <div style={panelHead}><div style={panelTitle}>👀 Watchlist · {s.watchlist.length}</div><span style={muted}>Stocks you follow without holding · click 🔭 事件 to open upcoming catalysts modal</span></div>

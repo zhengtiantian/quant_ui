@@ -4,6 +4,7 @@ import {
   fetchTaskMonitorStatus,
   fetchTaskLog,
 } from "../api/markets";
+import TaskSchedulePanel from "./TaskSchedulePanel";
 import type {
   TaskMonitorResponse,
   AirflowDagItem,
@@ -309,6 +310,9 @@ export const TaskMonitorPanel: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* 0. Today and tomorrow, in time order (2026-11-04) */}
+      <TaskSchedulePanel openLog={(title, source, target_id, run_id, task_id) => void openLogModal(title, source, target_id, run_id, task_id)} />
 
       {/* 1. Running Now Section */}
       <div style={{ marginBottom: "28px" }}>

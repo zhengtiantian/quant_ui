@@ -213,6 +213,8 @@ export interface PortfolioState {
   holdings: Holding[];
   closed: Holding[];
   watchlist: WatchItem[];
+  /** the Indices module's quotes, refreshed with the holdings (2026-11-04) */
+  indices?: IndexItem[];
   totals: Totals;
   problems: string[];
   session: Session;
@@ -827,6 +829,48 @@ export interface TaskLogResponse {
   log?: string;
   message?: string;
 }
+
+/** Today's and tomorrow's scheduled runs (Dublin days), in time order (2026-11-04). */
+export type ScheduleState = "done" | "failed" | "running" | "pending" | "partial";
+export interface ScheduleRun {
+  source: "airflow" | "job_agent" | "briefs";
+  key: string;
+  name: string;
+  at: string;
+  day: string;
+  time: string;
+  state: ScheduleState;
+  overdue: boolean;
+  dag_id?: string;
+  run_id?: string;
+  log_task_id?: string | null;
+  started?: string | null;
+  ended?: string | null;
+  duration_seconds?: number | null;
+  tasks_done?: number;
+  tasks_total?: number;
+  after?: string;
+  estimated?: boolean;
+  manual?: boolean;
+  error?: string | null;
+  group?: boolean;
+  runs?: ScheduleRun[];
+  counts?: Record<"done" | "failed" | "running" | "pending", number>;
+}
+export interface ScheduleDay {
+  date: string;
+  label: string;
+  weekday: string;
+  counts: Record<"done" | "failed" | "running" | "pending", number>;
+  items: ScheduleRun[];
+}
+export interface TaskScheduleResponse {
+  now: string;
+  timezone: string;
+  days: ScheduleDay[];
+  errors: string[];
+}
+export const fetchTaskSchedule = () => call<TaskScheduleResponse>("/tasks/schedule");
 
 export const fetchTaskMonitorStatus = () => {
   return call<TaskMonitorResponse>("/tasks/monitor");

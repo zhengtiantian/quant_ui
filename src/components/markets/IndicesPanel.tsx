@@ -1,12 +1,12 @@
 /** Indices and index ETFs the user follows (2026-11-04): moved out of the watchlist into their own module.
- *  The list is picked from the server's catalog and saved there; quotes come from CNBC and refresh every minute
- *  while the page is visible. */
+ *  The list is picked from the server's catalog and saved there. Quotes (CNBC) arrive with the portfolio state,
+ *  so they refresh as often as the holdings (`live`); without it the panel polls every minute itself. */
 import React from "react";
 import { fetchIndices, setIndexShown } from "../../api/markets";
-import type { IndicesState } from "../../api/markets";
+import type { IndexItem, IndicesState } from "../../api/markets";
 import { cell, color, iconButton, muted, num, panel, panelHead, panelTitle, right, signed, sub, th } from "./format";
 
-const IndicesPanel: React.FC = () => {
+const IndicesPanel: React.FC<{ live?: IndexItem[] }> = ({ live }) => {
   const [st, setSt] = React.useState<IndicesState | null>(null);
   const [error, setError] = React.useState("");
   const [busy, setBusy] = React.useState(false);
@@ -15,11 +15,15 @@ const IndicesPanel: React.FC = () => {
     fetchIndices().then((r) => { setSt(r); setError(""); }).catch((e: Error) => setError(e.message));
   }, []);
 
+  const hasLive = live !== undefined;
   React.useEffect(() => {
     load();
+    if (hasLive) return undefined;                 // quotes come with the holdings; the catalog once is enough
     const id = window.setInterval(() => { if (document.visibilityState === "visible") load(); }, 60_000);
     return () => window.clearInterval(id);
-  }, [load]);
+  }, [load, hasLive]);
+  // the portfolio poll's quotes, in the order of the saved list (a just-added one shows from the catalog call)
+  const items = st ? st.items.map((i) => (live || []).find((l) => l.symbol === i.symbol) || i) : (live || []);
 
   const toggle = async (symbol: string, shown: boolean) => {
     setBusy(true);
@@ -34,16 +38,16 @@ const IndicesPanel: React.FC = () => {
   return (
     <div style={panel}>
       <div style={panelHead}>
-        <div style={panelTitle}>📈 Indices · {st?.items.length ?? 0}</div>
-        <span style={muted}>Indices and index ETFs · CNBC, every {st?.refresh_seconds ?? 60} s, may be delayed</span>
+        <div style={panelTitle}>📈 Indices · {items.length}</div>
+        <span style={muted}>Indices and index ETFs · CNBC, {hasLive ? "refreshed with the holdings" : `every ${st?.refresh_seconds ?? 60} s`}, may be delayed</span>
       </div>
       {error ? <div style={{ ...muted, color: "#e57373" }}>{error}</div> : null}
-      {st && st.items.length ? (
+      {items.length ? (
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
             <thead><tr><th style={th}>Index</th><th style={{ ...th, ...right }}>Last</th><th style={{ ...th, ...right }}>Today</th>
               <th style={{ ...th, ...right }}>Prev close</th><th style={th} /></tr></thead>
-            <tbody>{st.items.map((i) => (
+            <tbody>{items.map((i) => (
               <tr key={i.symbol} title={`${i.full_name || i.name} · ${i.symbol}${i.trade_time ? ` · last ${i.trade_time}` : ""}`}>
                 <td style={cell}><b>{i.name}</b><span style={sub}>{i.symbol} · {i.group}</span></td>
                 <td style={{ ...cell, ...right }}>{num(i.price)}</td>
