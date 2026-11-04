@@ -868,3 +868,62 @@ export interface DailyActionReply {
   portfolio: { total: number; cash: number; cluster_pct: number; max_symbol_pct: number; max_cluster_pct: number; breaches: string[] };
 }
 export const fetchDailyAction = (force = false) => call<DailyActionReply>(`/portfolio/daily-action${force ? "?force=1" : ""}`);
+
+// ---- Weekly keyword review (quant_ai markets/keyword_review.py; proposals from quant_data tools/keyword_refresh.py)
+export type KeywordTier = "add" | "weak" | "model_none" | "unjudged";
+export type KeywordDecision = "add" | "weak" | "reject";
+export type KeywordHistory = "full" | "first_seen";
+
+export interface KeywordExample {
+  title: string;
+  url: string;
+  ts: string;
+}
+
+export interface KeywordProposal {
+  id: string;
+  set: "core" | "universe";
+  symbol: string;
+  name: string;
+  term: string;
+  kind: string | null;
+  reason: string;
+  tier: KeywordTier;
+  co_mention: number;
+  headlines_with_company: number;
+  headlines_total: number;
+  stories: number;
+  sites: number;
+  first_seen: string;
+  examples: KeywordExample[];
+  company_headlines: number;
+  current_keywords: string[];
+  ordinary_word?: boolean;
+  caveat?: boolean;
+  week: string;
+  weeks_seen: string[];
+  decision: KeywordDecision | null;
+  decided_at: string | null;
+  history: KeywordHistory;
+  rescans: { since: string | null; at: string | null; kept: number | null; new_rows: number | null }[];
+  in_rules: boolean;
+  applied_at: string | null;
+}
+
+export interface KeywordRun {
+  week: string;
+  created: string | null;
+  judged: string | null;
+  headlines: number | null;
+  candidates: number;
+}
+
+export interface KeywordReview {
+  dir: string;
+  runs: KeywordRun[];
+  proposals: KeywordProposal[];
+}
+
+export const fetchKeywordReview = () => call<KeywordReview>("/keywords/review");
+export const decideKeywords = (ids: string[], decision: KeywordDecision | "pending" | "keep", history?: KeywordHistory) =>
+  post<{ updated: number }>("/keywords/decide", { ids, decision, ...(history ? { history } : {}) });

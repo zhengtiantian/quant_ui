@@ -2,6 +2,7 @@ import React from "react";
 import StrategyStudio from "./StrategyStudio";
 import Holdings from "./Holdings";
 import Briefs from "./Briefs";
+import Keywords from "./Keywords";
 import SignalsPanel from "../components/SignalsPanel";
 import PositionsPanel from "../components/PositionsPanel";
 import PerformancePanel from "../components/PerformancePanel";
@@ -23,8 +24,8 @@ const tabStyle = (active: boolean): React.CSSProperties =>
 
 const Dashboard: React.FC = () => {
     const username = localStorage.getItem("username");
-    type Tab = "signals" | "holdings" | "briefs" | "positions" | "performance" | "strategy" | "tasks" | AgentModule;
-    const TABS: Tab[] = ["signals", "holdings", "briefs", "positions", "performance", "strategy", "tasks", "jobs", "budget", "time"];
+    type Tab = "signals" | "holdings" | "briefs" | "positions" | "performance" | "strategy" | "tasks" | "keywords" | AgentModule;
+    const TABS: Tab[] = ["signals", "holdings", "briefs", "positions", "performance", "strategy", "tasks", "keywords", "jobs", "budget", "time"];
     // ?tab=briefs (the desktop widget links straight to a tab)
     const [tab, setTab] = React.useState<Tab>(() => {
         const wanted = new URLSearchParams(window.location.search).get("tab") as Tab | null;
@@ -72,6 +73,7 @@ const Dashboard: React.FC = () => {
                 <button onClick={() => setTab("performance")} style={tabStyle(tab === "performance")}>Performance</button>
                 <button onClick={() => setTab("strategy")} style={tabStyle(tab === "strategy")}>Strategy Studio</button>
                 <button onClick={() => setTab("tasks")} style={tabStyle(tab === "tasks")}>⏱️ Task Monitor</button>
+                <button onClick={() => setTab("keywords")} style={tabStyle(tab === "keywords")}>🔤 Keywords</button>
                 <span style={{ width: 1, background: "#434b56", margin: "0 4px" }} />
                 {AGENT_TABS.map((t) => (
                     <button key={t.id} onClick={() => setTab(t.id)} style={tabStyle(tab === t.id)}>{t.label}</button>
@@ -102,6 +104,8 @@ const Dashboard: React.FC = () => {
                     <PerformancePanel />
                 ) : tab === "strategy" ? (
                     <StrategyStudio />
+                ) : tab === "keywords" ? (
+                    <Keywords />
                 ) : (
                     <TaskMonitorPanel />
                 )}
