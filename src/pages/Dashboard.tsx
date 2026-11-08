@@ -1,11 +1,9 @@
 import React from "react";
-import StrategyStudio from "./StrategyStudio";
 import Holdings from "./Holdings";
 import Briefs from "./Briefs";
 import Keywords from "./Keywords";
-import SignalsPanel from "../components/SignalsPanel";
+import QuantModelPanel from "../components/QuantModelPanel";
 import PositionsPanel from "../components/PositionsPanel";
-import PerformancePanel from "../components/PerformancePanel";
 import TaskMonitorPanel from "../components/TaskMonitorPanel";
 import { hostUrl, signOut, useSession } from "../auth";
 
@@ -24,12 +22,15 @@ const tabStyle = (active: boolean): React.CSSProperties =>
 
 const Dashboard: React.FC = () => {
     const username = localStorage.getItem("username");
-    type Tab = "signals" | "holdings" | "briefs" | "positions" | "performance" | "strategy" | "tasks" | "keywords" | AgentModule;
-    const TABS: Tab[] = ["signals", "holdings", "briefs", "positions", "performance", "strategy", "tasks", "keywords", "jobs", "budget", "time"];
+    type Tab = "quant" | "holdings" | "briefs" | "positions" | "tasks" | "keywords" | AgentModule;
+    const TABS: Tab[] = ["quant", "holdings", "briefs", "positions", "tasks", "keywords", "jobs", "budget", "time"];
+    // Tabs merged into Quant Model (2026-11-08); old ?tab= links still land there.
+    const LEGACY: Record<string, Tab> = { signals: "quant", performance: "quant", strategy: "quant" };
     // ?tab=briefs (the desktop widget links straight to a tab)
     const [tab, setTab] = React.useState<Tab>(() => {
-        const wanted = new URLSearchParams(window.location.search).get("tab") as Tab | null;
-        return wanted && TABS.includes(wanted) ? wanted : "signals";
+        const raw = new URLSearchParams(window.location.search).get("tab") ?? "";
+        const wanted = (LEGACY[raw] ?? raw) as Tab;
+        return TABS.includes(wanted) ? wanted : "quant";
     });
     // An agent tab's frame is loaded on first visit and kept, so switching back does not reload it.
     const [visited, setVisited] = React.useState<Set<AgentModule>>(() => new Set());
@@ -66,12 +67,10 @@ const Dashboard: React.FC = () => {
             </header>
 
             <div style={{ display: "flex", gap: "10px", marginBottom: "16px", flexWrap: "wrap" }}>
-                <button onClick={() => setTab("signals")} style={tabStyle(tab === "signals")}>Signals</button>
+                <button onClick={() => setTab("quant")} style={tabStyle(tab === "quant")}>Quant Model</button>
                 <button onClick={() => setTab("holdings")} style={tabStyle(tab === "holdings")}>My Holdings</button>
                 <button onClick={() => setTab("briefs")} style={tabStyle(tab === "briefs")}>Market Briefs</button>
                 <button onClick={() => setTab("positions")} style={tabStyle(tab === "positions")}>Positions</button>
-                <button onClick={() => setTab("performance")} style={tabStyle(tab === "performance")}>Performance</button>
-                <button onClick={() => setTab("strategy")} style={tabStyle(tab === "strategy")}>Strategy Studio</button>
                 <button onClick={() => setTab("tasks")} style={tabStyle(tab === "tasks")}>⏱️ Task Monitor</button>
                 <button onClick={() => setTab("keywords")} style={tabStyle(tab === "keywords")}>🔤 Keywords</button>
                 <span style={{ width: 1, background: "#434b56", margin: "0 4px" }} />
@@ -92,18 +91,14 @@ const Dashboard: React.FC = () => {
                                  border: "1px solid #434b56", borderRadius: 12, background: "#16191d" }}
                     />
                 ))}
-                {!ready || isAgent ? null : tab === "signals" ? (
-                    <SignalsPanel />
+                {!ready || isAgent ? null : tab === "quant" ? (
+                    <QuantModelPanel />
                 ) : tab === "holdings" ? (
                     <Holdings />
                 ) : tab === "briefs" ? (
                     <Briefs />
                 ) : tab === "positions" ? (
                     <PositionsPanel />
-                ) : tab === "performance" ? (
-                    <PerformancePanel />
-                ) : tab === "strategy" ? (
-                    <StrategyStudio />
                 ) : tab === "keywords" ? (
                     <Keywords />
                 ) : (
