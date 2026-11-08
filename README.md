@@ -8,10 +8,13 @@ Single-page application that displays daily equity signals, portfolio positions,
 
 ## Features
 
-- **Signal Dashboard** — daily composite scores and signal rankings for 100 US stocks
-- **Portfolio Tracker** — open positions, entry price, unrealized P&L, exit alerts
+- **Quant Model** — the ranking model's backtest against SPY, then today's composite scores and ranks
+- **My Holdings** — holdings from the trade log, the daily action per holding (English / Chinese), indices, catalysts, lot manager
+- **Market Briefs** — daily market summary and outlook
+- **Positions** — the paper portfolio the signal tracker opens from the daily top ranks, with exit alerts
+- **Task Monitor** — every scheduled pipeline, today's and tomorrow's runs, logs
+- **Keywords** — review the weekly keyword proposals for the news-matching rules
 - **News Feed** — labeled articles with sentiment scores per symbol
-- **Script Runner** — trigger and monitor quant_data pipeline scripts from the browser
 - **AI Chat** — browser-direct calls to `quant_ai` for natural language Q&A (e.g., "What's the sentiment trend for NVDA?")
 - **Keycloak auth** — JWT login/register with auto-refresh token
 
@@ -49,8 +52,8 @@ The app is served by Nginx in production. API calls use relative `/api/*` paths 
 
 ```
 src/
-├── api/              # API client modules (signals, news, portfolio)
-├── components/       # Shared UI components (LoginRegister, NewsList)
-├── pages/            # Page-level components (Dashboard, ScriptRunner)
+├── api/              # API clients (signals, performance, portfolio, holdings, markets, news)
+├── components/       # Panels (Quant Model, positions, task monitor) and markets/ widgets
+├── pages/            # Dashboard (tabs), Holdings, Briefs, Keywords
 └── App.tsx           # Router + JWT guard
 ```
