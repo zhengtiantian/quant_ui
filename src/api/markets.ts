@@ -26,6 +26,8 @@ export interface Quote {
   pending?: boolean;
   error?: string;
   fetched_at?: number;
+  // "nasdaq" | "nasdaq-batch" normally; "cnbc" / "finnhub" when Nasdaq did not answer
+  source?: string;
 }
 
 export type LotOrderStatus = "open" | "partial" | "closed";
