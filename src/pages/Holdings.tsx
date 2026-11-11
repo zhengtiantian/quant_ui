@@ -128,11 +128,8 @@ const PriceCell: React.FC<{ q: Holding["quote"] }> = ({ q }) => {
       <b>{usd(q.price)}</b>{" "}
       {q.session ? <span style={pill(SESSION_COLOR[q.session] || "#99a0a8")}>{SESSION_LABEL[q.session] || q.session}</span> : null}
       {q.stale ? <span style={{ ...pill("#dd7e95"), marginLeft: 4 }}>Stale quote</span> : null}
-      {q.source === "cnbc" || q.source === "finnhub" ? (
-        <span style={{ ...pill("#99a0a8"), marginLeft: 4 }}
-          title={q.source === "finnhub" ? "Nasdaq and CNBC did not answer; Finnhub has the regular session only" : "Nasdaq did not answer; quote from CNBC"}>
-          {q.source === "cnbc" ? "CNBC" : "Finnhub"}
-        </span>
+      {q.source === "cnbc" ? (
+        <span style={{ ...pill("#99a0a8"), marginLeft: 4 }} title="Nasdaq did not answer; quote from CNBC">CNBC</span>
       ) : null}
       {ext && q.regular_price ? (
         <span style={sub}>Close {usd(q.regular_price)}
