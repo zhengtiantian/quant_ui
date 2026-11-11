@@ -11,6 +11,7 @@ import {
 } from "../api/markets";
 import type { ChartData, DailyAction, Holding, PerStockCatalysts, PortfolioState, Side, Transaction, WatchItem } from "../api/markets";
 import AdvisorPanel from "../components/markets/AdvisorPanel";
+import { AnalystCell, AnalystsPanel } from "../components/markets/AnalystsPanel";
 import CatalystsPanel, { StockCatalystButton } from "../components/markets/CatalystsPanel";
 import LotManagerModal, { StockLotButton } from "../components/markets/LotManagerModal";
 import GlobalMarkets from "../components/markets/GlobalMarkets";
@@ -60,7 +61,7 @@ const ActionCell: React.FC<{ a?: DailyAction }> = ({ a }) => {
   const blocks = lang === "zh" && a.blocks_zh ? a.blocks_zh : a.blocks;
   const choose = (l: "zh" | "en") => { setLang(l); store.set("briefLang", l); };
   return (
-    <div style={{ minWidth: 150 }}>
+    <div style={{ minWidth: open ? 150 : undefined }}>
       <button type="button" onClick={() => setOpen(!open)} title="Show why"
               style={{ ...pill(c), cursor: "pointer", background: "transparent" }}>{label} {open ? "▴" : "▾"}</button>
       {a.orders.map((o, i) => (
@@ -113,6 +114,9 @@ const Kpi: React.FC<{ label: string; main: React.ReactNode; sub?: React.ReactNod
     {s ? <div style={{ ...muted, lineHeight: 1.5 }}>{s}</div> : null}
   </div>
 );
+
+// A company name on one line, cut with "…" (the full name on hover), so the tables fit the page.
+const nameLine: React.CSSProperties = { ...sub, maxWidth: 130, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" };
 
 const Tag: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <span style={{ fontSize: 10.5, color: "#aeb4ba", background: "#272e34", borderRadius: 4, padding: "0 4px", marginRight: 4 }}>{children}</span>
@@ -334,6 +338,7 @@ const Holdings: React.FC = () => {
   const [toast, setToast] = React.useState<{ msg: string; err?: boolean } | null>(null);
   const [form, setForm] = React.useState<FormState | null>(null);
   const [chart, setChart] = React.useState<string | null>(null);
+  const [analystOpen, setAnalystOpen] = React.useState<string | null>(null);   // the row whose analysts are expanded
   const [catalystModal, setCatalystModal] = React.useState<string | null>(null);
   const [lotModal, setLotModal] = React.useState<string | null>(null);
   const [catalystMap, setCatalystMap] = React.useState<Record<string, PerStockCatalysts>>({});
@@ -493,8 +498,6 @@ const Holdings: React.FC = () => {
         ) : null}
       </div>
 
-      <AdvisorPanel holdings={s.holdings} />
-
       <CatalystsPanel
         holdings={s.holdings}
         watchlist={s.watchlist}
@@ -515,13 +518,14 @@ const Holdings: React.FC = () => {
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
                 <thead><tr>
-                  <th style={th}>Stock</th><th style={th}>Price</th><th style={th}>Today</th><th style={th}>Action</th><th style={th}>Events</th><th style={th}>Lots / 波段</th><th style={{ ...th, ...right }}>Shares</th>
-                  <th style={{ ...th, ...right }}>Avg cost (mine / FIFO)</th><th style={{ ...th, ...right }}>Value / weight</th><th style={{ ...th, ...right }}>Unrealised P&L</th>
+                  <th style={th}>Stock</th><th style={th}>Price</th><th style={th}>Today</th><th style={th}>Action</th><th style={th}>Events</th><th style={th}>Analysts</th><th style={th}>Lots / 波段</th>
+                  <th style={{ ...th, ...right }}>Avg cost</th><th style={{ ...th, ...right }}>Value / shares</th><th style={{ ...th, ...right }}>Unrealised P&L</th>
                 </tr></thead>
                 <tbody>{s.holdings.map((h) => (
-                  <tr key={h.symbol} onClick={() => setChart(h.symbol)} style={{ cursor: "pointer" }} title="Click to see the chart">
+                  <React.Fragment key={h.symbol}>
+                  <tr onClick={() => setChart(h.symbol)} style={{ cursor: "pointer" }} title="Click to see the chart">
                     <td style={cell}><b><i style={{ display: "inline-block", width: 8, height: 8, borderRadius: 4, background: colors[h.symbol], marginRight: 6 }} />{h.symbol}</b>
-                      <span style={sub}>{shortName(h.quote?.name)}</span></td>
+                      <span style={nameLine} title={shortName(h.quote?.name)}>{shortName(h.quote?.name)}</span></td>
                     <td style={cell}><PriceCell q={h.quote || {}} /></td>
                     <td style={{ ...cell, color: color(h.day_change) }}><b>{pct(h.day_change_pct) || "—"}</b>
                       <span style={{ ...sub, color: color(h.day_pnl) }}>{h.day_pnl != null ? signed(h.day_pnl) : ""}</span></td>
@@ -530,17 +534,27 @@ const Holdings: React.FC = () => {
                       <StockCatalystButton symbol={h.symbol} info={catalystMap[h.symbol]} lang={catalystLang} onOpen={setCatalystModal} />
                     </td>
                     <td style={cell} onClick={(e) => e.stopPropagation()}>
+                      <AnalystCell s={s.analysts?.[h.symbol]} price={h.quote?.price} open={analystOpen === h.symbol}
+                                   onToggle={() => setAnalystOpen(analystOpen === h.symbol ? null : h.symbol)} />
+                    </td>
+                    <td style={cell} onClick={(e) => e.stopPropagation()}>
                       <StockLotButton holding={h} onOpen={setLotModal} />
                     </td>
-                    <td style={{ ...cell, ...right }}>{qty(h.quantity)}</td>
                     <td style={{ ...cell, ...right }}><Tag>Mine</Tag><b>{usd(h.avg_cost)}</b>
                       <span style={sub}><Tag>FIFO</Tag>{usd(h.fifo_avg_cost)}</span><span style={sub}>Cost {usd(h.cost)}</span></td>
                     <td style={{ ...cell, ...right }}><b>{usd(h.market_value)}</b>
-                      {h.weight != null ? <span style={sub}>{h.weight.toFixed(1)}%</span> : null}</td>
+                      {h.weight != null ? <span style={sub}>{h.weight.toFixed(1)}%</span> : null}
+                      <span style={sub} title="Shares held">{qty(h.quantity)} sh</span></td>
                     <td style={{ ...cell, ...right, color: color(h.unrealized) }}><b>{signed(h.unrealized)}</b>
                       <span style={{ ...sub, color: color(h.unrealized) }}>{pct(h.unrealized_pct)}</span>
                       <span style={sub}><Tag>FIFO</Tag><span style={{ color: color(h.fifo_unrealized) }}>{signed(h.fifo_unrealized)}</span></span></td>
                   </tr>
+                  {analystOpen === h.symbol ? (
+                    <tr><td colSpan={10} style={{ ...cell, background: "rgba(20,24,28,0.5)" }}>
+                      <AnalystsPanel symbol={h.symbol} price={h.quote?.price} refreshKey={s.analysts?.[h.symbol]?.fetched_at} />
+                    </td></tr>
+                  ) : null}
+                  </React.Fragment>
                 ))}</tbody>
               </table>
             </div>
@@ -548,22 +562,26 @@ const Holdings: React.FC = () => {
         ) : <div style={muted}>No holdings.</div>}
       </div>
 
-      <IndicesPanel live={s.indices} />
-
       <div style={panel}>
         <div style={panelHead}><div style={panelTitle}>👀 Watchlist · {s.watchlist.length}</div><span style={muted}>Stocks you follow without holding · click 🔭 事件 to open upcoming catalysts modal</span></div>
         {s.watchlist.length ? (
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
-              <thead><tr><th style={th}>Stock</th><th style={th}>Price</th><th style={th}>Today</th><th style={th}>Events</th><th style={{ ...th, ...right }}>Prev close</th><th style={th} /></tr></thead>
+              <thead><tr><th style={th}>Stock</th><th style={th}>Price</th><th style={th}>Today</th><th style={th}>Events</th><th style={th}>Analysts</th><th style={{ ...th, ...right }}>Prev close</th><th style={th} /></tr></thead>
               <tbody>{s.watchlist.map((w) => (
-                <tr key={w.symbol} onClick={() => setChart(w.symbol)} style={{ cursor: "pointer" }} title="Click to see the chart">
-                  <td style={cell}><b>{w.symbol}</b><span style={sub}>{shortName(w.quote?.name)}{w.note ? ` · ${w.note}` : ""}</span></td>
+                <React.Fragment key={w.symbol}>
+                <tr onClick={() => setChart(w.symbol)} style={{ cursor: "pointer" }} title="Click to see the chart">
+                  <td style={cell}><b>{w.symbol}</b><span style={nameLine} title={`${shortName(w.quote?.name)}${w.note ? ` · ${w.note}` : ""}`}>
+                    {shortName(w.quote?.name)}{w.note ? ` · ${w.note}` : ""}</span></td>
                   <td style={cell}><PriceCell q={w.quote || {}} /></td>
                   <td style={{ ...cell, color: color(w.day_change) }}><b>{pct(w.day_change_pct) || "—"}</b>
                     <span style={{ ...sub, color: color(w.day_change) }}>{w.day_change != null ? signed(w.day_change) : ""}</span></td>
                   <td style={cell} onClick={(e) => e.stopPropagation()}>
                     <StockCatalystButton symbol={w.symbol} info={catalystMap[w.symbol]} lang={catalystLang} onOpen={setCatalystModal} />
+                  </td>
+                  <td style={cell} onClick={(e) => e.stopPropagation()}>
+                    <AnalystCell s={s.analysts?.[w.symbol]} price={w.quote?.price} open={analystOpen === w.symbol}
+                                 onToggle={() => setAnalystOpen(analystOpen === w.symbol ? null : w.symbol)} />
                   </td>
                   <td style={{ ...cell, ...right }}>{usd(w.quote?.prev_close)}</td>
                   <td style={{ ...cell, whiteSpace: "nowrap" }} onClick={(e) => e.stopPropagation()}>
@@ -571,6 +589,12 @@ const Holdings: React.FC = () => {
                     <button style={iconButton} title="Remove from watchlist" onClick={() => void unwatch(w.symbol)}>✕</button>
                   </td>
                 </tr>
+                {analystOpen === w.symbol ? (
+                  <tr><td colSpan={7} style={{ ...cell, background: "rgba(20,24,28,0.5)" }}>
+                    <AnalystsPanel symbol={w.symbol} price={w.quote?.price} refreshKey={s.analysts?.[w.symbol]?.fetched_at} />
+                  </td></tr>
+                ) : null}
+                </React.Fragment>
               ))}</tbody>
             </table>
           </div>
@@ -582,6 +606,10 @@ const Holdings: React.FC = () => {
           <button style={ghostButton} onClick={() => void watch()}>+ Add</button>
         </div>
       </div>
+
+      <AdvisorPanel holdings={s.holdings} />
+
+      <IndicesPanel live={s.indices} />
 
       <GlobalMarkets g={s.global} />
 

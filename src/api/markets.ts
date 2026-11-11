@@ -231,6 +231,63 @@ export interface PortfolioState {
   refreshing: boolean;
   global: GlobalState;
   cash: number;
+  /** analysts' consensus per held or watched stock (quant_ai markets/analysts.py, 2026-11-11) */
+  analysts?: Record<string, AnalystSummary>;
+}
+
+// ---- Analysts' ratings and price targets (Yahoo via yfinance; one row per firm, its newest change)
+export interface AnalystChange {
+  firm: string;
+  graded_at: string;            // UTC, ISO
+  direction: -1 | 0 | 1;        // downgrade or cut target / neither / upgrade or raised target
+  text: string;
+}
+
+export interface AnalystSummary {
+  target_mean?: number | null;
+  target_median?: number | null;
+  target_high?: number | null;
+  target_low?: number | null;
+  price?: number | null;
+  buy?: number;
+  hold?: number;
+  sell?: number;
+  analysts?: number | null;
+  fetched_at?: number | null;
+  error?: string | null;
+  up_30d: number;
+  down_30d: number;
+  /** the newest change when it is under 7 days old */
+  latest: AnalystChange | null;
+}
+
+export interface AnalystNews {
+  title: string;
+  url: string;
+  date: string;                 // YYYYMMDD
+  source?: string | null;
+}
+
+export interface AnalystFirm {
+  firm: string;
+  graded_at: string;
+  age_days: number;
+  stale: boolean;               // newest change over a year old: probably no longer covering
+  rating: string | null;        // the firm's own word (Overweight, Market Perform...)
+  rating_bucket: "Buy" | "Hold" | "Sell" | null;
+  from_rating: string | null;
+  action: string | null;        // up / down / main / init / reit
+  target: number | null;
+  prior_target: number | null;
+  direction: -1 | 0 | 1;
+  text: string;
+  news: AnalystNews | null;
+}
+
+export interface AnalystDetail {
+  symbol: string;
+  summary: AnalystSummary | Record<string, never>;
+  firms: AnalystFirm[];
 }
 
 export interface Candle {
@@ -400,6 +457,7 @@ const post = <T>(path: string, payload: unknown) =>
   call<T>(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
 
 export const fetchPortfolio = (force = false) => call<PortfolioState>(`/portfolio/state${force ? "?force=1" : ""}`);
+export const fetchAnalysts = (symbol: string) => call<AnalystDetail>(`/analysts/${encodeURIComponent(symbol)}`);
 export const fetchChart = (symbol: string, range: string) =>
   call<ChartData>(`/portfolio/chart?symbol=${encodeURIComponent(symbol)}&range=${range}`);
 

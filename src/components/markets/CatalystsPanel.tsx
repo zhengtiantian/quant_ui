@@ -179,11 +179,16 @@ export const StockCatalystButton: React.FC<{
             e.stopPropagation();
             onOpen(symbol);
           }}
+          title={subHint}
           style={{
             fontSize: 11,
             color: urgent ? "#dd7e95" : "#99a0a8",
             cursor: "pointer",
             whiteSpace: "nowrap",
+            // capped so the holdings table fits the page without a sideways scroll
+            maxWidth: 170,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
           }}
         >
           {subHint}
