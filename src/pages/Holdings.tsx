@@ -122,6 +122,11 @@ const Tag: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <span style={{ fontSize: 10.5, color: "#aeb4ba", background: "#272e34", borderRadius: 4, padding: "0 4px", marginRight: 4 }}>{children}</span>
 );
 
+// Tooltip for the Today column: which price the move is measured from.
+const refTitle = (q?: Holding["quote"]): string =>
+  q?.ref_basis === "post_close" ? `vs after-hours close ${q.ref_date ?? ""} ${usd(q.ref_price)}`
+    : q?.ref_basis === "prev_close" ? `vs prev close ${usd(q.ref_price)} (after-hours close not available)` : "";
+
 const PriceCell: React.FC<{ q: Holding["quote"] }> = ({ q }) => {
   if (q.price == null && q.pending) return <span style={muted}>⏳ Loading quote…</span>;
   if (q.price == null && /not found/i.test(q.error || "")) return <span style={{ color: DOWN }}>Symbol not found, check the spelling</span>;
@@ -138,6 +143,11 @@ const PriceCell: React.FC<{ q: Holding["quote"] }> = ({ q }) => {
       {ext && q.regular_price ? (
         <span style={sub}>Close {usd(q.regular_price)}
           {q.session_change_pct != null ? <> · {SESSION_LABEL[q.session!]} <span style={{ color: color(q.session_change) }}>{pct(q.session_change_pct)}</span></> : null}
+        </span>
+      ) : null}
+      {q.ref_basis === "post_close" && q.ref_price ? (
+        <span style={sub} title={`Previous trading day's after-hours end (${q.ref_date ?? ""}, last trade by 19:59 ET)`}>
+          Prev AH close {usd(q.ref_price)} · <span style={{ color: color(q.price - q.ref_price) }}>{pct((q.price - q.ref_price) / q.ref_price * 100)}</span>
         </span>
       ) : null}
     </div>
@@ -283,7 +293,8 @@ const ChartModal: React.FC<{ symbol: string; state: PortfolioState; onClose: () 
   }, [onClose]);
   const row: Holding | WatchItem | undefined = state.holdings.find((h) => h.symbol === symbol) || state.watchlist.find((w) => w.symbol === symbol);
   const q = row?.quote || {};
-  const chg = q.price != null && q.prev_close ? q.price - q.prev_close : null;
+  const ref = q.ref_price ?? q.prev_close;
+  const chg = q.price != null && ref ? q.price - ref : null;
   const held = row && "quantity" in row ? (row as Holding) : null;
   const seg = (on: boolean): React.CSSProperties => ({ ...ghostButton, padding: "3px 10px", background: on ? "#2f746f" : "#23272c", color: on ? "#e4e5e7" : "#81dad3" });
   return (
@@ -300,7 +311,7 @@ const ChartModal: React.FC<{ symbol: string; state: PortfolioState; onClose: () 
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "baseline", flexWrap: "wrap", marginBottom: 8 }}>
           <b style={{ fontSize: 18 }}>{usd(q.price)}</b>
-          {chg != null ? <span style={{ color: color(chg) }}>{signed(chg)} ({pct(chg / q.prev_close! * 100)})</span> : null}
+          {chg != null ? <span style={{ color: color(chg) }}>{signed(chg)} ({pct(chg / ref! * 100)})</span> : null}
           {q.session ? <span style={pill(SESSION_COLOR[q.session])}>{SESSION_LABEL[q.session]}</span> : null}
           {q.regular_price && (q.session === "pre" || q.session === "post") ? <span style={muted}>Close {usd(q.regular_price)}</span> : null}
         </div>
@@ -489,8 +500,9 @@ const Holdings: React.FC = () => {
                {cny(t.market_value) ? ` · ${cny(t.market_value)}` : ""}<br />FIFO cost {usd(t.fifo_cost)}</>} />
         <Kpi label="Unrealised P&L" main={signed(t.unrealized)} tint={color(t.unrealized)}
              sub={<><span style={{ color: color(t.unrealized) }}>{pct(t.unrealized_pct)}</span><br />FIFO <span style={{ color: color(t.fifo_unrealized) }}>{signed(t.fifo_unrealized)}</span></>} />
-        <Kpi label="Today P&L" main={signed(t.day_pnl)} tint={color(t.day_pnl)}
-             sub={<><span style={{ color: color(t.day_pnl) }}>{pct(t.day_pnl_pct)}</span> · vs prev close</>} />
+        <Kpi label="Today P&L" main={signed(t.ref_pnl ?? t.day_pnl)} tint={color(t.ref_pnl ?? t.day_pnl)}
+             sub={<><span style={{ color: color(t.ref_pnl ?? t.day_pnl) }}>{pct(t.ref_pnl != null ? t.ref_pnl_pct ?? null : t.day_pnl_pct)}</span>
+               {" · "}{t.ref_basis === "post_close" ? "vs prev after-hours close" : t.ref_basis === "mixed" ? "vs prev after-hours close (some vs prev close)" : "vs prev close"}</>} />
         <CashKpi cash={s.cash ?? 0} onSaved={(st) => { apply(st); flash("Cash saved"); }} onError={(m) => flash(m, true)} />
         {Math.abs(realized) > 1e-9 || Math.abs(t.fifo_realized) > 1e-9 ? (
           <Kpi label="Realised + dividends" main={signed(realized)} tint={color(realized)}
@@ -527,8 +539,8 @@ const Holdings: React.FC = () => {
                     <td style={cell}><b><i style={{ display: "inline-block", width: 8, height: 8, borderRadius: 4, background: colors[h.symbol], marginRight: 6 }} />{h.symbol}</b>
                       <span style={nameLine} title={shortName(h.quote?.name)}>{shortName(h.quote?.name)}</span></td>
                     <td style={cell}><PriceCell q={h.quote || {}} /></td>
-                    <td style={{ ...cell, color: color(h.day_change) }}><b>{pct(h.day_change_pct) || "—"}</b>
-                      <span style={{ ...sub, color: color(h.day_pnl) }}>{h.day_pnl != null ? signed(h.day_pnl) : ""}</span></td>
+                    <td style={{ ...cell, color: color(h.ref_change ?? h.day_change) }} title={refTitle(h.quote)}><b>{pct(h.ref_change_pct ?? h.day_change_pct ?? null) || "—"}</b>
+                      <span style={{ ...sub, color: color(h.ref_pnl ?? h.day_pnl) }}>{(h.ref_pnl ?? h.day_pnl) != null ? signed((h.ref_pnl ?? h.day_pnl)!) : ""}</span></td>
                     <td style={cell} onClick={(e) => e.stopPropagation()}><ActionCell a={actions[h.symbol]} /></td>
                     <td style={cell} onClick={(e) => e.stopPropagation()}>
                       <StockCatalystButton symbol={h.symbol} info={catalystMap[h.symbol]} lang={catalystLang} onOpen={setCatalystModal} />
@@ -567,15 +579,15 @@ const Holdings: React.FC = () => {
         {s.watchlist.length ? (
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
-              <thead><tr><th style={th}>Stock</th><th style={th}>Price</th><th style={th}>Today</th><th style={th}>Events</th><th style={th}>Analysts</th><th style={{ ...th, ...right }}>Prev close</th><th style={th} /></tr></thead>
+              <thead><tr><th style={th}>Stock</th><th style={th}>Price</th><th style={th}>Today</th><th style={th}>Events</th><th style={th}>Analysts</th><th style={{ ...th, ...right }} title="The price today's move is measured from">Ref price</th><th style={th} /></tr></thead>
               <tbody>{s.watchlist.map((w) => (
                 <React.Fragment key={w.symbol}>
                 <tr onClick={() => setChart(w.symbol)} style={{ cursor: "pointer" }} title="Click to see the chart">
                   <td style={cell}><b>{w.symbol}</b><span style={nameLine} title={`${shortName(w.quote?.name)}${w.note ? ` · ${w.note}` : ""}`}>
                     {shortName(w.quote?.name)}{w.note ? ` · ${w.note}` : ""}</span></td>
                   <td style={cell}><PriceCell q={w.quote || {}} /></td>
-                  <td style={{ ...cell, color: color(w.day_change) }}><b>{pct(w.day_change_pct) || "—"}</b>
-                    <span style={{ ...sub, color: color(w.day_change) }}>{w.day_change != null ? signed(w.day_change) : ""}</span></td>
+                  <td style={{ ...cell, color: color(w.ref_change ?? w.day_change) }} title={refTitle(w.quote)}><b>{pct(w.ref_change_pct ?? w.day_change_pct ?? null) || "—"}</b>
+                    <span style={{ ...sub, color: color(w.ref_change ?? w.day_change) }}>{(w.ref_change ?? w.day_change) != null ? signed((w.ref_change ?? w.day_change)!) : ""}</span></td>
                   <td style={cell} onClick={(e) => e.stopPropagation()}>
                     <StockCatalystButton symbol={w.symbol} info={catalystMap[w.symbol]} lang={catalystLang} onOpen={setCatalystModal} />
                   </td>
@@ -583,7 +595,7 @@ const Holdings: React.FC = () => {
                     <AnalystCell s={s.analysts?.[w.symbol]} price={w.quote?.price} open={analystOpen === w.symbol}
                                  onToggle={() => setAnalystOpen(analystOpen === w.symbol ? null : w.symbol)} />
                   </td>
-                  <td style={{ ...cell, ...right }}>{usd(w.quote?.prev_close)}</td>
+                  <td style={{ ...cell, ...right }} title={refTitle(w.quote)}>{usd(w.quote?.ref_price ?? w.quote?.prev_close)}</td>
                   <td style={{ ...cell, whiteSpace: "nowrap" }} onClick={(e) => e.stopPropagation()}>
                     <button style={iconButton} title="Add a buy" onClick={() => { setFilter(""); editTx(null, w.symbol); }}>+</button>
                     <button style={iconButton} title="Remove from watchlist" onClick={() => void unwatch(w.symbol)}>✕</button>

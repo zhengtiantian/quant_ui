@@ -22,6 +22,11 @@ export interface Quote {
   regular_price?: number | null;
   session_change?: number | null;
   session_change_pct?: number | null;
+  // The day is measured from this price (2026-11-12): the previous trading day's after-hours end
+  // ("post_close"), or the previous regular close when that could not be fetched ("prev_close").
+  ref_price?: number | null;
+  ref_date?: string | null;
+  ref_basis?: "post_close" | "prev_close" | null;
   stale?: boolean;
   pending?: boolean;
   error?: string;
@@ -118,6 +123,9 @@ export interface Holding {
   day_change?: number | null;
   day_change_pct?: number | null;
   day_pnl?: number | null;
+  ref_change?: number | null;
+  ref_change_pct?: number | null;
+  ref_pnl?: number | null;
   weight?: number | null;
   buy_orders?: BuyOrderLot[];
   sell_orders?: SellOrderRecord[];
@@ -135,6 +143,8 @@ export interface WatchItem {
   quote: Quote;
   day_change?: number | null;
   day_change_pct?: number | null;
+  ref_change?: number | null;
+  ref_change_pct?: number | null;
 }
 
 export interface Transaction {
@@ -162,6 +172,9 @@ export interface Totals {
   cost: number;
   day_pnl: number;
   day_pnl_pct: number | null;
+  ref_pnl?: number;
+  ref_pnl_pct?: number | null;
+  ref_basis?: "post_close" | "prev_close" | "mixed" | null;
   realized: number;
   dividends: number;
   unrealized: number;

@@ -592,7 +592,8 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
     });
 
   const q = holding.quote || {};
-  const chg = q.price != null && q.prev_close ? q.price - q.prev_close : null;
+  const ref = q.ref_price ?? q.prev_close;   // previous after-hours end (2026-11-12), else previous close
+  const chg = q.price != null && ref ? q.price - ref : null;
 
   const tabBtn = (active: boolean, accent = "#81dad3"): React.CSSProperties => ({
     ...ghostButton,
@@ -669,9 +670,9 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
             <span style={{ fontSize: 20, fontWeight: 800, color: "#d6d9dc" }}>📦 {symbol} 批次与波段订单簿</span>
             <span style={muted}>{shortName(q.name)}</span>
             {q.price != null ? <b style={{ fontSize: 17 }}>{usd(q.price)}</b> : null}
-            {chg != null && q.prev_close ? (
+            {chg != null && ref ? (
               <span style={{ color: color(chg), fontSize: 13, fontWeight: 600 }}>
-                {signed(chg)} ({pct((chg / q.prev_close) * 100)})
+                {signed(chg)} ({pct((chg / ref) * 100)})
               </span>
             ) : null}
             {q.session ? <span style={pill(SESSION_COLOR[q.session] || "#99a0a8")}>{SESSION_LABEL[q.session]}</span> : null}
