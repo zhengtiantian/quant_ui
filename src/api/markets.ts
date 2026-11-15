@@ -1017,8 +1017,14 @@ export interface NewsJudgment {
   others: { symbol: string; direction: number; label: Bilingual; why: string }[];
   sources: { title: string; url: string }[];
   storylines: { head: string; reason: Bilingual; n24: number }[];
+  after?: { h: number; excess: number; right: boolean | null }[];   // excess return vs SPY since the call (trading days)
 }
-export interface NewsJudgmentReply { hints: Record<string, NewsJudgment>; labels: Record<string, Bilingual>; show_hours: number }
+export interface NewsJudgmentReply {
+  hints: Record<string, NewsJudgment>;
+  labels: Record<string, Bilingual>;
+  show_hours: number;
+  track?: { text: Bilingual };   // every scored live call: how many were right
+}
 export const fetchNewsJudgments = () => call<NewsJudgmentReply>("/portfolio/news-linkage");
 
 // ---- Weekly keyword review (quant_ai markets/keyword_review.py; proposals from quant_data tools/keyword_refresh.py)

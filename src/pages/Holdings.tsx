@@ -554,7 +554,7 @@ const Holdings: React.FC = () => {
                       <span style={{ ...sub, color: color(h.ref_pnl ?? h.day_pnl) }}>{(h.ref_pnl ?? h.day_pnl) != null ? signed((h.ref_pnl ?? h.day_pnl)!) : ""}</span></td>
                     <td style={cell} onClick={(e) => e.stopPropagation()}>
                       {actions[h.symbol] || !news?.hints[h.symbol] ? <ActionCell a={actions[h.symbol]} /> : null}
-                      <NewsHint j={news?.hints[h.symbol]} labels={news?.labels} />
+                      <NewsHint j={news?.hints[h.symbol]} labels={news?.labels} track={news?.track?.text} />
                     </td>
                     <td style={cell} onClick={(e) => e.stopPropagation()}>
                       <StockCatalystButton symbol={h.symbol} info={catalystMap[h.symbol]} lang={catalystLang} onOpen={setCatalystModal} />
@@ -599,7 +599,7 @@ const Holdings: React.FC = () => {
                 <tr onClick={() => setChart(w.symbol)} style={{ cursor: "pointer" }} title="Click to see the chart">
                   <td style={cell}><b>{w.symbol}</b><span style={nameLine} title={`${shortName(w.quote?.name)}${w.note ? ` · ${w.note}` : ""}`}>
                     {shortName(w.quote?.name)}{w.note ? ` · ${w.note}` : ""}</span>
-                    <NewsHint j={news?.hints[w.symbol]} labels={news?.labels} /></td>
+                    <NewsHint j={news?.hints[w.symbol]} labels={news?.labels} track={news?.track?.text} /></td>
                   <td style={cell}><PriceCell q={w.quote || {}} /></td>
                   <td style={{ ...cell, color: color(w.ref_change ?? w.day_change) }} title={refTitle(w.quote)}><b>{pct(w.ref_change_pct ?? w.day_change_pct ?? null) || "—"}</b>
                     <span style={{ ...sub, color: color(w.ref_change ?? w.day_change) }}>{(w.ref_change ?? w.day_change) != null ? signed((w.ref_change ?? w.day_change)!) : ""}</span></td>

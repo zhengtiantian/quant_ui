@@ -12,7 +12,7 @@ const lang = (): "zh" | "en" => {
 };
 const head: React.CSSProperties = { color: "#81dad3", marginTop: 6, fontSize: 12 };
 
-const NewsHint: React.FC<{ j?: NewsJudgment; labels?: Record<string, Bilingual> }> = ({ j, labels }) => {
+const NewsHint: React.FC<{ j?: NewsJudgment; labels?: Record<string, Bilingual>; track?: Bilingual }> = ({ j, labels, track }) => {
   const [open, setOpen] = React.useState(false);
   if (!j) return null;
   const l = lang();
@@ -28,6 +28,12 @@ const NewsHint: React.FC<{ j?: NewsJudgment; labels?: Record<string, Bilingual> 
         <div style={{ ...muted, marginTop: 4, maxWidth: 380, whiteSpace: "normal", lineHeight: 1.45 }}>
           <div style={{ color: "#bbc0c5" }}><b>{j.summary[l]}</b></div>
           <div>{j.detail[l]} · {t("judged", "Judged")} {when}</div>
+          {j.after?.length ? (
+            <div>{t("after", "Since the call, vs SPY")}: {j.after.map((a, i) => (
+              <span key={i} style={{ color: a.excess < 0 ? DOWN : a.excess > 0 ? UP : undefined }}>
+                {i ? " · " : ""}{a.h}{t("days", "d")} {a.excess > 0 ? "+" : ""}{a.excess.toFixed(1)}%{a.right == null ? "" : a.right ? " ✓" : " ✗"}
+              </span>))}</div>
+          ) : null}
           {j.storylines.length ? <div style={head}>{t("storylines", "Storylines")}</div> : null}
           {j.storylines.map((s, i) => <div key={i}>• {s.head} <span style={{ opacity: 0.8 }}>({s.reason[l]}, {s.n24}/24h)</span></div>)}
           {j.chain.length ? <div style={head}>{t("chain", "Why")}</div> : null}
@@ -43,6 +49,7 @@ const NewsHint: React.FC<{ j?: NewsJudgment; labels?: Record<string, Bilingual> 
             <div key={i}>• {s.url ? <a href={s.url} target="_blank" rel="noreferrer" style={{ color: "#aeb4ba" }}>{s.title || s.url}</a> : s.title}</div>
           ))}
           <div style={{ marginTop: 6, opacity: 0.8 }}>{t("hint", "A hint from the news alone: the action above is unchanged.")}</div>
+          {track ? <div style={{ opacity: 0.8 }}>{track[l]}</div> : null}
         </div>
       ) : null}
     </div>
