@@ -4,12 +4,14 @@ import {
   deleteTransaction,
   fetchChart,
   fetchDailyAction,
+  fetchNewsJudgments,
   fetchPortfolio,
   removeWatch,
   saveTransaction,
   setCash,
 } from "../api/markets";
-import type { ChartData, DailyAction, Holding, PerStockCatalysts, PortfolioState, Side, Transaction, WatchItem } from "../api/markets";
+import type { ChartData, DailyAction, Holding, NewsJudgmentReply, PerStockCatalysts, PortfolioState, Side, Transaction, WatchItem } from "../api/markets";
+import NewsHint from "../components/markets/NewsHint";
 import AdvisorPanel from "../components/markets/AdvisorPanel";
 import { AnalystCell, AnalystsPanel } from "../components/markets/AnalystsPanel";
 import CatalystsPanel, { StockCatalystButton } from "../components/markets/CatalystsPanel";
@@ -388,6 +390,15 @@ const Holdings: React.FC = () => {
     return () => window.clearInterval(id);
   }, []);
 
+  // News storyline judgments (N.6) come every 30 minutes at most: fetched on open and every 5 minutes.
+  const [news, setNews] = React.useState<NewsJudgmentReply | null>(null);
+  React.useEffect(() => {
+    const get = () => fetchNewsJudgments().then(setNews).catch(() => undefined);
+    void get();
+    const id = window.setInterval(() => { if (!document.hidden) void get(); }, 300000);
+    return () => window.clearInterval(id);
+  }, []);
+
   // Poll at the session's pace; the global markets keep a minute's pace while any exchange is open.
   React.useEffect(() => {
     if (!s) return;
@@ -541,7 +552,10 @@ const Holdings: React.FC = () => {
                     <td style={cell}><PriceCell q={h.quote || {}} /></td>
                     <td style={{ ...cell, color: color(h.ref_change ?? h.day_change) }} title={refTitle(h.quote)}><b>{pct(h.ref_change_pct ?? h.day_change_pct ?? null) || "—"}</b>
                       <span style={{ ...sub, color: color(h.ref_pnl ?? h.day_pnl) }}>{(h.ref_pnl ?? h.day_pnl) != null ? signed((h.ref_pnl ?? h.day_pnl)!) : ""}</span></td>
-                    <td style={cell} onClick={(e) => e.stopPropagation()}><ActionCell a={actions[h.symbol]} /></td>
+                    <td style={cell} onClick={(e) => e.stopPropagation()}>
+                      {actions[h.symbol] || !news?.hints[h.symbol] ? <ActionCell a={actions[h.symbol]} /> : null}
+                      <NewsHint j={news?.hints[h.symbol]} labels={news?.labels} />
+                    </td>
                     <td style={cell} onClick={(e) => e.stopPropagation()}>
                       <StockCatalystButton symbol={h.symbol} info={catalystMap[h.symbol]} lang={catalystLang} onOpen={setCatalystModal} />
                     </td>
@@ -584,7 +598,8 @@ const Holdings: React.FC = () => {
                 <React.Fragment key={w.symbol}>
                 <tr onClick={() => setChart(w.symbol)} style={{ cursor: "pointer" }} title="Click to see the chart">
                   <td style={cell}><b>{w.symbol}</b><span style={nameLine} title={`${shortName(w.quote?.name)}${w.note ? ` · ${w.note}` : ""}`}>
-                    {shortName(w.quote?.name)}{w.note ? ` · ${w.note}` : ""}</span></td>
+                    {shortName(w.quote?.name)}{w.note ? ` · ${w.note}` : ""}</span>
+                    <NewsHint j={news?.hints[w.symbol]} labels={news?.labels} /></td>
                   <td style={cell}><PriceCell q={w.quote || {}} /></td>
                   <td style={{ ...cell, color: color(w.ref_change ?? w.day_change) }} title={refTitle(w.quote)}><b>{pct(w.ref_change_pct ?? w.day_change_pct ?? null) || "—"}</b>
                     <span style={{ ...sub, color: color(w.ref_change ?? w.day_change) }}>{(w.ref_change ?? w.day_change) != null ? signed((w.ref_change ?? w.day_change)!) : ""}</span></td>

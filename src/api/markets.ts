@@ -1004,6 +1004,23 @@ export interface DailyActionReply {
 }
 export const fetchDailyAction = (force = false) => call<DailyActionReply>(`/portfolio/daily-action${force ? "?force=1" : ""}`);
 
+// ---- News storyline judgments (N.6, quant_ai markets/news_linkage.py): a hint under the Action pill, never advice
+export interface NewsJudgment {
+  symbol: string;
+  at: string;                    // when the storylines fired and Claude judged them (UTC)
+  direction: number;             // -2 strongly bearish .. 2 strongly bullish, over the next 1-20 trading days vs the market
+  label: Bilingual;              // "News: Bearish"
+  detail: Bilingual;             // confidence · how much is priced in
+  summary: Bilingual;
+  chain: string[];               // Claude's steps from the facts to the effect (English)
+  watch: string[];               // next events that would change the judgment (English)
+  others: { symbol: string; direction: number; label: Bilingual; why: string }[];
+  sources: { title: string; url: string }[];
+  storylines: { head: string; reason: Bilingual; n24: number }[];
+}
+export interface NewsJudgmentReply { hints: Record<string, NewsJudgment>; labels: Record<string, Bilingual>; show_hours: number }
+export const fetchNewsJudgments = () => call<NewsJudgmentReply>("/portfolio/news-linkage");
+
 // ---- Weekly keyword review (quant_ai markets/keyword_review.py; proposals from quant_data tools/keyword_refresh.py)
 export type KeywordTier = "add" | "weak" | "model_none" | "unjudged";
 export type KeywordDecision = "add" | "weak" | "reject";
