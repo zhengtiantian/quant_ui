@@ -113,7 +113,7 @@ export const TaskMonitorPanel: React.FC = () => {
   };
 
   // Categories list
-  const categories = ["全部", "量化主管道", "数据采集与匹配", "数据处理与特征", "实时盘中监控", "模型每周训练"];
+  const categories = ["全部", "量化主管道", "全球求职监控", "数据采集与匹配", "数据处理与特征", "行情与历史数据", "实时盘中监控", "机构与资金流", "模型每周训练", "系统健康检查"];
 
   const filteredDags = (data?.airflow_dags || []).filter((d) => {
     if (categoryFilter === "全部") return true;
@@ -402,7 +402,7 @@ export const TaskMonitorPanel: React.FC = () => {
       {/* 2. Job Agent Section */}
       <div style={{ marginBottom: "28px" }}>
         <h3 style={{ fontSize: "16px", color: "#d6d9dc", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
-          🎯 找工中控平台 (Job Agent · 5050 端口独立定时服务)
+          🎯 找工中控平台 (Job Agent · :5050 多国求职看板 & Airflow 统一调度)
         </h3>
 
         <div
@@ -450,8 +450,14 @@ export const TaskMonitorPanel: React.FC = () => {
 
               <div style={{ fontSize: "13px", color: "#aeb4ba", lineHeight: "1.6" }}>
                 <div>
-                  📅 <b>调度机制:</b> {data?.job_agent?.schedule || "每日 11:00 & 16:00 (macOS Launchd)"}
+                  📅 <b>调度机制:</b> {data?.job_agent?.schedule || "每日 11:00 & 16:00 都柏林时间 (Airflow 统一调度)"}
                 </div>
+                {data?.job_agent?.regions_summary && (
+                  <div>
+                    🌍 <b>覆盖板块与待投池:</b>{" "}
+                    <span style={{ color: "#d6d9dc" }}>{data.job_agent.regions_summary}</span>
+                  </div>
+                )}
                 <div>
                   ⏳ <b>下次自动执行:</b>{" "}
                   <span style={{ color: "#7e9cdd", fontWeight: 600 }}>
@@ -516,7 +522,7 @@ export const TaskMonitorPanel: React.FC = () => {
 
               <button
                 onClick={() =>
-                  openLogModal("找工平台 launchd 调度日志", "job_agent", "launchd")
+                  openLogModal("找工平台 5050 Web 服务日志", "job_agent", "web")
                 }
                 style={{
                   padding: "6px 14px",
@@ -528,7 +534,7 @@ export const TaskMonitorPanel: React.FC = () => {
                   cursor: "pointer",
                 }}
               >
-                📄 查看 launchd 日志
+                📄 查看 5050 Web 日志
               </button>
             </div>
           </div>

@@ -815,6 +815,7 @@ export interface JobAgentInfo {
   is_online: boolean;
   is_scraping_now: boolean;
   schedule: string;
+  regions_summary?: string | null;
   next_run: {
     next_run_iso: string;
     next_run_display: string;
