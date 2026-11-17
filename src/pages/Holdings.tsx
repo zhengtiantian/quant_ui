@@ -4,14 +4,18 @@ import {
   deleteTransaction,
   fetchChart,
   fetchDailyAction,
+  fetchDevilsAdvocate,
   fetchNewsJudgments,
   fetchPortfolio,
   removeWatch,
+  requestDevilsAdvocate,
   saveTransaction,
   setCash,
 } from "../api/markets";
-import type { ChartData, DailyAction, Holding, NewsJudgmentReply, PerStockCatalysts, PortfolioState, Side, Transaction, WatchItem } from "../api/markets";
+import type { ChartData, DailyAction, DevilsAdvocateReply, Holding, NewsJudgmentReply, PerStockCatalysts, PortfolioState, Side, Transaction, WatchItem } from "../api/markets";
 import NewsHint from "../components/markets/NewsHint";
+import DevilsAdvocate from "../components/markets/DevilsAdvocate";
+import HintScores from "../components/markets/HintScores";
 import AdvisorPanel from "../components/markets/AdvisorPanel";
 import { AnalystCell, AnalystsPanel } from "../components/markets/AnalystsPanel";
 import CatalystsPanel, { StockCatalystButton } from "../components/markets/CatalystsPanel";
@@ -399,6 +403,19 @@ const Holdings: React.FC = () => {
     return () => window.clearInterval(id);
   }, []);
 
+  // The case against adding (Q.17.1): every 5 minutes, every 5 seconds while one is being written.
+  const [advocate, setAdvocate] = React.useState<DevilsAdvocateReply | null>(null);
+  const advocateBusy = Object.values(advocate?.items ?? {}).some((i) => i.status === "queued" || i.status === "running");
+  const getAdvocate = React.useCallback(() => fetchDevilsAdvocate().then(setAdvocate).catch(() => undefined), []);
+  React.useEffect(() => {
+    void getAdvocate();
+    const id = window.setInterval(() => { if (!document.hidden) void getAdvocate(); }, advocateBusy ? 5000 : 300000);
+    return () => window.clearInterval(id);
+  }, [getAdvocate, advocateBusy]);
+  const askAdvocate = (symbol: string) => {
+    requestDevilsAdvocate(symbol).then(() => getAdvocate()).catch((e) => flash(String(e?.message || e), true));
+  };
+
   // Poll at the session's pace; the global markets keep a minute's pace while any exchange is open.
   React.useEffect(() => {
     if (!s) return;
@@ -555,6 +572,7 @@ const Holdings: React.FC = () => {
                     <td style={cell} onClick={(e) => e.stopPropagation()}>
                       {actions[h.symbol] || !news?.hints[h.symbol] ? <ActionCell a={actions[h.symbol]} /> : null}
                       <NewsHint j={news?.hints[h.symbol]} labels={news?.labels} track={news?.track?.text} />
+                      <DevilsAdvocate symbol={h.symbol} item={advocate?.items[h.symbol]} labels={advocate?.labels} onAsk={askAdvocate} />
                     </td>
                     <td style={cell} onClick={(e) => e.stopPropagation()}>
                       <StockCatalystButton symbol={h.symbol} info={catalystMap[h.symbol]} lang={catalystLang} onOpen={setCatalystModal} />
@@ -587,6 +605,8 @@ const Holdings: React.FC = () => {
           </>
         ) : <div style={muted}>No holdings.</div>}
       </div>
+
+      <HintScores />
 
       <div style={panel}>
         <div style={panelHead}><div style={panelTitle}>👀 Watchlist · {s.watchlist.length}</div><span style={muted}>Stocks you follow without holding · click 🔭 事件 to open upcoming catalysts modal</span></div>

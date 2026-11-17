@@ -1028,6 +1028,39 @@ export interface NewsJudgmentReply {
 }
 export const fetchNewsJudgments = () => call<NewsJudgmentReply>("/portfolio/news-linkage");
 
+// ---- The case against adding (Q.17.1, quant_ai markets/devils_advocate.py): a hint before averaging down, never advice
+export interface DevilsAdvocateAnswer {
+  summary: Bilingual;
+  base_rate: Bilingual;
+  points: { zh: string; en: string; cites: string[] }[];
+  would_weaken: Bilingual;
+  strength: "strong" | "moderate" | "weak";
+}
+export interface DevilsAdvocateItem {
+  id: number;
+  symbol: string;
+  day: string;                   // the New York session it was written in
+  trigger: "manual" | "big_drop" | "add_block";
+  status: "queued" | "running" | "done" | "invalid" | "error";
+  requested_at: string;
+  finished_at: string | null;
+  price: number | null;
+  answer: DevilsAdvocateAnswer | null;   // only when status is "done"
+  sources: { id: string; title: string; url: string | null; time?: string; source?: string }[];
+  facts: { id: string; text: string }[];
+  error: string | null;
+}
+export interface DevilsAdvocateReply { items: Record<string, DevilsAdvocateItem>; labels: Record<string, Bilingual> }
+export const fetchDevilsAdvocate = () => call<DevilsAdvocateReply>("/portfolio/devils-advocate");
+export const requestDevilsAdvocate = (symbol: string) =>
+  post<{ started: boolean; id?: number; reason?: string }>("/portfolio/devils-advocate", { symbol });
+
+// ---- Blocked buys scored against having bought at that session's close (Q.17.0, quant_ai markets/hint_scores.py)
+export interface HintSide { n: number; fell: number; loss_avoided: number | null; rose: number; gain_missed: number | null; net: number | null }
+export interface HintGroup { fired: number; first_day: string; last_day: string; horizons: Record<string, { own: HintSide; vs_spy: HintSide }> }
+export interface HintScoresReply { groups: Record<string, HintGroup>; labels: Record<string, Bilingual> }
+export const fetchHintScores = () => call<HintScoresReply>("/portfolio/hint-scores");
+
 // ---- Weekly keyword review (quant_ai markets/keyword_review.py; proposals from quant_data tools/keyword_refresh.py)
 export type KeywordTier = "add" | "weak" | "model_none" | "unjudged";
 export type KeywordDecision = "add" | "weak" | "reject";
