@@ -558,8 +558,9 @@ const Holdings: React.FC = () => {
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
                 <thead><tr>
-                  <th style={th}>Stock</th><th style={th}>Price</th><th style={th}>Today</th><th style={th}>Action</th><th style={th}>Events</th><th style={th}>Analysts</th><th style={th}>Lots / 波段</th>
+                  <th style={th}>Stock</th><th style={th}>Price</th><th style={th}>Today</th>
                   <th style={{ ...th, ...right }}>Avg cost</th><th style={{ ...th, ...right }}>Value / shares</th><th style={{ ...th, ...right }}>Unrealised P&L</th>
+                  <th style={th}>Action</th><th style={th}>Events</th><th style={th}>Analysts</th><th style={th}>Lots / 波段</th>
                 </tr></thead>
                 <tbody>{s.holdings.map((h) => (
                   <React.Fragment key={h.symbol}>
@@ -569,6 +570,14 @@ const Holdings: React.FC = () => {
                     <td style={cell}><PriceCell q={h.quote || {}} /></td>
                     <td style={{ ...cell, color: color(h.ref_change ?? h.day_change) }} title={refTitle(h.quote)}><b>{pct(h.ref_change_pct ?? h.day_change_pct ?? null) || "—"}</b>
                       <span style={{ ...sub, color: color(h.ref_pnl ?? h.day_pnl) }}>{(h.ref_pnl ?? h.day_pnl) != null ? signed((h.ref_pnl ?? h.day_pnl)!) : ""}</span></td>
+                    <td style={{ ...cell, ...right }}><Tag>Mine</Tag><b>{usd(h.avg_cost)}</b>
+                      <span style={sub}><Tag>FIFO</Tag>{usd(h.fifo_avg_cost)}</span><span style={sub}>Cost {usd(h.cost)}</span></td>
+                    <td style={{ ...cell, ...right }}><b>{usd(h.market_value)}</b>
+                      {h.weight != null ? <span style={sub}>{h.weight.toFixed(1)}%</span> : null}
+                      <span style={sub} title="Shares held">{qty(h.quantity)} sh</span></td>
+                    <td style={{ ...cell, ...right, color: color(h.unrealized) }}><b>{signed(h.unrealized)}</b>
+                      <span style={{ ...sub, color: color(h.unrealized) }}>{pct(h.unrealized_pct)}</span>
+                      <span style={sub}><Tag>FIFO</Tag><span style={{ color: color(h.fifo_unrealized) }}>{signed(h.fifo_unrealized)}</span></span></td>
                     <td style={cell} onClick={(e) => e.stopPropagation()}>
                       {actions[h.symbol] || !news?.hints[h.symbol] ? <ActionCell a={actions[h.symbol]} /> : null}
                       <NewsHint j={news?.hints[h.symbol]} labels={news?.labels} track={news?.track?.text} />
@@ -584,14 +593,6 @@ const Holdings: React.FC = () => {
                     <td style={cell} onClick={(e) => e.stopPropagation()}>
                       <StockLotButton holding={h} onOpen={setLotModal} />
                     </td>
-                    <td style={{ ...cell, ...right }}><Tag>Mine</Tag><b>{usd(h.avg_cost)}</b>
-                      <span style={sub}><Tag>FIFO</Tag>{usd(h.fifo_avg_cost)}</span><span style={sub}>Cost {usd(h.cost)}</span></td>
-                    <td style={{ ...cell, ...right }}><b>{usd(h.market_value)}</b>
-                      {h.weight != null ? <span style={sub}>{h.weight.toFixed(1)}%</span> : null}
-                      <span style={sub} title="Shares held">{qty(h.quantity)} sh</span></td>
-                    <td style={{ ...cell, ...right, color: color(h.unrealized) }}><b>{signed(h.unrealized)}</b>
-                      <span style={{ ...sub, color: color(h.unrealized) }}>{pct(h.unrealized_pct)}</span>
-                      <span style={sub}><Tag>FIFO</Tag><span style={{ color: color(h.fifo_unrealized) }}>{signed(h.fifo_unrealized)}</span></span></td>
                   </tr>
                   {analystOpen === h.symbol ? (
                     <tr><td colSpan={10} style={{ ...cell, background: "rgba(20,24,28,0.5)" }}>
