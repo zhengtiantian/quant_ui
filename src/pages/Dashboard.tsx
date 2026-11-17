@@ -26,7 +26,7 @@ const Dashboard: React.FC = () => {
     const TABS: Tab[] = ["quant", "holdings", "briefs", "positions", "tasks", "keywords", "jobs", "budget", "time"];
     // Tabs merged into Quant Model (2026-11-08); old ?tab= links still land there.
     const LEGACY: Record<string, Tab> = { signals: "quant", performance: "quant", strategy: "quant" };
-    // ?tab=briefs (the desktop widget links straight to a tab)
+    // ?tab=briefs opens straight on a tab
     const [tab, setTab] = React.useState<Tab>(() => {
         const raw = new URLSearchParams(window.location.search).get("tab") ?? "";
         const wanted = (LEGACY[raw] ?? raw) as Tab;
