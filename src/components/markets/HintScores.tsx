@@ -10,7 +10,7 @@ import { cell, muted, panel, panelHead, panelTitle, right, th } from "./format";
 const lang = (): "zh" | "en" => {
   try { return localStorage.getItem("briefLang") === "en" ? "en" : "zh"; } catch { return "zh"; }
 };
-const ORDER = ["add_block", "add_block:falling", "add_block:spacing", "add_block:size", "devils_advocate"];
+const ORDER = ["add_block", "add_block:falling", "add_block:spacing", "add_block:size", "devils_advocate", "filing_change"];
 const HORIZONS = ["5", "20", "60"];
 
 const side = (s: HintSide | undefined) => {

@@ -5,6 +5,7 @@ import {
   fetchChart,
   fetchDailyAction,
   fetchDevilsAdvocate,
+  fetchFilingChanges,
   fetchNewsJudgments,
   fetchPortfolio,
   removeWatch,
@@ -12,10 +13,11 @@ import {
   saveTransaction,
   setCash,
 } from "../api/markets";
-import type { ChartData, DailyAction, DevilsAdvocateReply, Holding, NewsJudgmentReply, PerStockCatalysts, PortfolioState, Side, Transaction, WatchItem } from "../api/markets";
+import type { ChartData, DailyAction, DevilsAdvocateReply, FilingChangesReply, Holding, NewsJudgmentReply, PerStockCatalysts, PortfolioState, Side, Transaction, WatchItem } from "../api/markets";
 import NewsHint from "../components/markets/NewsHint";
 import DevilsAdvocate from "../components/markets/DevilsAdvocate";
 import HintScores from "../components/markets/HintScores";
+import FilingFlag from "../components/markets/FilingFlag";
 import AdvisorPanel from "../components/markets/AdvisorPanel";
 import { AnalystCell, AnalystsPanel } from "../components/markets/AnalystsPanel";
 import CatalystsPanel, { StockCatalystButton } from "../components/markets/CatalystsPanel";
@@ -405,6 +407,14 @@ const Holdings: React.FC = () => {
 
   // The case against adding (Q.17.1): every 5 minutes, every 5 seconds while one is being written.
   const [advocate, setAdvocate] = React.useState<DevilsAdvocateReply | null>(null);
+  // Q.17.5: rewritten risk factors in the latest 10-K / 10-Q (written each weekday evening; checked half-hourly)
+  const [filings, setFilings] = React.useState<FilingChangesReply | null>(null);
+  React.useEffect(() => {
+    const get = () => fetchFilingChanges().then(setFilings).catch(() => undefined);
+    void get();
+    const id = window.setInterval(() => { if (!document.hidden) void get(); }, 1800000);
+    return () => window.clearInterval(id);
+  }, []);
   const advocateBusy = Object.values(advocate?.items ?? {}).some((i) => i.status === "queued" || i.status === "running");
   const getAdvocate = React.useCallback(() => fetchDevilsAdvocate().then(setAdvocate).catch(() => undefined), []);
   React.useEffect(() => {
@@ -582,6 +592,7 @@ const Holdings: React.FC = () => {
                       {actions[h.symbol] || !news?.hints[h.symbol] ? <ActionCell a={actions[h.symbol]} /> : null}
                       <NewsHint j={news?.hints[h.symbol]} labels={news?.labels} track={news?.track?.text} />
                       <DevilsAdvocate symbol={h.symbol} item={advocate?.items[h.symbol]} labels={advocate?.labels} onAsk={askAdvocate} />
+                      <FilingFlag f={filings?.items[h.symbol]} labels={filings?.labels} />
                     </td>
                     <td style={cell} onClick={(e) => e.stopPropagation()}>
                       <StockCatalystButton symbol={h.symbol} info={catalystMap[h.symbol]} lang={catalystLang} onOpen={setCatalystModal} />
@@ -620,7 +631,8 @@ const Holdings: React.FC = () => {
                 <tr onClick={() => setChart(w.symbol)} style={{ cursor: "pointer" }} title="Click to see the chart">
                   <td style={cell}><b>{w.symbol}</b><span style={nameLine} title={`${shortName(w.quote?.name)}${w.note ? ` · ${w.note}` : ""}`}>
                     {shortName(w.quote?.name)}{w.note ? ` · ${w.note}` : ""}</span>
-                    <NewsHint j={news?.hints[w.symbol]} labels={news?.labels} track={news?.track?.text} /></td>
+                    <NewsHint j={news?.hints[w.symbol]} labels={news?.labels} track={news?.track?.text} />
+                    <FilingFlag f={filings?.items[w.symbol]} labels={filings?.labels} /></td>
                   <td style={cell}><PriceCell q={w.quote || {}} /></td>
                   <td style={{ ...cell, color: color(w.ref_change ?? w.day_change) }} title={refTitle(w.quote)}><b>{pct(w.ref_change_pct ?? w.day_change_pct ?? null) || "—"}</b>
                     <span style={{ ...sub, color: color(w.ref_change ?? w.day_change) }}>{(w.ref_change ?? w.day_change) != null ? signed((w.ref_change ?? w.day_change)!) : ""}</span></td>

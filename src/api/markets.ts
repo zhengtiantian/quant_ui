@@ -1061,6 +1061,11 @@ export interface HintGroup { fired: number; first_day: string; last_day: string;
 export interface HintScoresReply { groups: Record<string, HintGroup>; labels: Record<string, Bilingual> }
 export const fetchHintScores = () => call<HintScoresReply>("/portfolio/hint-scores");
 
+// ---- Risk factors rewritten in the latest 10-K / 10-Q (Q.17.5, quant_ai markets/filing_changes.py)
+export interface FilingFlag { form: string; date: string; direction: "grown" | "rewritten" | null; sim_1a: number; cut: number; url: string | null; text: Bilingual }
+export interface FilingChangesReply { items: Record<string, FilingFlag>; labels: Record<string, Bilingual>; generated_at?: string }
+export const fetchFilingChanges = () => call<FilingChangesReply>("/portfolio/filing-changes");
+
 // ---- Weekly keyword review (quant_ai markets/keyword_review.py; proposals from quant_data tools/keyword_refresh.py)
 export type KeywordTier = "add" | "weak" | "model_none" | "unjudged";
 export type KeywordDecision = "add" | "weak" | "reject";
