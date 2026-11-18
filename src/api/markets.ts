@@ -1001,8 +1001,11 @@ export interface DailyActionReply {
   generated_at: string;
   symbols: string[];
   actions: DailyAction[];
-  portfolio: { total: number; cash: number; cluster_pct: number; max_symbol_pct: number; max_cluster_pct: number; breaches: string[] };
+  portfolio: { total: number; cash: number; cluster_pct: number; max_symbol_pct: number; max_cluster_pct: number; breaches: string[];
+               week_reports?: WeekReports | null };
 }
+// Holdings reporting within a week, their bad report nights summed against the loss budget (Q.17 round 4)
+export interface WeekReports { symbols: string[]; loss_usd: number; budget_usd: number; over: boolean; loss_pct: number | null; text?: Bilingual }
 export const fetchDailyAction = (force = false) => call<DailyActionReply>(`/portfolio/daily-action${force ? "?force=1" : ""}`);
 
 // ---- News storyline judgments (N.6, quant_ai markets/news_linkage.py): a hint under the Action pill, never advice

@@ -13,7 +13,7 @@ import {
   saveTransaction,
   setCash,
 } from "../api/markets";
-import type { ChartData, DailyAction, DevilsAdvocateReply, FilingChangesReply, Holding, NewsJudgmentReply, PerStockCatalysts, PortfolioState, Side, Transaction, WatchItem } from "../api/markets";
+import type { ChartData, DailyAction, DevilsAdvocateReply, FilingChangesReply, WeekReports, Holding, NewsJudgmentReply, PerStockCatalysts, PortfolioState, Side, Transaction, WatchItem } from "../api/markets";
 import NewsHint from "../components/markets/NewsHint";
 import DevilsAdvocate from "../components/markets/DevilsAdvocate";
 import HintScores from "../components/markets/HintScores";
@@ -389,8 +389,12 @@ const Holdings: React.FC = () => {
 
   // Today's action changes slowly (the server caches it 10 minutes): fetched on open and every 10 minutes.
   const [actions, setActions] = React.useState<Record<string, DailyAction>>({});
+  const [weekReports, setWeekReports] = React.useState<WeekReports | null>(null);
   React.useEffect(() => {
-    const get = () => fetchDailyAction().then((r) => setActions(Object.fromEntries(r.actions.map((a) => [a.symbol, a])))).catch(() => undefined);
+    const get = () => fetchDailyAction().then((r) => {
+      setActions(Object.fromEntries(r.actions.map((a) => [a.symbol, a])));
+      setWeekReports(r.portfolio?.week_reports ?? null);
+    }).catch(() => undefined);
     void get();
     const id = window.setInterval(() => { if (!document.hidden) void get(); }, 600000);
     return () => window.clearInterval(id);
@@ -558,6 +562,12 @@ const Holdings: React.FC = () => {
       />
 
       <div style={panel}>
+        {weekReports?.over && weekReports.text ? (
+          <div style={{ ...muted, color: "#d9b36c", border: "1px solid #5a4a2a", borderRadius: 6, padding: "6px 10px", marginBottom: 8 }}
+               title="Bad report nights come together: count holdings reporting in the same week as one exposure">
+            ⚠ {weekReports.text[(() => { try { return localStorage.getItem("briefLang") === "en" ? "en" : "zh"; } catch { return "zh"; } })()]}
+          </div>
+        ) : null}
         <div style={panelHead}><div style={panelTitle}>📈 Holdings · {s.holdings.length}</div>
           <span style={muted}>Mine: buys re-average, sales leave the average unchanged. FIFO: a sale takes the oldest shares first (the Irish CGT basis). Click a row for its chart, 📦 批次 for per-order statuses & swing lot matching, or 🔭 事件 for upcoming catalysts</span></div>
         {s.holdings.length ? (
