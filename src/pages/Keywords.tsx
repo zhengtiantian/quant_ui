@@ -1,6 +1,7 @@
 import React from "react";
-import { decideKeywords, fetchKeywordReview } from "../api/markets";
-import type { KeywordDecision, KeywordHistory, KeywordProposal, KeywordReview, KeywordTier } from "../api/markets";
+import { decideKeywords, fetchKeywordReview, setKeywordAuto } from "../api/markets";
+import type { KeywordAudit, KeywordDecision, KeywordHistory, KeywordProposal, KeywordReview, KeywordTier } from "../api/markets";
+import CoveragePanel from "../components/markets/CoveragePanel";
 import { cell, ghostButton, iconButton, muted, panel, panelHead, panelTitle, pill, right, th } from "../components/markets/format";
 
 /**
@@ -18,6 +19,12 @@ import { cell, ghostButton, iconButton, muted, panel, panelHead, panelTitle, pil
  * window, from 2021 ("full") or only from the day it was first seen ("first_seen"). Products default to
  * full (no headline names a product before it exists); subsidiaries and executives to first seen, since
  * an acquired company's or a new CEO's older news belongs to someone else.
+ *
+ * 2026-11-19: every suggestion is also screened for collateral hits (24 months of headlines: how often the
+ * term came with the company, the word or company next to it otherwise; Claude on other meanings). With
+ * Auto-add on, quant_data adds the "Suggested: add" terms that pass every check by itself, searched only
+ * from the day first seen, and takes one out again if the relevance model keeps under 30% of what it
+ * brings in (daily audit). The user's own decision always wins. The coverage check sits above.
  */
 
 const TIER_LABEL: Record<KeywordTier, string> = {
@@ -26,6 +33,9 @@ const TIER_LABEL: Record<KeywordTier, string> = {
 const TIER_COLOR: Record<KeywordTier, string> = { add: "#84d6a3", weak: "#e3b177", model_none: "#7a838e", unjudged: "#99a0a8" };
 const DECISION_LABEL: Record<KeywordDecision, string> = { add: "Added", weak: "Weak", reject: "Rejected" };
 const DECISION_COLOR: Record<KeywordDecision, string> = { add: "#84d6a3", weak: "#e3b177", reject: "#d88383" };
+const AUDIT_LABEL: Record<KeywordAudit["verdict"], string> = {
+  watching: "watching", confirmed: "confirmed", revert: "taken out", poor: "the model keeps little of it",
+};
 
 type StatusFilter = "pending" | "add" | "weak" | "reject" | "all";
 type TierFilter = "suggested" | KeywordTier | "all";
@@ -48,15 +58,61 @@ const actionButton = (active: boolean, c: string): React.CSSProperties => ({
 });
 
 const Status: React.FC<{ p: KeywordProposal }> = ({ p }) => {
-  if (!p.decision) return <span style={muted}>Pending</span>;
+  if (!p.decision) return <span style={muted}>{p.auto_eligible ? "Pending · passes every check" : "Pending"}</span>;
   const waiting = p.decision === "reject" ? p.in_rules : !p.in_rules;
+  const a = p.audit;
   return (
     <span>
-      <span style={pill(DECISION_COLOR[p.decision])}>{DECISION_LABEL[p.decision]}</span>
+      <span style={pill(DECISION_COLOR[p.decision])}>{DECISION_LABEL[p.decision]}{p.decided_by === "auto" ? " (auto)" : ""}</span>
       <span style={{ ...muted, display: "block", marginTop: 3 }}>
         {waiting ? "applies at :55" : p.decision === "reject" ? "not in rules" : `in rules${p.applied_at ? ` since ${when(p.applied_at)}` : ""}`}
       </span>
+      {p.decision_reason ? <span style={{ ...muted, display: "block", marginTop: 3 }}>{p.decision_reason}</span> : null}
+      {a && a.brought_in != null ? (
+        <span style={{ ...muted, display: "block", marginTop: 3 }}
+              title="Core articles collected since it went in that contain it but none of the company's own names, and how many the relevance model kept">
+          brought in {a.brought_in}, kept {a.kept} · {AUDIT_LABEL[a.verdict]}
+        </span>
+      ) : null}
     </span>
+  );
+};
+
+const Screen: React.FC<{ p: KeywordProposal }> = ({ p }) => {
+  const s = p.screen;
+  if (!s) return null;
+  if (!s.risks.length) {
+    return <span style={{ ...pill("#84d6a3"), marginLeft: 4 }} title="Past headlines, neighbouring words, other companies and Claude found nothing else it means">no collateral risk</span>;
+  }
+  return (
+    <span style={{ display: "block", marginTop: 4 }}>
+      {s.risks.map((r) => (
+        <span key={r.code} style={{ display: "block", color: "#e3b177", fontSize: 12.5, marginTop: 2 }}>⚠ {r.text}</span>
+      ))}
+    </span>
+  );
+};
+
+const ScreenDetail: React.FC<{ p: KeywordProposal }> = ({ p }) => {
+  const s = p.screen;
+  if (!s || s.hist_headlines == null) return null;
+  return (
+    <div style={{ marginTop: 8, fontSize: 13 }}>
+      <div style={muted}>
+        Past {s.history_months} months: {s.hist_with_company}/{s.hist_headlines} headlines with the term named the company
+        {s.hist_co_mention != null ? ` (${Math.round(s.hist_co_mention * 100)}%)` : ""}; {s.extra_per_month} a month without it.
+        {s.neighbours?.length ? ` Next to it otherwise: ${s.neighbours.map(([w, x]) => `${w} ${Math.round(x * 100)}%`).join(", ")}.` : ""}
+        {s.others?.length ? ` Other companies there: ${s.others.map(([o, x]) => `${o} ${Math.round(x * 100)}%`).join(", ")}.` : ""}
+        {s.claude ? ` Claude: ${s.claude.risky ? s.claude.other || "other meanings" : "nothing else"}.` : " Claude did not answer."}
+      </div>
+      {s.extra_examples?.length ? <div style={{ ...muted, marginTop: 4 }}>Past headlines without the company:</div> : null}
+      {(s.extra_examples || []).map((e) => (
+        <div key={e.url + e.title} style={{ fontSize: 13, margin: "2px 0" }}>
+          <span style={{ ...muted, marginRight: 8 }}>{day(e.ts)}</span>
+          {e.url ? <a href={e.url} target="_blank" rel="noreferrer">{e.title}</a> : e.title}
+        </div>
+      ))}
+    </div>
   );
 };
 
@@ -96,6 +152,7 @@ const Row: React.FC<{ p: KeywordProposal; busy: boolean; onDecide: Decide }> = (
             <span style={pill(TIER_COLOR[p.tier])}>{TIER_LABEL[p.tier]}</span>
             {p.ordinary_word ? <span style={{ ...pill("#e3b177"), marginLeft: 4 }}>ordinary word</span> : null}
             {p.caveat ? <span style={{ ...pill("#e3b177"), marginLeft: 4 }} title="Starts with a number, or the model's reason says former / discontinued / category / being acquired">check</span> : null}
+            <Screen p={p} />
           </span>
         </td>
         <td style={{ ...cell, ...right }}>{Math.round(p.co_mention * 100)}%</td>
@@ -128,6 +185,7 @@ const Row: React.FC<{ p: KeywordProposal; busy: boolean; onDecide: Decide }> = (
                 {e.url ? <a href={e.url} target="_blank" rel="noreferrer">{e.title}</a> : e.title}
               </div>
             ))}
+            <ScreenDetail p={p} />
             <div style={{ ...muted, marginTop: 6 }}>
               Seen in week{p.weeks_seen.length > 1 ? "s" : ""} {p.weeks_seen.join(", ")} · id {p.id}
             </div>
@@ -182,6 +240,20 @@ const Keywords: React.FC = () => {
   const count = (f: (p: KeywordProposal) => boolean) => all.filter(f).length;
   const latest = data?.runs[0];
   const suggestedAddShown = rows.filter((p) => p.tier === "add" && !p.decision).map((p) => p.id);
+  const autoReady = count((p) => p.auto_eligible && !p.decision);
+  const autoOn = !!data?.auto?.enabled;
+  const toggleAuto = async () => {
+    if (!autoOn && !window.confirm(`Turn on Auto-add? The ${autoReady} suggestion${autoReady === 1 ? "" : "s"} that pass every check now, and those of later weeks, go into the rules at the next :55, without your review.`)) return;
+    setBusy(true);
+    try {
+      await setKeywordAuto(!autoOn);
+      load();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const filterSelect = <T extends string>(value: T, onChange: (v: T) => void, key: string, options: [T, string][]) => (
     <select style={select} value={value} onChange={(e) => { onChange(e.target.value as T); store.set(key, e.target.value); }}>
@@ -191,6 +263,7 @@ const Keywords: React.FC = () => {
 
   return (
     <div>
+      <CoveragePanel />
       <div style={panel}>
         <div style={panelHead}>
           <div style={panelTitle}>🔤 Keyword review</div>
@@ -215,6 +288,17 @@ const Keywords: React.FC = () => {
           <span>Rejected: <b>{count((p) => p.decision === "reject")}</b></span>
           <span>In rules now: <b>{count((p) => p.in_rules)}</b></span>
           <span style={muted}>Model said not this company: {count((p) => p.tier === "model_none")}</span>
+        </div>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 12, fontSize: 13 }}>
+          <button style={actionButton(autoOn, "#84d6a3")} disabled={busy || !data} onClick={toggleAuto}
+                  title="Whether quant_data adds the suggestions that pass every check by itself">
+            Auto-add: {autoOn ? "On" : "Off"}
+          </button>
+          <span style={muted}>
+            {autoReady} undecided suggestion{autoReady === 1 ? "" : "s"} pass every check (no collateral risk, Claude answered, 3+ stories on 3+ sites).
+            {autoOn ? " They go in at the next :55" : " With Auto-add on they would go in at the next :55"}, searched only from the day first seen,
+            and come out again if the relevance model keeps under 30% of what they bring in. Your own decision always wins.
+          </span>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
           {filterSelect(status, setStatus, "kw.status", [["pending", "Not decided"], ["add", "Added"], ["weak", "Weak"], ["reject", "Rejected"], ["all", "Any decision"]])}

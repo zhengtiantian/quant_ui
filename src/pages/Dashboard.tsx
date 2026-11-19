@@ -6,6 +6,8 @@ import QuantModelPanel from "../components/QuantModelPanel";
 import PositionsPanel from "../components/PositionsPanel";
 import TaskMonitorPanel from "../components/TaskMonitorPanel";
 import { hostUrl, signOut, useSession } from "../auth";
+import { fetchKeywordSummary } from "../api/markets";
+import type { KeywordSummary } from "../api/markets";
 
 // The Jobs / Budget / Time dashboard (job_agent, kept running by launchd on :5050) shown inside this
 // one: its own page in embed mode, which drops its module switch and uses this palette.
@@ -20,8 +22,28 @@ const AGENT_TABS: { id: AgentModule; label: string }[] = [
 const tabStyle = (active: boolean): React.CSSProperties =>
     active ? {} : { background: "#262b31", borderColor: "#434b56", color: "#aeb4ba", fontWeight: 600 };
 
+// The Keywords tab's badge: suggestions waiting for a decision and coverage alerts (quant_ai
+// /keywords/summary), refreshed every 10 minutes, so neither needs the tab open to be seen.
+const useKeywordSummary = (): KeywordSummary | null => {
+    const [s, setS] = React.useState<KeywordSummary | null>(null);
+    React.useEffect(() => {
+        const load = () => fetchKeywordSummary().then(setS).catch(() => setS(null));
+        load();
+        const t = window.setInterval(load, 10 * 60 * 1000);
+        return () => window.clearInterval(t);
+    }, []);
+    return s;
+};
+
+const Badge: React.FC<{ n: number; color: string; title: string }> = ({ n, color, title }) =>
+    n > 0 ? (
+        <span title={title} style={{ marginLeft: 6, padding: "0 6px", borderRadius: 9, fontSize: 11.5, fontWeight: 700,
+                                     background: color, color: "#16191d" }}>{n}</span>
+    ) : null;
+
 const Dashboard: React.FC = () => {
     const username = localStorage.getItem("username");
+    const kw = useKeywordSummary();
     type Tab = "quant" | "holdings" | "briefs" | "positions" | "tasks" | "keywords" | AgentModule;
     const TABS: Tab[] = ["quant", "holdings", "briefs", "positions", "tasks", "keywords", "jobs", "budget", "time"];
     // Tabs merged into Quant Model (2026-11-08); old ?tab= links still land there.
@@ -72,7 +94,11 @@ const Dashboard: React.FC = () => {
                 <button onClick={() => setTab("briefs")} style={tabStyle(tab === "briefs")}>Market Briefs</button>
                 <button onClick={() => setTab("positions")} style={tabStyle(tab === "positions")}>Positions</button>
                 <button onClick={() => setTab("tasks")} style={tabStyle(tab === "tasks")}>⏱️ Task Monitor</button>
-                <button onClick={() => setTab("keywords")} style={tabStyle(tab === "keywords")}>🔤 Keywords</button>
+                <button onClick={() => setTab("keywords")} style={tabStyle(tab === "keywords")}>
+                    🔤 Keywords
+                    <Badge n={kw?.coverage_alerts ?? 0} color="#d88383" title="Coverage alerts: companies whose news fell below half their usual week, or a rule fault" />
+                    <Badge n={kw?.pending ?? 0} color="#e3b177" title="Keyword suggestions waiting for a decision" />
+                </button>
                 <span style={{ width: 1, background: "#434b56", margin: "0 4px" }} />
                 {AGENT_TABS.map((t) => (
                     <button key={t.id} onClick={() => setTab(t.id)} style={tabStyle(tab === t.id)}>{t.label}</button>

@@ -1108,6 +1108,39 @@ export interface KeywordProposal {
   rescans: { since: string | null; at: string | null; kept: number | null; new_rows: number | null }[];
   in_rules: boolean;
   applied_at: string | null;
+  decided_by: "auto" | "user" | null;
+  decision_reason: string | null;
+  confirmed_at: string | null;
+  screen: KeywordScreen | null;
+  auto_eligible: boolean;
+  audit: KeywordAudit | null;
+}
+
+/** quant_data's collateral check of a suggestion (keyword_refresh.py screen). */
+export interface KeywordScreen {
+  at: string;
+  history_months?: number;
+  hist_headlines?: number;
+  hist_with_company?: number;
+  hist_co_mention?: number | null;
+  extra_per_month?: number;
+  neighbours?: [string, number][];
+  others?: [string, number][];
+  extra_examples?: KeywordExample[];
+  claude?: { risky: boolean; other: string } | null;
+  risks: { code: string; text: string }[];
+}
+
+/** What an added keyword brought in since it went into the rules (keyword_refresh.py audit). */
+export interface KeywordAudit {
+  days: number;
+  by: "auto" | "user";
+  brought_in?: number;
+  kept?: number;
+  keep_rate?: number | null;
+  per_week?: number;
+  verdict: "watching" | "confirmed" | "revert" | "poor";
+  reason?: string;
 }
 
 export interface KeywordRun {
@@ -1122,8 +1155,57 @@ export interface KeywordReview {
   dir: string;
   runs: KeywordRun[];
   proposals: KeywordProposal[];
+  auto: { enabled: boolean; preview_at: string | null; eligible: number };
+  audit_at: string | null;
+}
+
+export interface CoverageFlag { code: string; text: string; level: "alert" | "notice" }
+export interface CoverageSample { title: string | null; url: string | null; date: string; why?: string; named?: boolean }
+export interface CoverageCore {
+  name: string;
+  collected_7d: number;
+  kept_7d: number;
+  usual_collected: number;
+  usual_kept: number;
+  keep_rate_7d: number | null;
+  usual_keep_rate: number | null;
+  weeks: [number, number][];
+  flags: CoverageFlag[];
+  why: Record<string, number>;
+  named_by_rule: Record<string, number>;
+  kept?: CoverageSample[];
+  lost?: CoverageSample[];
+}
+export interface CoverageUniverse {
+  name: string;
+  month: string;
+  last_month: number;
+  usual_month: number;
+  months: number[];
+  flags: CoverageFlag[];
+}
+export interface Coverage {
+  at?: string;
+  asof?: string;
+  window?: [string, string];
+  core?: Record<string, CoverageCore>;
+  core_flagged?: string[];
+  core_alerts?: string[];
+  universe?: Record<string, CoverageUniverse>;
+  universe_checked?: number;
+  universe_flagged?: string[];
+}
+export interface KeywordSummary {
+  pending: number;
+  coverage_at: string | null;
+  coverage_alerts: number;
+  coverage_notices: number;
+  auto_apply: boolean;
 }
 
 export const fetchKeywordReview = () => call<KeywordReview>("/keywords/review");
 export const decideKeywords = (ids: string[], decision: KeywordDecision | "pending" | "keep", history?: KeywordHistory) =>
   post<{ updated: number }>("/keywords/decide", { ids, decision, ...(history ? { history } : {}) });
+export const fetchKeywordSummary = () => call<KeywordSummary>("/keywords/summary");
+export const fetchCoverage = () => call<{ coverage: Coverage }>("/keywords/coverage").then((r) => r.coverage);
+export const setKeywordAuto = (enabled: boolean) => post<{ auto_apply: boolean }>("/keywords/auto", { enabled });
