@@ -1,4 +1,5 @@
 import React from "react";
+import { useLang } from "../lang";
 import { fetchBrief, fetchBriefs, fetchMacro, fetchScorecard, runBrief } from "../api/markets";
 import type { Brief, BriefMeta, BriefsResponse, MacroState, Prediction, PredictionStats, Scorecard } from "../api/markets";
 import Markdown from "../components/markets/Markdown";
@@ -20,10 +21,6 @@ const KIND_LABEL: Record<string, string> = {
 const KIND_GROUP: Record<string, string> = { asia_europe: "Summary", us: "Summary", outlook: "Forward", flash: "Forward", advisor: "Advice" };
 const OP_TEXT: Record<string, string> = { ">=": "≥", "<=": "≤", "abs>=": "|move| ≥", "abs<=": "|move| ≤" };
 const STATUS_COLOR: Record<string, string> = { hit: "#84d6a3", miss: "#d88383", pending: "#99a0a8", void: "#7a838e" };
-const store = {
-  get: (k: string, d: string) => { try { return localStorage.getItem(k) || d; } catch { return d; } },
-  set: (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* per-viewer convenience only */ } },
-};
 const when = (ts: number | null) => (ts ? new Date(ts * 1000).toLocaleString() : "");
 const label = (b: BriefMeta) => `${KIND_LABEL[b.kind] || b.kind}${b.topic ? ` · ${b.topic}` : ""}`;
 const pctText = (v: number | null) => (v == null ? "—" : `${(v * 100).toFixed(0)}%`);
@@ -116,7 +113,7 @@ const Briefs: React.FC = () => {
   const [list, setList] = React.useState<BriefsResponse | null>(null);
   const [selected, setSelected] = React.useState<number | null>(null);
   const [brief, setBrief] = React.useState<Brief | null>(null);
-  const [lang, setLang] = React.useState<"zh" | "en">(() => (store.get("briefLang", "zh") === "en" ? "en" : "zh"));
+  const [lang, setLang] = useLang();
   const [kind, setKind] = React.useState("");
   const [macro, setMacro] = React.useState<MacroState | null>(null);
   const [card, setCard] = React.useState<Scorecard | null>(null);
@@ -221,8 +218,8 @@ const Briefs: React.FC = () => {
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 4 }}>
-                  {(["zh", "en"] as const).map((l) => (
-                    <button key={l} onClick={() => { setLang(l); store.set("briefLang", l); }}
+                  {(["en", "zh"] as const).map((l) => (
+                    <button key={l} onClick={() => setLang(l)}
                             style={{ ...ghostButton, padding: "3px 10px", background: lang === l ? "#81dad3" : "#23272c", color: lang === l ? "#23272c" : "#81dad3" }}>
                       {l === "zh" ? "ZH" : "EN"}
                     </button>

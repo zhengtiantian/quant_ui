@@ -5,6 +5,7 @@ import {
   fetchTaskLog,
 } from "../api/markets";
 import TaskSchedulePanel from "./TaskSchedulePanel";
+import { getLang, tr, useLang } from "../lang";
 import type {
   TaskMonitorResponse,
   AirflowDagItem,
@@ -16,7 +17,11 @@ export const TaskMonitorPanel: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState<boolean>(true);
-  const [categoryFilter, setCategoryFilter] = useState<string>("全部");
+  const [lang] = useLang();
+  const L = (en: string, zh: string) => tr(lang, en, zh);
+  // A text the server sends in Chinese with its English beside it ("<field>_en")
+  const loc = (zh?: string | null, en?: string | null) => (lang === "zh" ? zh || en : en || zh) || "";
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [expandedDags, setExpandedDags] = useState<Record<string, boolean>>({});
 
   // Log modal state
@@ -42,10 +47,10 @@ export const TaskMonitorPanel: React.FC = () => {
         setData(res);
         setError(null);
       } else {
-        setError("无法获取任务监控状态");
+        setError(tr(getLang(), "Could not load the task monitor", "无法获取任务监控状态"));
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "请求任务监控状态失败");
+      setError(err instanceof Error ? err.message : tr(getLang(), "Task monitor request failed", "请求任务监控状态失败"));
     } finally {
       if (!isPolling) setLoading(false);
     }
@@ -80,9 +85,9 @@ export const TaskMonitorPanel: React.FC = () => {
     try {
       const res = await fetchTaskLog(source, target_id, run_id, task_id, 250);
       setLogMeta(res);
-      setLogContent(res.log || res.message || "日志为空");
+      setLogContent(res.log || res.message || L("The log is empty", "日志为空"));
     } catch (err: unknown) {
-      setLogContent(`获取日志失败: ${err instanceof Error ? err.message : String(err)}`);
+      setLogContent(`${L("Could not load the log", "获取日志失败")}: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setLogLoading(false);
     }
@@ -100,9 +105,9 @@ export const TaskMonitorPanel: React.FC = () => {
         250
       );
       setLogMeta(res);
-      setLogContent(res.log || res.message || "日志为空");
+      setLogContent(res.log || res.message || L("The log is empty", "日志为空"));
     } catch (err: unknown) {
-      setLogContent(`刷新日志失败: ${err instanceof Error ? err.message : String(err)}`);
+      setLogContent(`${L("Could not refresh the log", "刷新日志失败")}: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setLogLoading(false);
     }
@@ -113,10 +118,11 @@ export const TaskMonitorPanel: React.FC = () => {
   };
 
   // Categories list
-  const categories = ["全部", "量化主管道", "全球求职监控", "数据采集与匹配", "数据处理与特征", "行情与历史数据", "实时盘中监控", "机构与资金流", "模型每周训练", "系统健康检查"];
+  // The filter's categories come from the server in order (key = the Chinese name, as on each DAG)
+  const categories = [{ zh: "all", en: "all" }, ...(data?.categories || [])];
 
   const filteredDags = (data?.airflow_dags || []).filter((d) => {
-    if (categoryFilter === "全部") return true;
+    if (categoryFilter === "all") return true;
     return d.category === categoryFilter;
   });
 
@@ -140,7 +146,7 @@ export const TaskMonitorPanel: React.FC = () => {
       >
         <div>
           <h2 style={{ margin: "0 0 6px 0", fontSize: "20px", color: "#d6d9dc", display: "flex", alignItems: "center", gap: "8px" }}>
-            ⏱️ 全系统定时任务与数据管道中控台
+            ⏱️ {L("Scheduled tasks & data pipelines", "全系统定时任务与数据管道中控台")}
             <span
               style={{
                 fontSize: "12px",
@@ -151,11 +157,11 @@ export const TaskMonitorPanel: React.FC = () => {
                 fontWeight: "normal",
               }}
             >
-              {data?.summary?.scheduler_running ? "Airflow 调度器运行中" : "Airflow 调度器未运行"}
+              {data?.summary?.scheduler_running ? L("Airflow scheduler running", "Airflow 调度器运行中") : L("Airflow scheduler not running", "Airflow 调度器未运行")}
             </span>
           </h2>
           <div style={{ fontSize: "13px", color: "#99a0a8" }}>
-            聚合监控 Airflow 量化与特征主管道、找工中控平台 (http://127.0.0.1:5050/) 及宿主机核心守护进程
+            {L("Airflow pipelines, the Job Agent board (http://127.0.0.1:5050/) and the host's core services in one place", "聚合监控 Airflow 量化与特征主管道、找工中控平台 (http://127.0.0.1:5050/) 及宿主机核心守护进程")}
           </div>
         </div>
 
@@ -166,7 +172,7 @@ export const TaskMonitorPanel: React.FC = () => {
               checked={autoRefresh}
               onChange={(e) => setAutoRefresh(e.target.checked)}
             />
-            自动刷新 (10s)
+            {L("Auto refresh (10s)", "自动刷新 (10s)")}
           </label>
           <button
             onClick={() => loadData()}
@@ -185,7 +191,7 @@ export const TaskMonitorPanel: React.FC = () => {
               gap: "4px",
             }}
           >
-            {loading ? "⏳ 刷新中..." : "🔄 立即刷新"}
+            {loading ? L("⏳ Refreshing…", "⏳ 刷新中...") : L("🔄 Refresh now", "🔄 立即刷新")}
           </button>
         </div>
       </div>
@@ -224,10 +230,10 @@ export const TaskMonitorPanel: React.FC = () => {
             boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
           }}
         >
-          <div style={{ fontSize: "12px", color: "#99a0a8", marginBottom: "4px" }}>⚡ 当前正在运行</div>
+          <div style={{ fontSize: "12px", color: "#99a0a8", marginBottom: "4px" }}>{L("⚡ Running now", "⚡ 当前正在运行")}</div>
           <div style={{ fontSize: "24px", fontWeight: "bold", color: (data?.summary?.running_count || 0) > 0 ? "#82d9a2" : "#d6d9dc" }}>
             {data?.summary?.running_count || 0}
-            <span style={{ fontSize: "13px", fontWeight: "normal", color: "#99a0a8", marginLeft: "4px" }}>个任务</span>
+            <span style={{ fontSize: "13px", fontWeight: "normal", color: "#99a0a8", marginLeft: "4px" }}>{L("tasks", "个任务")}</span>
           </div>
         </div>
 
@@ -240,7 +246,7 @@ export const TaskMonitorPanel: React.FC = () => {
             boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
           }}
         >
-          <div style={{ fontSize: "12px", color: "#99a0a8", marginBottom: "4px" }}>🎯 找工中控服务 (:5050)</div>
+          <div style={{ fontSize: "12px", color: "#99a0a8", marginBottom: "4px" }}>{L("🎯 Job Agent service (:5050)", "🎯 找工中控服务 (:5050)")}</div>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <span
               style={{
@@ -252,11 +258,11 @@ export const TaskMonitorPanel: React.FC = () => {
               }}
             />
             <span style={{ fontSize: "18px", fontWeight: "bold", color: "#d6d9dc" }}>
-              {data?.job_agent?.is_online ? "在线运行" : "服务离线"}
+              {data?.job_agent?.is_online ? L("Online", "在线运行") : L("Offline", "服务离线")}
             </span>
           </div>
           <div style={{ fontSize: "11px", color: "#99a0a8", marginTop: "4px" }}>
-            下次运行: {data?.job_agent?.next_run?.countdown || "--"}
+            {L("Next run", "下次运行")}: {loc(data?.job_agent?.next_run?.countdown, data?.job_agent?.next_run?.countdown_en) || "--"}
           </div>
         </div>
 
@@ -269,7 +275,7 @@ export const TaskMonitorPanel: React.FC = () => {
             boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
           }}
         >
-          <div style={{ fontSize: "12px", color: "#99a0a8", marginBottom: "4px" }}>🌊 Airflow 活跃管道</div>
+          <div style={{ fontSize: "12px", color: "#99a0a8", marginBottom: "4px" }}>{L("🌊 Active Airflow pipelines", "🌊 Airflow 活跃管道")}</div>
           <div style={{ fontSize: "24px", fontWeight: "bold", color: "#d6d9dc" }}>
             {data?.summary?.active_dags || 0}
             <span style={{ fontSize: "13px", fontWeight: "normal", color: "#99a0a8", marginLeft: "4px" }}>
@@ -287,10 +293,10 @@ export const TaskMonitorPanel: React.FC = () => {
             boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
           }}
         >
-          <div style={{ fontSize: "12px", color: "#99a0a8", marginBottom: "4px" }}>✅ 今日执行成功</div>
+          <div style={{ fontSize: "12px", color: "#99a0a8", marginBottom: "4px" }}>{L("✅ Succeeded today", "✅ 今日执行成功")}</div>
           <div style={{ fontSize: "24px", fontWeight: "bold", color: "#82d9a2" }}>
             {data?.summary?.success_today || 0}
-            <span style={{ fontSize: "13px", fontWeight: "normal", color: "#99a0a8", marginLeft: "4px" }}>次</span>
+            <span style={{ fontSize: "13px", fontWeight: "normal", color: "#99a0a8", marginLeft: "4px" }}>{L("runs", "次")}</span>
           </div>
         </div>
 
@@ -303,10 +309,10 @@ export const TaskMonitorPanel: React.FC = () => {
             boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
           }}
         >
-          <div style={{ fontSize: "12px", color: "#99a0a8", marginBottom: "4px" }}>❌ 今日执行失败</div>
+          <div style={{ fontSize: "12px", color: "#99a0a8", marginBottom: "4px" }}>{L("❌ Failed today", "❌ 今日执行失败")}</div>
           <div style={{ fontSize: "24px", fontWeight: "bold", color: (data?.summary?.failed_today || 0) > 0 ? "#d78484" : "#d6d9dc" }}>
             {data?.summary?.failed_today || 0}
-            <span style={{ fontSize: "13px", fontWeight: "normal", color: "#99a0a8", marginLeft: "4px" }}>次</span>
+            <span style={{ fontSize: "13px", fontWeight: "normal", color: "#99a0a8", marginLeft: "4px" }}>{L("runs", "次")}</span>
           </div>
         </div>
       </div>
@@ -317,7 +323,7 @@ export const TaskMonitorPanel: React.FC = () => {
       {/* 1. Running Now Section */}
       <div style={{ marginBottom: "28px" }}>
         <h3 style={{ fontSize: "16px", color: "#d6d9dc", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
-          ⚡ 正在运行中的任务 (Running Now)
+          {L("⚡ Running now", "⚡ 正在运行中的任务 (Running Now)")}
         </h3>
 
         {(!data?.running_tasks || data.running_tasks.length === 0) ? (
@@ -332,7 +338,7 @@ export const TaskMonitorPanel: React.FC = () => {
               fontSize: "14px",
             }}
           >
-            🎉 当前没有正在运行中的任务，系统待命中。所有定时任务按计划自动触发。
+            {L("🎉 Nothing is running. Every scheduled task starts on its own timetable.", "🎉 当前没有正在运行中的任务，系统待命中。所有定时任务按计划自动触发。")}
           </div>
         ) : (
           <div style={{ display: "grid", gap: "10px" }}>
@@ -361,10 +367,10 @@ export const TaskMonitorPanel: React.FC = () => {
                     }}
                   />
                   <div>
-                    <div style={{ fontWeight: 600, color: "#89d2a5", fontSize: "14px" }}>{task.name}</div>
+                    <div style={{ fontWeight: 600, color: "#89d2a5", fontSize: "14px" }}>{loc(task.name, task.name_en)}</div>
                     <div style={{ fontSize: "12px", color: "#a6acb3", marginTop: "2px" }}>
-                      已运行: {task.duration_seconds !== null ? `${task.duration_seconds} 秒` : "计算中..."}
-                      {task.start_date && ` | 开始于: ${new Date(task.start_date).toLocaleTimeString()}`}
+                      {L("Running for", "已运行")}: {task.duration_seconds !== null ? `${task.duration_seconds} ${L("s", "秒")}` : L("measuring…", "计算中...")}
+                      {task.start_date && ` | ${L("started", "开始于")}: ${new Date(task.start_date).toLocaleTimeString()}`}
                     </div>
                   </div>
                 </div>
@@ -373,7 +379,7 @@ export const TaskMonitorPanel: React.FC = () => {
                   <button
                     onClick={() =>
                       openLogModal(
-                        `实时任务日志: ${task.name}`,
+                        `${L("Live task log", "实时任务日志")}: ${loc(task.name, task.name_en)}`,
                         task.source,
                         task.dag_id,
                         task.run_id,
@@ -390,7 +396,7 @@ export const TaskMonitorPanel: React.FC = () => {
                       cursor: "pointer",
                     }}
                   >
-                    📜 查看实时日志
+                    {L("📜 Live log", "📜 查看实时日志")}
                   </button>
                 )}
               </div>
@@ -402,7 +408,7 @@ export const TaskMonitorPanel: React.FC = () => {
       {/* 2. Job Agent Section */}
       <div style={{ marginBottom: "28px" }}>
         <h3 style={{ fontSize: "16px", color: "#d6d9dc", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
-          🎯 找工中控平台 (Job Agent · :5050 多国求职看板 & Airflow 统一调度)
+          {L("🎯 Job Agent (:5050 job board, scheduled by Airflow)", "🎯 找工中控平台 (Job Agent · :5050 多国求职看板 & Airflow 统一调度)")}
         </h3>
 
         <div
@@ -418,7 +424,7 @@ export const TaskMonitorPanel: React.FC = () => {
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
                 <span style={{ fontSize: "18px", fontWeight: "bold", color: "#d6d9dc" }}>
-                  {data?.job_agent?.name || "找工平台 (Job Agent)"}
+                  {loc(data?.job_agent?.name, data?.job_agent?.name_en) || "Job Agent"}
                 </span>
                 <span
                   style={{
@@ -430,7 +436,7 @@ export const TaskMonitorPanel: React.FC = () => {
                     fontWeight: 600,
                   }}
                 >
-                  {data?.job_agent?.is_online ? "🟢 5050 服务在线" : "🔴 离线"}
+                  {data?.job_agent?.is_online ? L("🟢 5050 online", "🟢 5050 服务在线") : L("🔴 Offline", "🔴 离线")}
                 </span>
                 {data?.job_agent?.is_scraping_now && (
                   <span
@@ -443,36 +449,36 @@ export const TaskMonitorPanel: React.FC = () => {
                       fontWeight: 600,
                     }}
                   >
-                    ⚡ 正在全网扫描中
+                    {L("⚡ Scanning now", "⚡ 正在全网扫描中")}
                   </span>
                 )}
               </div>
 
               <div style={{ fontSize: "13px", color: "#aeb4ba", lineHeight: "1.6" }}>
                 <div>
-                  📅 <b>调度机制:</b> {data?.job_agent?.schedule || "每日 11:00 & 16:00 都柏林时间 (Airflow 统一调度)"}
+                  📅 <b>{L("Schedule", "调度机制")}:</b> {loc(data?.job_agent?.schedule, data?.job_agent?.schedule_en) || L("Daily 11:00 & 16:00 Dublin time (Airflow)", "每日 11:00 & 16:00 都柏林时间 (Airflow 统一调度)")}
                 </div>
                 {data?.job_agent?.regions_summary && (
                   <div>
-                    🌍 <b>覆盖板块与待投池:</b>{" "}
-                    <span style={{ color: "#d6d9dc" }}>{data.job_agent.regions_summary}</span>
+                    🌍 <b>{L("Open jobs by region", "覆盖板块与待投池")}:</b>{" "}
+                    <span style={{ color: "#d6d9dc" }}>{loc(data.job_agent.regions_summary, data.job_agent.regions_summary_en)}</span>
                   </div>
                 )}
                 <div>
-                  ⏳ <b>下次自动执行:</b>{" "}
+                  ⏳ <b>{L("Next run", "下次自动执行")}:</b>{" "}
                   <span style={{ color: "#7e9cdd", fontWeight: 600 }}>
-                    {data?.job_agent?.next_run?.next_run_display} ({data?.job_agent?.next_run?.countdown})
+                    {data?.job_agent?.next_run?.next_run_display} ({loc(data?.job_agent?.next_run?.countdown, data?.job_agent?.next_run?.countdown_en)})
                   </span>
                 </div>
                 <div>
-                  🕒 <b>上次成功执行:</b> {data?.job_agent?.last_success || "无记录"}
-                  {data?.job_agent?.last_full_sweep && ` (全网深度排查: ${data?.job_agent?.last_full_sweep})`}
+                  🕒 <b>{L("Last success", "上次成功执行")}:</b> {data?.job_agent?.last_success || L("none yet", "无记录")}
+                  {data?.job_agent?.last_full_sweep && ` (${L("last full sweep", "全网深度排查")}: ${data?.job_agent?.last_full_sweep})`}
                 </div>
                 {data?.job_agent?.report?.exists && (
                   <div style={{ marginTop: "6px", color: "#d6d9dc", background: "#252a30", padding: "8px 12px", borderRadius: "6px", border: "1px solid #434b56" }}>
-                    📑 <b>最新产出报告 (Today_Jobs.md):</b> {data.job_agent.report.summary}
+                    📑 <b>{L("Latest report", "最新产出报告")} (Today_Jobs.md):</b> {loc(data.job_agent.report.summary, data.job_agent.report.summary_en)}
                     <div style={{ fontSize: "11px", color: "#99a0a8", marginTop: "2px" }}>
-                      文件大小: {data.job_agent.report.size_kb} KB | 更新时间: {data.job_agent.report.modified_at}
+                      {L("Size", "文件大小")}: {data.job_agent.report.size_kb} KB | {L("updated", "更新时间")}: {data.job_agent.report.modified_at}
                     </div>
                   </div>
                 )}
@@ -499,12 +505,12 @@ export const TaskMonitorPanel: React.FC = () => {
                   boxShadow: "0 1px 2px rgba(37,99,235,0.2)",
                 }}
               >
-                🌐 打开找工平台 (:5050)
+                {L("🌐 Open Job Agent (:5050)", "🌐 打开找工平台 (:5050)")}
               </a>
 
               <button
                 onClick={() =>
-                  openLogModal("找工平台 (Job Agent) 爬虫与运行日志", "job_agent", "job_agent")
+                  openLogModal(L("Job Agent scrape & run log", "找工平台 (Job Agent) 爬虫与运行日志"), "job_agent", "job_agent")
                 }
                 style={{
                   padding: "8px 14px",
@@ -517,12 +523,12 @@ export const TaskMonitorPanel: React.FC = () => {
                   fontWeight: 500,
                 }}
               >
-                📜 查看爬虫与分析日志
+                {L("📜 Scrape & analysis log", "📜 查看爬虫与分析日志")}
               </button>
 
               <button
                 onClick={() =>
-                  openLogModal("找工平台 5050 Web 服务日志", "job_agent", "web")
+                  openLogModal(L("Job Agent :5050 web log", "找工平台 5050 Web 服务日志"), "job_agent", "web")
                 }
                 style={{
                   padding: "6px 14px",
@@ -534,7 +540,7 @@ export const TaskMonitorPanel: React.FC = () => {
                   cursor: "pointer",
                 }}
               >
-                📄 查看 5050 Web 日志
+                {L("📄 5050 web log", "📄 查看 5050 Web 日志")}
               </button>
             </div>
           </div>
@@ -545,27 +551,27 @@ export const TaskMonitorPanel: React.FC = () => {
       <div style={{ marginBottom: "28px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px", marginBottom: "14px" }}>
           <h3 style={{ fontSize: "16px", color: "#d6d9dc", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
-            🌊 Airflow 定时工作流与数据管道 (Airflow Pipelines)
+            {L("🌊 Airflow pipelines", "🌊 Airflow 定时工作流与数据管道 (Airflow Pipelines)")}
           </h3>
 
           {/* Category Chips */}
           <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
             {categories.map((cat) => (
               <button
-                key={cat}
-                onClick={() => setCategoryFilter(cat)}
+                key={cat.zh}
+                onClick={() => setCategoryFilter(cat.zh)}
                 style={{
                   padding: "4px 10px",
                   borderRadius: "20px",
-                  border: categoryFilter === cat ? "1px solid #7e9cdd" : "1px solid #424549",
-                  background: categoryFilter === cat ? "#7e9cdd" : "#23272c",
-                  color: categoryFilter === cat ? "#23272c" : "#aeb4ba",
+                  border: categoryFilter === cat.zh ? "1px solid #7e9cdd" : "1px solid #424549",
+                  background: categoryFilter === cat.zh ? "#7e9cdd" : "#23272c",
+                  color: categoryFilter === cat.zh ? "#23272c" : "#aeb4ba",
                   fontSize: "12px",
                   cursor: "pointer",
-                  fontWeight: categoryFilter === cat ? 600 : "normal",
+                  fontWeight: categoryFilter === cat.zh ? 600 : "normal",
                 }}
               >
-                {cat}
+                {cat.zh === "all" ? L("All", "全部") : loc(cat.zh, cat.en)}
               </button>
             ))}
           </div>
@@ -580,24 +586,24 @@ export const TaskMonitorPanel: React.FC = () => {
 
             let badgeBg = "#272e34";
             let badgeColor = "#aeb4ba";
-            let badgeText = "⚪ 待触发 / 就绪";
+            let badgeText = L("⚪ Ready", "⚪ 待触发 / 就绪");
 
             if (dag.is_paused) {
               badgeBg = "#282d33";
               badgeColor = "#9aa1a9";
-              badgeText = "⏸️ 已暂停";
+              badgeText = L("⏸️ Paused", "⏸️ 已暂停");
             } else if (state === "success") {
               badgeBg = "#24422e";
               badgeColor = "#84d6a3";
-              badgeText = "🟢 成功完成";
+              badgeText = L("🟢 Succeeded", "🟢 成功完成");
             } else if (state === "running") {
               badgeBg = "#6f5902";
               badgeColor = "#e1a67a";
-              badgeText = "🟡 执行中";
+              badgeText = L("🟡 Running", "🟡 执行中");
             } else if (state === "failed") {
               badgeBg = "#402121";
               badgeColor = "#d88383";
-              badgeText = "🔴 执行失败";
+              badgeText = L("🔴 Failed", "🔴 执行失败");
             }
 
             return (
@@ -615,7 +621,7 @@ export const TaskMonitorPanel: React.FC = () => {
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
                       <span style={{ fontSize: "16px", fontWeight: 600, color: "#d6d9dc" }}>
-                        {dag.name}
+                        {loc(dag.name, dag.name_en)}
                       </span>
                       <span
                         style={{
@@ -626,7 +632,7 @@ export const TaskMonitorPanel: React.FC = () => {
                           color: "#aeb4ba",
                         }}
                       >
-                        {dag.category}
+                        {loc(dag.category, dag.category_en)}
                       </span>
                       <span
                         style={{
@@ -643,21 +649,21 @@ export const TaskMonitorPanel: React.FC = () => {
                     </div>
 
                     <div style={{ fontSize: "13px", color: "#99a0a8", marginBottom: "8px" }}>
-                      {dag.description}
+                      {loc(dag.description, dag.description_en)}
                     </div>
 
                     <div style={{ display: "flex", gap: "18px", flexWrap: "wrap", fontSize: "12px", color: "#aeb4ba" }}>
                       <div>
-                        ⏱️ <b>调度周期:</b> {dag.schedule_display}
+                        ⏱️ <b>{L("Schedule", "调度周期")}:</b> {loc(dag.schedule_display, dag.schedule_display_en)}
                       </div>
                       {dag.next_run && (
                         <div>
-                          ⏳ <b>下次触发:</b> {new Date(dag.next_run).toLocaleString()}
+                          ⏳ <b>{L("Next run", "下次触发")}:</b> {new Date(dag.next_run).toLocaleString()}
                         </div>
                       )}
                       {lastRun?.start_date && (
                         <div>
-                          🕒 <b>上次执行:</b> {new Date(lastRun.start_date).toLocaleString()}
+                          🕒 <b>{L("Last run", "上次执行")}:</b> {new Date(lastRun.start_date).toLocaleString()}
                           {lastRun.duration_seconds !== null && ` (${lastRun.duration_seconds}s)`}
                         </div>
                       )}
@@ -669,7 +675,7 @@ export const TaskMonitorPanel: React.FC = () => {
                       <button
                         onClick={() =>
                           openLogModal(
-                            `Airflow 运行日志: ${dag.name} (${lastRun.run_id})`,
+                            `${L("Airflow run log", "Airflow 运行日志")}: ${loc(dag.name, dag.name_en)} (${lastRun.run_id})`,
                             "airflow",
                             dag.dag_id,
                             lastRun.run_id
@@ -686,7 +692,7 @@ export const TaskMonitorPanel: React.FC = () => {
                           fontWeight: 500,
                         }}
                       >
-                        📜 查看日志
+                        {L("📜 Log", "📜 查看日志")}
                       </button>
                     )}
 
@@ -703,7 +709,7 @@ export const TaskMonitorPanel: React.FC = () => {
                           cursor: "pointer",
                         }}
                       >
-                        {isExpanded ? "收起步骤 ▲" : `展开 ${dag.tasks.length} 个步骤 ▼`}
+                        {isExpanded ? L("Hide steps ▲", "收起步骤 ▲") : L(`Show ${dag.tasks.length} steps ▼`, `展开 ${dag.tasks.length} 个步骤 ▼`)}
                       </button>
                     )}
                   </div>
@@ -713,9 +719,9 @@ export const TaskMonitorPanel: React.FC = () => {
                 {progress && progress.total > 0 && (
                   <div style={{ marginTop: "12px" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", color: "#99a0a8", marginBottom: "4px" }}>
-                      <span>完成进度: {progress.success} / {progress.total} 步骤 ({progress.percent}%)</span>
-                      {progress.running > 0 && <span style={{ color: "#e3b177" }}>⚡ {progress.running} 个任务运行中</span>}
-                      {progress.failed > 0 && <span style={{ color: "#d78484" }}>❌ {progress.failed} 个步骤失败</span>}
+                      <span>{L("Progress", "完成进度")}: {progress.success} / {progress.total} {L("steps", "步骤")} ({progress.percent}%)</span>
+                      {progress.running > 0 && <span style={{ color: "#e3b177" }}>⚡ {L(`${progress.running} running`, `${progress.running} 个任务运行中`)}</span>}
+                      {progress.failed > 0 && <span style={{ color: "#d78484" }}>❌ {L(`${progress.failed} failed`, `${progress.failed} 个步骤失败`)}</span>}
                     </div>
                     <div
                       style={{
@@ -750,7 +756,7 @@ export const TaskMonitorPanel: React.FC = () => {
                     }}
                   >
                     <div style={{ fontSize: "12px", fontWeight: 600, color: "#aeb4ba", marginBottom: "4px" }}>
-                      执行步骤明细:
+                      {L("Steps", "执行步骤明细")}:
                     </div>
                     {dag.tasks.map((task) => (
                       <div
@@ -792,7 +798,7 @@ export const TaskMonitorPanel: React.FC = () => {
                         <button
                           onClick={() =>
                             openLogModal(
-                              `任务步骤日志: ${dag.dag_id} ➔ ${task.task_id}`,
+                              `${L("Step log", "任务步骤日志")}: ${dag.dag_id} ➔ ${task.task_id}`,
                               "airflow",
                               dag.dag_id,
                               dag.last_run?.run_id || "",
@@ -809,7 +815,7 @@ export const TaskMonitorPanel: React.FC = () => {
                             cursor: "pointer",
                           }}
                         >
-                          查看日志
+                          {L("Log", "查看日志")}
                         </button>
                       </div>
                     ))}
@@ -824,7 +830,7 @@ export const TaskMonitorPanel: React.FC = () => {
       {/* 4. System & AI Background Daemons */}
       <div style={{ marginBottom: "28px" }}>
         <h3 style={{ fontSize: "16px", color: "#d6d9dc", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
-          🖥️ 核心系统与 AI 守护进程 (Daemons & Infrastructure)
+          {L("🖥️ Core services & infrastructure", "🖥️ 核心系统与 AI 守护进程 (Daemons & Infrastructure)")}
         </h3>
 
         <div
@@ -839,12 +845,12 @@ export const TaskMonitorPanel: React.FC = () => {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", textAlign: "left" }}>
             <thead>
               <tr style={{ background: "#252a30", borderBottom: "1px solid #434b56", color: "#aeb4ba" }}>
-                <th style={{ padding: "12px 16px" }}>服务名称</th>
-                <th style={{ padding: "12px 16px" }}>类型 / 标识</th>
-                <th style={{ padding: "12px 16px" }}>端口 / PID</th>
-                <th style={{ padding: "12px 16px" }}>运行状态</th>
-                <th style={{ padding: "12px 16px" }}>功能说明</th>
-                <th style={{ padding: "12px 16px", textAlign: "right" }}>操作</th>
+                <th style={{ padding: "12px 16px" }}>{L("Service", "服务名称")}</th>
+                <th style={{ padding: "12px 16px" }}>{L("Type / label", "类型 / 标识")}</th>
+                <th style={{ padding: "12px 16px" }}>{L("Port / PID", "端口 / PID")}</th>
+                <th style={{ padding: "12px 16px" }}>{L("Status", "运行状态")}</th>
+                <th style={{ padding: "12px 16px" }}>{L("What it does", "功能说明")}</th>
+                <th style={{ padding: "12px 16px", textAlign: "right" }}>{L("Actions", "操作")}</th>
               </tr>
             </thead>
             <tbody>
@@ -853,11 +859,11 @@ export const TaskMonitorPanel: React.FC = () => {
                 return (
                   <tr key={daemon.id} style={{ borderBottom: "1px solid #3b4752" }}>
                     <td style={{ padding: "12px 16px", fontWeight: 600, color: "#d6d9dc" }}>
-                      {daemon.name}
+                      {loc(daemon.name, daemon.name_en)}
                     </td>
                     <td style={{ padding: "12px 16px", color: "#99a0a8" }}>
                       <span style={{ fontSize: "11px", padding: "2px 6px", background: "#272e34", borderRadius: "4px" }}>
-                        {daemon.type}
+                        {loc(daemon.type, daemon.type_en)}
                       </span>
                     </td>
                     <td style={{ padding: "12px 16px", fontFamily: "monospace", color: "#aeb4ba" }}>
@@ -875,11 +881,11 @@ export const TaskMonitorPanel: React.FC = () => {
                           color: isOnline ? "#84d6a3" : "#d88383",
                         }}
                       >
-                        {isOnline ? "🟢 正常运行" : "🔴 停止/异常"}
+                        {isOnline ? L("🟢 Running", "🟢 正常运行") : L("🔴 Stopped", "🔴 停止/异常")}
                       </span>
                     </td>
                     <td style={{ padding: "12px 16px", color: "#99a0a8", fontSize: "12px" }}>
-                      {daemon.description}
+                      {loc(daemon.description, daemon.description_en)}
                     </td>
                     <td style={{ padding: "12px 16px", textAlign: "right" }}>
                       {daemon.log_path ? (
@@ -889,7 +895,7 @@ export const TaskMonitorPanel: React.FC = () => {
                             if (daemon.id === "job_agent") source = "job_agent";
                             else if (daemon.id === "quant_ai") source = "quant_ai";
                             else if (daemon.id === "disk_watch") source = "disk_watch";
-                            openLogModal(`${daemon.name} 日志`, source, daemon.id);
+                            openLogModal(`${loc(daemon.name, daemon.name_en)} ${L("log", "日志")}`, source, daemon.id);
                           }}
                           style={{
                             padding: "4px 10px",
@@ -901,7 +907,7 @@ export const TaskMonitorPanel: React.FC = () => {
                             cursor: "pointer",
                           }}
                         >
-                          📜 日志
+                          {L("📜 Log", "📜 日志")}
                         </button>
                       ) : (
                         <span style={{ color: "#7a838e", fontSize: "11px" }}>--</span>
@@ -964,7 +970,7 @@ export const TaskMonitorPanel: React.FC = () => {
                 </div>
                 {logMeta?.path && (
                   <div style={{ color: "#7a838e", fontSize: "11px", marginTop: "2px", fontFamily: "monospace" }}>
-                    {logMeta.path} {logMeta.total_lines ? `(共 ${logMeta.total_lines} 行)` : ""}
+                    {logMeta.path} {logMeta.total_lines ? L(`(${logMeta.total_lines} lines)`, `(共 ${logMeta.total_lines} 行)`) : ""}
                   </div>
                 )}
               </div>
@@ -983,13 +989,13 @@ export const TaskMonitorPanel: React.FC = () => {
                     cursor: logLoading ? "not-allowed" : "pointer",
                   }}
                 >
-                  {logLoading ? "⏳ 刷新中..." : "🔄 刷新"}
+                  {logLoading ? L("⏳ Refreshing…", "⏳ 刷新中...") : L("🔄 Refresh", "🔄 刷新")}
                 </button>
                 <button
                   onClick={() => {
                     if (logContent) {
                       navigator.clipboard.writeText(logContent);
-                      alert("日志已复制到剪贴板！");
+                      alert(L("Log copied to the clipboard", "日志已复制到剪贴板！"));
                     }
                   }}
                   style={{
@@ -1002,7 +1008,7 @@ export const TaskMonitorPanel: React.FC = () => {
                     cursor: "pointer",
                   }}
                 >
-                  📋 复制
+                  {L("📋 Copy", "📋 复制")}
                 </button>
                 <button
                   onClick={() => setLogModalOpen(false)}
@@ -1017,7 +1023,7 @@ export const TaskMonitorPanel: React.FC = () => {
                     fontWeight: "bold",
                   }}
                 >
-                  ✕ 关闭
+                  {L("✕ Close", "✕ 关闭")}
                 </button>
               </div>
             </div>
@@ -1039,10 +1045,10 @@ export const TaskMonitorPanel: React.FC = () => {
             >
               {logLoading ? (
                 <div style={{ color: "#7a838e", textAlign: "center", padding: "40px" }}>
-                  ⏳ 正在拉取最新日志输出...
+                  {L("⏳ Loading the latest log…", "⏳ 正在拉取最新日志输出...")}
                 </div>
               ) : (
-                logContent || "暂无日志"
+                logContent || L("No log yet", "暂无日志")
               )}
               <div ref={logBottomRef} />
             </div>

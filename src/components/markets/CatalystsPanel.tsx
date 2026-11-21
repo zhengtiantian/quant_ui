@@ -1,4 +1,5 @@
 import React from "react";
+import { useLang } from "../../lang";
 import {
   deleteCatalystHistory,
   fetchCatalysts,
@@ -322,9 +323,7 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
   onOpenChart,
   onSummaryMap,
 }) => {
-  const [lang, setLang] = React.useState<"zh" | "en">(() =>
-    store.get("briefLang", "zh") === "en" ? "en" : "zh"
-  );
+  const [lang, setLang] = useLang();
   const [days, setDays] = React.useState<number>(() => Number(store.get("catDaysV2", "90")) || 90);
   const [scope, setScope] = React.useState<ScopeFilter>("all");
   const [layerFilter, setLayerFilter] = React.useState<LayerFilter>("all");
@@ -417,7 +416,6 @@ const CatalystsPanel: React.FC<CatalystsControllerProps> = ({
 
   const switchLang = (l: "zh" | "en") => {
     setLang(l);
-    store.set("briefLang", l);
     if (feed?.per_stock) summaryCbRef.current?.(feed.per_stock, l);
   };
 

@@ -1,21 +1,19 @@
 import React from "react";
+import { useLang } from "../../lang";
 import type { Bilingual, NewsJudgment } from "../../api/markets";
 import { DOWN, UP, muted, pill } from "./format";
 
 /**
  * N.6: the newest news-storyline judgment of a stock (quant_ai /portfolio/news-linkage), shown under its
  * Action pill. A hint only: the action above it is unchanged. All words come from the server in both
- * languages; the language is the briefs' (briefLang), which the Action cell's switch also sets.
+ * languages; the language is the dashboard's (lang.tsx: English unless switched).
  */
-const lang = (): "zh" | "en" => {
-  try { return localStorage.getItem("briefLang") === "en" ? "en" : "zh"; } catch { return "zh"; }
-};
 const head: React.CSSProperties = { color: "#81dad3", marginTop: 6, fontSize: 12 };
 
 const NewsHint: React.FC<{ j?: NewsJudgment; labels?: Record<string, Bilingual>; track?: Bilingual }> = ({ j, labels, track }) => {
   const [open, setOpen] = React.useState(false);
+  const [l] = useLang();
   if (!j) return null;
-  const l = lang();
   const t = (k: string, fallback: string) => labels?.[k]?.[l] ?? fallback;
   const c = j.direction < 0 ? DOWN : j.direction > 0 ? UP : "#99a0a8";
   const when = new Date(j.at).toLocaleString("en-GB", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });

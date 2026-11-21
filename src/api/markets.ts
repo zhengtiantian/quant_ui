@@ -803,24 +803,30 @@ export interface RunningTaskItem {
   task_id: string;
   run_id: string;
   name: string;
+  name_en?: string;
   state: string;
   start_date: string | null;
   duration_seconds: number | null;
   can_view_log: boolean;
 }
 
+// Display texts in Chinese come with "<field>_en" beside them (quant_ai task_monitor._add_english).
 export interface JobAgentInfo {
   name: string;
+  name_en?: string;
   url: string;
   port: number;
   is_online: boolean;
   is_scraping_now: boolean;
   schedule: string;
+  schedule_en?: string;
   regions_summary?: string | null;
+  regions_summary_en?: string | null;
   next_run: {
     next_run_iso: string;
     next_run_display: string;
     countdown: string;
+    countdown_en?: string;
   };
   last_success?: string | null;
   last_full_sweep?: string | null;
@@ -831,6 +837,7 @@ export interface JobAgentInfo {
     modified_at: string;
     size_kb: number;
     summary: string;
+    summary_en?: string;
   };
   has_log: boolean;
 }
@@ -846,11 +853,15 @@ export interface AirflowTaskInstanceItem {
 export interface AirflowDagItem {
   dag_id: string;
   name: string;
+  name_en?: string;
   category: string;
+  category_en?: string;
   description: string;
+  description_en?: string;
   is_paused: boolean;
   schedule: string;
   schedule_display: string;
+  schedule_display_en?: string;
   next_run: string | null;
   last_run: {
     run_id: string;
@@ -872,13 +883,16 @@ export interface AirflowDagItem {
 export interface SystemDaemonItem {
   id: string;
   name: string;
+  name_en?: string;
   type: string;
+  type_en?: string;
   label: string;
   port: number | null;
   is_port_open: boolean | null;
   pid: number | null;
   status: string;
   description: string;
+  description_en?: string;
   log_path: string | null;
 }
 
@@ -890,6 +904,7 @@ export interface TaskMonitorResponse {
   job_agent: JobAgentInfo;
   airflow_dags: AirflowDagItem[];
   system_daemons: SystemDaemonItem[];
+  categories?: { zh: string; en: string }[];   // the category filter, in order; zh is the category's key
 }
 
 export interface TaskLogResponse {

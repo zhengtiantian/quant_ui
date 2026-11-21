@@ -1,4 +1,5 @@
 import React from "react";
+import LangSwitch from "../LangSwitch";
 import Holdings from "./Holdings";
 import Briefs from "./Briefs";
 import Keywords from "./Keywords";
@@ -82,8 +83,9 @@ const Dashboard: React.FC = () => {
                 }}
             >
                 <h2>Quant Dashboard</h2>
-                <div>
-                    <span style={{ marginRight: "15px" }}>👋 Welcome, {username || "User"}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+                    <LangSwitch size={12} />
+                    <span>👋 Welcome, {username || "User"}</span>
                     <button onClick={handleLogout}>Logout</button>
                 </div>
             </header>

@@ -1,15 +1,13 @@
 import React from "react";
+import { useLang } from "../../lang";
 import { fetchHintScores, type HintScoresReply, type HintSide } from "../../api/markets";
 import { cell, muted, panel, panelHead, panelTitle, right, th } from "./format";
 
 /**
  * Q.17.0: every blocked buy and every case against adding, scored against having bought one unit at that
  * session's close (quant_ai /portfolio/hint-scores). A fall afterwards is a loss avoided, a rise a gain
- * missed; neither is profit. Words come from the server in both languages (briefLang).
+ * missed; neither is profit. Words come from the server in both languages (lang.tsx).
  */
-const lang = (): "zh" | "en" => {
-  try { return localStorage.getItem("briefLang") === "en" ? "en" : "zh"; } catch { return "zh"; }
-};
 const ORDER = ["add_block", "add_block:falling", "add_block:spacing", "add_block:size", "devils_advocate", "filing_change"];
 const HORIZONS = ["5", "20", "60"];
 
@@ -26,6 +24,7 @@ const side = (s: HintSide | undefined) => {
 
 const HintScores: React.FC = () => {
   const [r, setR] = React.useState<HintScoresReply | null>(null);
+  const [l] = useLang();
   React.useEffect(() => {
     const get = () => fetchHintScores().then(setR).catch(() => undefined);
     void get();
@@ -33,7 +32,6 @@ const HintScores: React.FC = () => {
     return () => window.clearInterval(id);
   }, []);
   if (!r || !Object.keys(r.groups).length) return null;
-  const l = lang();
   const t = (k: string, fallback: string) => r.labels?.[k]?.[l] ?? fallback;
   const keys = ORDER.filter((k) => r.groups[k]);
   return (

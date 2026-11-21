@@ -1,5 +1,6 @@
 import React from "react";
 import { deleteTransaction, fetchLotAdvice, saveTransaction } from "../../api/markets";
+import { tr, useLang } from "../../lang";
 import type {
   BuyOrderLot,
   Holding,
@@ -43,13 +44,14 @@ const todayLocal = () => {
 
 const exactQtyStr = (n: number) => String(Number(n.toFixed(8)));
 
-const STATUS_META: Record<LotOrderStatus, { label: string; color: string; bg: string; border: string }> = {
-  open: { label: "🟢 持仓中", color: "#84d6a3", bg: "#213928", border: "#396e4b" },
-  partial: { label: "🟡 部分平仓", color: "#e1a67a", bg: "#3d371e", border: "#817339" },
-  closed: { label: "⚪ 已结清", color: "#99a0a8", bg: "#252a30", border: "#4b545f" },
+const STATUS_META: Record<LotOrderStatus, { label: [string, string]; color: string; bg: string; border: string }> = {   // label: [English, Chinese]
+  open: { label: ["🟢 Open", "🟢 持仓中"], color: "#84d6a3", bg: "#213928", border: "#396e4b" },
+  partial: { label: ["🟡 Partly sold", "🟡 部分平仓"], color: "#e1a67a", bg: "#3d371e", border: "#817339" },
+  closed: { label: ["⚪ Closed", "⚪ 已结清"], color: "#99a0a8", bg: "#252a30", border: "#4b545f" },
 };
 
 const StatusBadge: React.FC<{ status: LotOrderStatus }> = ({ status }) => {
+  const [lang] = useLang();
   const m = STATUS_META[status] || STATUS_META.open;
   return (
     <span
@@ -65,7 +67,7 @@ const StatusBadge: React.FC<{ status: LotOrderStatus }> = ({ status }) => {
         whiteSpace: "nowrap",
       }}
     >
-      {m.label}
+      {m.label[lang === "zh" ? 1 : 0]}
     </span>
   );
 };
@@ -75,6 +77,8 @@ export const StockLotButton: React.FC<{
   holding: Holding;
   onOpen: (symbol: string) => void;
 }> = ({ holding, onOpen }) => {
+  const [lang] = useLang();
+  const L = (en: string, zh: string) => tr(lang, en, zh);
   const orders = holding.buy_orders || [];
   const active = orders.filter((b) => b.status !== "closed");
   const profitable = active.filter((b) => (b.open_pnl ?? 0) > 0.01);
@@ -86,14 +90,14 @@ export const StockLotButton: React.FC<{
   const hasProf = profitable.length > 0;
   const label =
     orders.length > active.length
-      ? `📦 批次 (${active.length}/${orders.length})`
-      : `📦 批次 (${active.length}笔)`;
+      ? L(`📦 Lots (${active.length}/${orders.length})`, `📦 批次 (${active.length}/${orders.length})`)
+      : L(`📦 Lots (${active.length})`, `📦 批次 (${active.length}笔)`);
 
   let hint = "";
   if (hasProf) {
-    hint = `🟢 ${profitable.length}笔浮盈 ${signed(profSum)}`;
+    hint = L(`🟢 ${profitable.length} in profit ${signed(profSum)}`, `🟢 ${profitable.length}笔浮盈 ${signed(profSum)}`);
   } else if (lowest) {
-    hint = `最低 ${usd(lowest.unit_cost)}${lowest.open_pnl_pct != null ? ` (${pct(lowest.open_pnl_pct)})` : ""}`;
+    hint = `${L("Lowest", "最低")} ${usd(lowest.unit_cost)}${lowest.open_pnl_pct != null ? ` (${pct(lowest.open_pnl_pct)})` : ""}`;
   }
 
   return (
@@ -107,7 +111,7 @@ export const StockLotButton: React.FC<{
           e.stopPropagation();
           onOpen(holding.symbol);
         }}
-        title={`打开 ${holding.symbol} 的订单状态与波段选批平仓窗口`}
+        title={L(`Open ${holding.symbol}'s lots: order status and choosing lots to sell`, `打开 ${holding.symbol} 的订单状态与波段选批平仓窗口`)}
         style={{
           background: hasProf ? "#213928" : "#1d243c",
           color: hasProf ? "#84d6a3" : "#918cce",
@@ -158,6 +162,8 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
   onSaved,
   onOpenChart,
 }) => {
+  const [lang] = useLang();
+  const L = (en: string, zh: string) => tr(lang, en, zh);
   const holding: Holding | undefined =
     state.holdings.find((h) => h.symbol === symbol) || state.closed.find((c) => c.symbol === symbol);
   const livePrice = holding?.quote?.price ?? null;
@@ -257,7 +263,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
               ✕
             </button>
           </div>
-          <div style={{ ...muted, marginTop: 12 }}>未找到该股票的持仓或历史交易记录。</div>
+          <div style={{ ...muted, marginTop: 12 }}>{L("No holding or past trades found for this stock.", "未找到该股票的持仓或历史交易记录。")}</div>
         </div>
       </div>
     );
@@ -355,13 +361,13 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
   };
 
   const handleDeleteOrder = async (id: number, desc: string) => {
-    if (!window.confirm(`确认删除这笔记录吗？\n${desc}`)) return;
+    if (!window.confirm(`${L("Delete this record?", "确认删除这笔记录吗？")}\n${desc}`)) return;
     setBusy(true);
     setErrMsg(null);
     try {
       const r = await deleteTransaction(id);
-      onSaved(r.state, `已删除记录 #${id}`);
-      flashOk(`已删除记录 #${id}`);
+      onSaved(r.state, L(`Deleted record #${id}`, `已删除记录 #${id}`));
+      flashOk(L(`Deleted record #${id}`, `已删除记录 #${id}`));
     } catch (e) {
       setErrMsg((e as Error).message);
     } finally {
@@ -404,7 +410,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
         note: buyNote,
       });
       buyReqId.current = newRequestId();
-      const msg = editBuyId ? `已更新买入批次 #${editBuyId}` : `已新增 ${symbol} 买入批次`;
+      const msg = editBuyId ? L(`Updated buy lot #${editBuyId}`, `已更新买入批次 #${editBuyId}`) : L(`Added a ${symbol} buy lot`, `已新增 ${symbol} 买入批次`);
       onSaved(r.state, msg);
       flashOk(msg);
       setEditBuyId(null);
@@ -485,7 +491,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
     if (!selectableLots.length) return;
     if (mode === "profitable") {
       if (!(sPriceNum > 0)) {
-        setErrMsg("请先填写卖出价格，以便筛选在该卖价下盈利的批次");
+        setErrMsg(L("Enter the sale price first, to pick the lots in profit at that price", "请先填写卖出价格，以便筛选在该卖价下盈利的批次"));
         return;
       }
       const next: Record<number, string> = {};
@@ -527,12 +533,12 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
     e.preventDefault();
     if (busy) return;
     if (selectedEntries.length === 0 || totalSelectedQty <= 1e-8) {
-      setErrMsg("请在下方勾选至少一笔要平仓的买入订单，并确认平仓股数大于 0");
+      setErrMsg(L("Tick at least one buy lot below and give it more than 0 shares to sell", "请在下方勾选至少一笔要平仓的买入订单，并确认平仓股数大于 0"));
       return;
     }
     for (const x of selectedEntries) {
       if (x.take > x.avail + 1e-6) {
-        setErrMsg(`批次 #${x.lot.id} 平仓股数 (${qty(x.take)}) 超过了该笔剩余可卖股数 (${qty(x.avail)})`);
+        setErrMsg(L(`Lot #${x.lot.id}: ${qty(x.take)} shares to sell is more than the ${qty(x.avail)} left`, `批次 #${x.lot.id} 平仓股数 (${qty(x.take)}) 超过了该笔剩余可卖股数 (${qty(x.avail)})`));
         return;
       }
     }
@@ -558,8 +564,8 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
       });
       sellReqId.current = newRequestId();
       const msg = editSellId
-        ? `已更新卖出 #${editSellId} 的批次配对`
-        : `已卖出 ${qty(totalSelectedQty)} 股 ${symbol} (平掉 ${allocations.length} 笔批次)`;
+        ? L(`Updated the lots of sale #${editSellId}`, `已更新卖出 #${editSellId} 的批次配对`)
+        : L(`Sold ${qty(totalSelectedQty)} ${symbol} (${allocations.length} lots)`, `已卖出 ${qty(totalSelectedQty)} 股 ${symbol} (平掉 ${allocations.length} 笔批次)`);
       onSaved(r.state, msg);
       flashOk(msg);
       setEditSellId(null);
@@ -667,7 +673,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
           }}
         >
           <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 20, fontWeight: 800, color: "#d6d9dc" }}>📦 {symbol} 批次与波段订单簿</span>
+            <span style={{ fontSize: 20, fontWeight: 800, color: "#d6d9dc" }}>📦 {symbol} {L("lots and swing orders", "批次与波段订单簿")}</span>
             <span style={muted}>{shortName(q.name)}</span>
             {q.price != null ? <b style={{ fontSize: 17 }}>{usd(q.price)}</b> : null}
             {chg != null && ref ? (
@@ -687,16 +693,16 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                   onOpenChart(symbol);
                 }}
               >
-                📈 K线图
+                {L("📈 Chart", "📈 K线图")}
               </button>
             ) : null}
             <button
               type="button"
               style={{ ...iconButton, fontSize: 14, padding: "4px 10px" }}
               onClick={onClose}
-              title="关闭 (Esc)"
+              title={L("Close (Esc)", "关闭 (Esc)")}
             >
-              ✕ 关闭
+              {L("✕ Close", "✕ 关闭")}
             </button>
           </div>
         </div>
@@ -711,37 +717,37 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
           }}
         >
           <div style={{ background: "#252a30", border: "1px solid #434b56", borderRadius: 10, padding: "9px 12px" }}>
-            <div style={{ fontSize: 11.5, color: "#99a0a8" }}>当前总持仓 / 批次状态</div>
+            <div style={{ fontSize: 11.5, color: "#99a0a8" }}>{L("Shares held / lot status", "当前总持仓 / 批次状态")}</div>
             <div style={{ fontSize: 17, fontWeight: 800, margin: "2px 0", fontVariantNumeric: "tabular-nums" }}>
-              {qty(holding.quantity)} 股
+              {qty(holding.quantity)} {L("shares", "股")}
             </div>
             <div style={{ fontSize: 11.5, color: "#aeb4ba" }}>
-              🟢 {openCount} 持仓 · 🟡 {partialCount} 部分平 · ⚪ {closedCount} 结清
+              🟢 {openCount} {L("open", "持仓")} · 🟡 {partialCount} {L("partly sold", "部分平")} · ⚪ {closedCount} {L("closed", "结清")}
             </div>
           </div>
 
           <div style={{ background: "#252a30", border: "1px solid #434b56", borderRadius: 10, padding: "9px 12px" }}>
             <div
               style={{ fontSize: 11.5, color: "#99a0a8" }}
-              title="未平批次均价 = 当前未结清批次的加权买入价；净回本价 = (累计买入总额 - 累计卖出回笼 - 分红) ÷ 当前剩余股数"
+              title={L("Open-lot average = weighted buy price of the lots still open; net break-even = (total bought - total sold - dividends) ÷ shares left", "未平批次均价 = 当前未结清批次的加权买入价；净回本价 = (累计买入总额 - 累计卖出回笼 - 分红) ÷ 当前剩余股数")}
             >
-              未平批次均价 / 真实净回本价
+              {L("Open-lot average / net break-even", "未平批次均价 / 真实净回本价")}
             </div>
             <div style={{ fontSize: 17, fontWeight: 800, margin: "2px 0", fontVariantNumeric: "tabular-nums" }}>
               {usd(holding.open_lots_avg)}
               <span style={{ fontSize: 12.5, fontWeight: 600, color: "#99a0a8" }}>
                 {" "}
-                / 回本{" "}
+                / {L("break-even", "回本")}{" "}
                 {holding.raw_breakeven_price != null && holding.raw_breakeven_price <= 0
-                  ? "$0 (纯利润仓)"
+                  ? L("$0 (all profit)", "$0 (纯利润仓)")
                   : usd(holding.breakeven_price)}
               </span>
             </div>
-            <div style={{ fontSize: 11.5, color: "#aeb4ba" }}>每做一笔盈利波段都会拉低真实净回本价</div>
+            <div style={{ fontSize: 11.5, color: "#aeb4ba" }}>{L("Every profitable swing lowers the net break-even", "每做一笔盈利波段都会拉低真实净回本价")}</div>
           </div>
 
           <div style={{ background: "#252a30", border: "1px solid #434b56", borderRadius: 10, padding: "9px 12px" }}>
-            <div style={{ fontSize: 11.5, color: "#99a0a8" }}>波段已结清盈亏 (按选定批次)</div>
+            <div style={{ fontSize: 11.5, color: "#99a0a8" }}>{L("Realised swing P/L (chosen lots)", "波段已结清盈亏 (按选定批次)")}</div>
             <div
               style={{
                 fontSize: 17,
@@ -755,18 +761,18 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
             </div>
             <div style={{ fontSize: 11.5, color: profitableOrders.length > 0 ? UP : "#99a0a8" }}>
               {profitableOrders.length > 0
-                ? `🟢 当前有 ${profitableOrders.length} 笔浮盈 (${signed(profitableSum)})`
-                : "当前暂无单笔浮盈批次"}
+                ? L(`🟢 ${profitableOrders.length} lots in profit (${signed(profitableSum)})`, `🟢 当前有 ${profitableOrders.length} 笔浮盈 (${signed(profitableSum)})`)
+                : L("No lot is in profit now", "当前暂无单笔浮盈批次")}
             </div>
           </div>
 
           <div style={{ background: "#252a30", border: "1px solid #434b56", borderRadius: 10, padding: "9px 12px" }}>
-            <div style={{ fontSize: 11.5, color: "#99a0a8" }}>主表总成本 (保持不变)</div>
+            <div style={{ fontSize: 11.5, color: "#99a0a8" }}>{L("Average cost on the main table (unchanged)", "主表总成本 (保持不变)")}</div>
             <div style={{ fontSize: 17, fontWeight: 800, margin: "2px 0", fontVariantNumeric: "tabular-nums" }}>
               Mine {usd(holding.avg_cost)}
             </div>
             <div style={{ fontSize: 11.5, color: "#aeb4ba" }}>
-              税法 FIFO {usd(holding.fifo_avg_cost)} · 选批卖出不影响总成本
+              FIFO {usd(holding.fifo_avg_cost)} · {L("selling chosen lots leaves the average unchanged", "选批卖出不影响总成本")}
             </div>
           </div>
         </div>
@@ -789,10 +795,10 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
               setTab("list");
             }}
           >
-            📋 订单与状态明细 ({buyOrders.length})
+            {L("📋 Orders and status", "📋 订单与状态明细")} ({buyOrders.length})
           </button>
           <button type="button" style={tabBtn(tab === "buy", "#84d6a3")} onClick={openNewBuyTab}>
-            {tab === "buy" && editBuyId ? `✎ 编辑买入 #${editBuyId}` : "➕ 记一笔买入 (Buy)"}
+            {tab === "buy" && editBuyId ? L(`✎ Edit buy #${editBuyId}`, `✎ 编辑买入 #${editBuyId}`) : L("➕ Record a buy", "➕ 记一笔买入 (Buy)")}
           </button>
           <button
             type="button"
@@ -800,7 +806,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
             onClick={() => openNewSellTab()}
             disabled={activeOrders.length === 0 && editSellId == null}
           >
-            {tab === "sell" && editSellId ? `🎯 改配卖出 #${editSellId}` : "💰 选批次卖出 (Sell)"}
+            {tab === "sell" && editSellId ? L(`🎯 Re-pair sale #${editSellId}`, `🎯 改配卖出 #${editSellId}`) : L("💰 Sell chosen lots", "💰 选批次卖出 (Sell)")}
           </button>
 
           {okMsg ? (
@@ -837,7 +843,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
               color: "#bbc0c5",
             }}
           >
-            <span style={{ fontWeight: 700, color: "#d6d9dc" }}>⚡ 波段风控引擎</span>
+            <span style={{ fontWeight: 700, color: "#d6d9dc" }}>{L("⚡ Swing risk check", "⚡ 波段风控引擎")}</span>
             <span style={pill("#81dad3")}>
               ATR(14) {usd(lotAdvice.stats.atr14)}{" "}
               {lotAdvice.stats.atr14_pct != null ? `(${lotAdvice.stats.atr14_pct.toFixed(1)}%)` : ""}
@@ -849,19 +855,19 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                 )}
               >
                 RSI(14) {lotAdvice.stats.rsi14.toFixed(1)}
-                {lotAdvice.stats.rsi14 < 30 ? " · 超卖" : lotAdvice.stats.rsi14 > 70 ? " · 超买" : ""}
+                {lotAdvice.stats.rsi14 < 30 ? L(" · oversold", " · 超卖") : lotAdvice.stats.rsi14 > 70 ? L(" · overbought", " · 超买") : ""}
               </span>
             ) : null}
             <span style={pill(lotAdvice.stats.stabilized ? "#84d6a3" : "#d88383")}>
-              {lotAdvice.stats.stabilized ? "🟢 日线已企稳" : "🟠 急跌未企稳"}
-              {lotAdvice.stats.drop_3d_pct != null ? ` (3日 ${pct(lotAdvice.stats.drop_3d_pct)})` : ""}
+              {lotAdvice.stats.stabilized ? L("🟢 Daily chart has steadied", "🟢 日线已企稳") : L("🟠 Still falling fast", "🟠 急跌未企稳")}
+              {lotAdvice.stats.drop_3d_pct != null ? ` (${L("3d", "3日")} ${pct(lotAdvice.stats.drop_3d_pct)})` : ""}
             </span>
             {lotAdvice.catalysts_7d.length > 0 ? (
               <span
                 style={pill(lotAdvice.has_binary_7d ? "#a17edd" : "#76bde4")}
                 title={lotAdvice.catalysts_7d.map((c) => `${c.date.slice(5)} ${c.title}`).join(" | ")}
               >
-                🔭 7日内 {lotAdvice.catalysts_7d.length} 个事件：
+                🔭 {L(`${lotAdvice.catalysts_7d.length} events within 7 days:`, `7日内 ${lotAdvice.catalysts_7d.length} 个事件：`)}
                 {lotAdvice.catalysts_7d
                   .slice(0, 2)
                   .map((c) => `${c.date.slice(5)} ${c.title.slice(0, 14)}`)
@@ -870,7 +876,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
             ) : null}
             {lotAdvice.is_semi_cluster ? (
               <span style={{ marginLeft: "auto", fontSize: 11.5, color: "#99a0a8" }}>
-                芯片/存储总仓位 <b>{lotAdvice.semi_cluster_weight_pct.toFixed(1)}%</b> ({symbol}{" "}
+                {L("Chips / storage weight", "芯片/存储总仓位")} <b>{lotAdvice.semi_cluster_weight_pct.toFixed(1)}%</b> ({symbol}{" "}
                 {lotAdvice.symbol_weight_pct.toFixed(1)}%)
               </span>
             ) : null}
@@ -907,10 +913,10 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
               <b style={{ fontSize: 15, color: "#8ad0a6" }}>
-                {editBuyId ? `✎ 修改买入批次 #${editBuyId} (${symbol})` : `➕ 新增 ${symbol} 买入批次 (创建后状态为 🟢 持仓中)`}
+                {editBuyId ? L(`✎ Edit buy lot #${editBuyId} (${symbol})`, `✎ 修改买入批次 #${editBuyId} (${symbol})`) : L(`➕ New ${symbol} buy lot (starts as 🟢 Open)`, `➕ 新增 ${symbol} 买入批次 (创建后状态为 🟢 持仓中)`)}
               </b>
               <button type="button" style={chipBtn(false)} onClick={() => setTab("list")}>
-                返回列表
+                {L("Back to the list", "返回列表")}
               </button>
             </div>
 
@@ -947,7 +953,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                   >
                     <b style={{ color: palette.fg, fontSize: 13.5 }}>
                       {dg.headline_zh}
-                      {lotAdviceLoading ? " (重算中…)" : ""}
+                      {lotAdviceLoading ? L(" (recalculating…)", " (重算中…)") : ""}
                     </b>
                     {dg.suggested_buy_limit != null ? (
                       <button
@@ -964,7 +970,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                           cursor: "pointer",
                         }}
                       >
-                        🎯 填入建议挂单价 {usd(dg.suggested_buy_limit)}
+                        {L("🎯 Use the suggested limit", "🎯 填入建议挂单价")} {usd(dg.suggested_buy_limit)}
                       </button>
                     ) : null}
                   </div>
@@ -976,9 +982,9 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                     </ul>
                   ) : null}
                   <div style={{ fontSize: 11.5, color: "#99a0a8" }}>
-                    📊 样本外基准（{lotAdvice.empirical_oos.universe_stocks}股 {lotAdvice.empirical_oos.oos_years} 共{" "}
-                    {lotAdvice.empirical_oos.oos_2atr_drop_events} 次 ≥2×ATR 急跌）：隔日直接抄底均值{" "}
-                    <b>+{lotAdvice.empirical_oos.immediate_tp15_mean_pct}%</b> vs 拉开 1.5×ATR 挂单波段均值{" "}
+                    📊 {L("Out-of-sample baseline (", "样本外基准（")}{lotAdvice.empirical_oos.universe_stocks}{L(" stocks, ", "股 ")}{lotAdvice.empirical_oos.oos_years}{L(", ", " 共")}{" "}
+                    {lotAdvice.empirical_oos.oos_2atr_drop_events}{L(" drops of ≥2×ATR): buying the next day averaged", " 次 ≥2×ATR 急跌）：隔日直接抄底均值")}{" "}
+                    <b>+{lotAdvice.empirical_oos.immediate_tp15_mean_pct}%</b> vs {L("a limit 1.5×ATR lower averaged", "拉开 1.5×ATR 挂单波段均值")}{" "}
                     <b style={{ color: "#84d6a3" }}>+{lotAdvice.empirical_oos.spaced_15atr_mean_pct}%</b>
                   </div>
                 </div>
@@ -994,7 +1000,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
               }}
             >
               <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#bbc0c5" }}>
-                交易日期
+                {L("Trade date", "交易日期")}
                 <input
                   style={inputStyle}
                   type="date"
@@ -1006,7 +1012,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
 
               <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#bbc0c5" }}>
                 <span>
-                  买入单价 (USD/股){" "}
+                  {L("Buy price (USD/share)", "买入单价 (USD/股)")}{" "}
                   {livePrice != null ? (
                     <button
                       type="button"
@@ -1021,7 +1027,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                         textDecoration: "underline",
                       }}
                     >
-                      填入现价 {usd(livePrice)}
+                      {L("Use current", "填入现价")} {usd(livePrice)}
                     </button>
                   ) : null}
                 </span>
@@ -1031,48 +1037,48 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                   step="any"
                   min="0"
                   required
-                  placeholder="例如 65.75"
+                  placeholder={L("e.g. 65.75", "例如 65.75")}
                   value={buyPrice}
                   onChange={(e) => setBuyPrice(e.target.value)}
                 />
               </label>
 
               <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#bbc0c5" }}>
-                录入方式
+                {L("Enter by", "录入方式")}
                 <select
                   style={inputStyle}
                   value={buyMode}
                   onChange={(e) => setBuyMode(e.target.value === "amount" ? "amount" : "quantity")}
                 >
-                  <option value="quantity">按股数 (Shares)</option>
-                  <option value="amount">按投入金额 (USD Amount)</option>
+                  <option value="quantity">{L("Shares", "按股数 (Shares)")}</option>
+                  <option value="amount">{L("Amount (USD)", "按投入金额 (USD Amount)")}</option>
                 </select>
               </label>
 
               {buyMode === "quantity" ? (
                 <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#bbc0c5" }}>
-                  买入股数 (支持碎股)
+                  {L("Shares (fractions allowed)", "买入股数 (支持碎股)")}
                   <input
                     style={inputStyle}
                     type="number"
                     step="any"
                     min="0"
                     required
-                    placeholder="例如 20"
+                    placeholder={L("e.g. 20", "例如 20")}
                     value={buyQty}
                     onChange={(e) => setBuyQty(e.target.value)}
                   />
                 </label>
               ) : (
                 <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#bbc0c5" }}>
-                  投入金额 (USD, 不含手续费)
+                  {L("Amount (USD, before fees)", "投入金额 (USD, 不含手续费)")}
                   <input
                     style={inputStyle}
                     type="number"
                     step="any"
                     min="0"
                     required
-                    placeholder="例如 1000"
+                    placeholder={L("e.g. 1000", "例如 1000")}
                     value={buyAmount}
                     onChange={(e) => setBuyAmount(e.target.value)}
                   />
@@ -1080,7 +1086,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
               )}
 
               <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#bbc0c5" }}>
-                手续费 (USD, 可选)
+                {L("Fee (USD, optional)", "手续费 (USD, 可选)")}
                 <input
                   style={inputStyle}
                   type="number"
@@ -1093,10 +1099,10 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
               </label>
 
               <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#bbc0c5" }}>
-                备注 (可选)
+                {L("Note (optional)", "备注 (可选)")}
                 <input
                   style={inputStyle}
-                  placeholder="如：大选前分批加仓 / 波段仓"
+                  placeholder={L("e.g. staged add / swing position", "如：大选前分批加仓 / 波段仓")}
                   value={buyNote}
                   onChange={(e) => setBuyNote(e.target.value)}
                 />
@@ -1114,11 +1120,11 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                   marginBottom: 10,
                 }}
               >
-                本次买入约 <b>{qty(bSharesNum)} 股</b> · 合计支出 <b>{usd(bOutlay)}</b>
+                {L("About", "本次买入约")} <b>{qty(bSharesNum)} {L("shares", "股")}</b> · {L("total outlay", "合计支出")} <b>{usd(bOutlay)}</b>
                 {newMineAvgAfterBuy != null ? (
                   <>
                     {" "}
-                    · 买后总账面均价 (Mine): {usd(holding.avg_cost)} → <b>{usd(newMineAvgAfterBuy)}</b>
+                    · {L("average after the buy (Mine)", "买后总账面均价 (Mine)")}: {usd(holding.avg_cost)} → <b>{usd(newMineAvgAfterBuy)}</b>
                   </>
                 ) : null}
               </div>
@@ -1126,7 +1132,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
 
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
               <button type="button" style={ghostButton} onClick={() => setTab("list")}>
-                取消
+                {L("Cancel", "取消")}
               </button>
               <button
                 type="submit"
@@ -1141,7 +1147,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                   cursor: "pointer",
                 }}
               >
-                {busy ? "保存中…" : editBuyId ? "保存买入修改" : "确认记录买入批次"}
+                {busy ? L("Saving…", "保存中…") : editBuyId ? L("Save the buy", "保存买入修改") : L("Record the buy lot", "确认记录买入批次")}
               </button>
             </div>
           </form>
@@ -1172,11 +1178,11 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
               <div>
                 <b style={{ fontSize: 15, color: "#d9829d" }}>
                   {editSellId
-                    ? `🎯 修改卖出单 #${editSellId} 对应的买入批次 (${symbol})`
-                    : `💰 选择要平仓的 ${symbol} 买入批次 (可勾选多笔、可填部分股数)`}
+                    ? L(`🎯 Change the buy lots of sale #${editSellId} (${symbol})`, `🎯 修改卖出单 #${editSellId} 对应的买入批次 (${symbol})`)
+                    : L(`💰 Choose the ${symbol} buy lots to sell (several, or part of one)`, `💰 选择要平仓的 ${symbol} 买入批次 (可勾选多笔、可填部分股数)`)}
                 </b>
                 <div style={{ fontSize: 12, color: "#99a0a8", marginTop: 2 }}>
-                  你也可以先修改上方「卖出单价」(例如填 85) 来实时测算平掉某几笔波段仓能赚多少，确认后再提交。
+                  {L("You can change the sale price above (e.g. 85) first to see what selling certain lots would make, then submit.", "你也可以先修改上方「卖出单价」(例如填 85) 来实时测算平掉某几笔波段仓能赚多少，确认后再提交。")}
                 </div>
               </div>
               <button
@@ -1187,7 +1193,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                   setTab("list");
                 }}
               >
-                返回列表
+                {L("Back to the list", "返回列表")}
               </button>
             </div>
 
@@ -1201,7 +1207,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
               }}
             >
               <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#bbc0c5" }}>
-                卖出日期
+                {L("Sale date", "卖出日期")}
                 <input
                   style={inputStyle}
                   type="date"
@@ -1213,7 +1219,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
 
               <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#bbc0c5" }}>
                 <span style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-                  <span>卖出单价 (USD/股)</span>
+                  <span>{L("Sale price (USD/share)", "卖出单价 (USD/股)")}</span>
                   {livePrice != null ? (
                     <>
                       <button
@@ -1229,7 +1235,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                           textDecoration: "underline",
                         }}
                       >
-                        现价 {usd(livePrice)}
+                        {L("Current", "现价")} {usd(livePrice)}
                       </button>
                       <button
                         type="button"
@@ -1244,7 +1250,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                           textDecoration: "underline",
                         }}
                       >
-                        +10%测算
+                        {L("+10% test", "+10%测算")}
                       </button>
                     </>
                   ) : null}
@@ -1255,14 +1261,14 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                   step="any"
                   min="0"
                   required
-                  placeholder="例如 85.00"
+                  placeholder={L("e.g. 85.00", "例如 85.00")}
                   value={sellPrice}
                   onChange={(e) => setSellPrice(e.target.value)}
                 />
               </label>
 
               <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#bbc0c5" }}>
-                手续费 (USD, 可选)
+                {L("Fee (USD, optional)", "手续费 (USD, 可选)")}
                 <input
                   style={inputStyle}
                   type="number"
@@ -1275,10 +1281,10 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
               </label>
 
               <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "#bbc0c5" }}>
-                备注 (可选)
+                {L("Note (optional)", "备注 (可选)")}
                 <input
                   style={inputStyle}
-                  placeholder="如：波段止盈平仓"
+                  placeholder={L("e.g. swing take-profit", "如：波段止盈平仓")}
                   value={sellNote}
                   onChange={(e) => setSellNote(e.target.value)}
                 />
@@ -1299,35 +1305,35 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                 marginBottom: 10,
               }}
             >
-              <span style={{ fontSize: 12, color: "#aeb4ba", fontWeight: 600 }}>快捷选批：</span>
+              <span style={{ fontSize: 12, color: "#aeb4ba", fontWeight: 600 }}>{L("Quick pick:", "快捷选批：")}</span>
               <button type="button" style={chipBtn(false)} onClick={() => applyStrategy("profitable")}>
-                ✨ 全选该卖价下盈利批次
+                {L("✨ Every lot in profit at this price", "✨ 全选该卖价下盈利批次")}
               </button>
               <span style={{ color: "#6c757f" }}>|</span>
               <input
                 type="number"
                 step="any"
                 min="0"
-                placeholder="按股数自动分配 (可选)"
+                placeholder={L("Shares to allocate (optional)", "按股数自动分配 (可选)")}
                 value={quickQty}
                 onChange={(e) => setQuickQty(e.target.value)}
                 style={{ ...inputStyle, width: 150, padding: "4px 8px", fontSize: 12 }}
               />
               <button type="button" style={chipBtn(false)} onClick={() => applyStrategy("lowest")}>
-                ⚡ 最低成本优先
+                {L("⚡ Lowest cost first", "⚡ 最低成本优先")}
               </button>
               <button type="button" style={chipBtn(false)} onClick={() => applyStrategy("lifo")}>
-                ⚡ 最近买入 (LIFO)
+                {L("⚡ Newest first (LIFO)", "⚡ 最近买入 (LIFO)")}
               </button>
               <button type="button" style={chipBtn(false)} onClick={() => applyStrategy("fifo")}>
-                ⚡ 最早买入 (FIFO)
+                {L("⚡ Oldest first (FIFO)", "⚡ 最早买入 (FIFO)")}
               </button>
               <button
                 type="button"
                 style={{ ...chipBtn(false), marginLeft: "auto" }}
                 onClick={() => setAllocMap({})}
               >
-                🧹 清空重选
+                {L("🧹 Clear", "🧹 清空重选")}
               </button>
             </div>
 
@@ -1336,15 +1342,15 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                 <thead>
                   <tr>
-                    <th style={th}>选择</th>
-                    <th style={th}>批次 / 买入日</th>
-                    <th style={th}>当前状态</th>
-                    <th style={{ ...th, ...right }}>买入成本价</th>
-                    <th style={{ ...th, ...right }}>可平股数</th>
+                    <th style={th}>{L("Pick", "选择")}</th>
+                    <th style={th}>{L("Lot / bought", "批次 / 买入日")}</th>
+                    <th style={th}>{L("Status", "当前状态")}</th>
+                    <th style={{ ...th, ...right }}>{L("Buy price", "买入成本价")}</th>
+                    <th style={{ ...th, ...right }}>{L("Shares left", "可平股数")}</th>
                     <th style={{ ...th, ...right }}>
-                      按卖价 {sPriceNum > 0 ? usd(sPriceNum) : "—"} 测算盈亏
+                      {L("P/L at", "按卖价")} {sPriceNum > 0 ? usd(sPriceNum) : "—"} {L("", "测算盈亏")}
                     </th>
-                    <th style={{ ...th, ...right }}>本次平仓股数</th>
+                    <th style={{ ...th, ...right }}>{L("Shares to sell", "本次平仓股数")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1398,29 +1404,29 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                                   fontSize: 11,
                                   textDecoration: "underline",
                                 }}
-                                title="将该笔 +1.5×ATR 波段目标价填入上方卖出单价"
+                                title={L("Put this lot's +1.5×ATR swing target into the sale price above", "将该笔 +1.5×ATR 波段目标价填入上方卖出单价")}
                               >
-                                填入
+                                {L("Use", "填入")}
                               </button>
                             </span>
                           ) : null}
                         </td>
                         <td style={{ ...cell, ...right }}>
                           <b>{qty(avail)}</b>
-                          <span style={sub}>原买 {qty(lot.quantity)}</span>
+                          <span style={sub}>{L("bought", "原买")} {qty(lot.quantity)}</span>
                         </td>
                         <td style={{ ...cell, ...right, color: color(rowPnl) }}>
                           {rowPnl != null ? (
                             <>
                               <b>
-                                {checked ? signed(rowPnl) : `全平 ${signed(rowPnl)}`}
+                                {checked ? signed(rowPnl) : `${L("all", "全平")} ${signed(rowPnl)}`}
                               </b>
                               <span style={{ ...sub, color: color(diffPct) }}>
-                                {pct(diffPct)} ({signed(diffPerShare)}/股)
+                                {pct(diffPct)} ({signed(diffPerShare)}/{L("sh", "股")})
                               </span>
                             </>
                           ) : (
-                            <span style={muted}>填卖价后显示</span>
+                            <span style={muted}>{L("enter a sale price", "填卖价后显示")}</span>
                           )}
                         </td>
                         <td style={{ ...cell, ...right, whiteSpace: "nowrap" }}>
@@ -1440,19 +1446,19 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                               style={{ ...chipBtn(false), padding: "3px 7px", fontSize: 11 }}
                               onClick={() => setLotShareInput(lot.id, exactQtyStr(avail))}
                             >
-                              全平
+                              {L("All", "全平")}
                             </button>
                             <button
                               type="button"
                               style={{ ...chipBtn(false), padding: "3px 7px", fontSize: 11 }}
                               onClick={() => setLotShareInput(lot.id, exactQtyStr(avail / 2))}
                             >
-                              半仓
+                              {L("Half", "半仓")}
                             </button>
                           </div>
                           {checked ? (
                             <span style={sub}>
-                              {remAfter <= 1e-7 ? "卖后 → ⚪ 已结清" : `卖后 → 🟡 剩 ${qty(remAfter)} 股`}
+                              {remAfter <= 1e-7 ? L("after → ⚪ closed", "卖后 → ⚪ 已结清") : L(`after → 🟡 ${qty(remAfter)} left`, `卖后 → 🟡 剩 ${qty(remAfter)} 股`)}
                             </span>
                           ) : null}
                         </td>
@@ -1462,7 +1468,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                   {selectableLots.length === 0 ? (
                     <tr>
                       <td colSpan={8} style={{ ...cell, textAlign: "center", color: "#99a0a8", padding: 20 }}>
-                        该卖出日期 ({sellDate}) 之前没有可平仓的买入批次。
+                        {L(`No buy lot to sell before the sale date (${sellDate}).`, `该卖出日期 (${sellDate}) 之前没有可平仓的买入批次。`)}
                       </td>
                     </tr>
                   ) : null}
@@ -1488,18 +1494,18 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
             >
               <div style={{ fontSize: 13, lineHeight: 1.65 }}>
                 <div>
-                  已勾选 <b>{selectedEntries.length}</b> 笔批次 · 合计卖出{" "}
-                  <b>{qty(totalSelectedQty)} 股</b>
+                  {L("Picked", "已勾选")} <b>{selectedEntries.length}</b> {L("lots · selling", "笔批次 · 合计卖出")}{" "}
+                  <b>{qty(totalSelectedQty)} {L("shares", "股")}</b>
                   {weightedSelectedCost != null ? (
-                    <> · 所选批次加权买入成本 <b>{usd(weightedSelectedCost)}</b></>
+                    <> · {L("weighted buy cost of the picked lots", "所选批次加权买入成本")} <b>{usd(weightedSelectedCost)}</b></>
                   ) : null}
                   {sPriceNum > 0 && totalSelectedQty > 0 ? (
-                    <> · 净回笼资金 <b>{usd(totalSelectedQty * sPriceNum - sFeeNum)}</b></>
+                    <> · {L("net proceeds", "净回笼资金")} <b>{usd(totalSelectedQty * sPriceNum - sFeeNum)}</b></>
                   ) : null}
                 </div>
                 {estSwingProfit != null ? (
                   <div>
-                    🎯 <b>本单对应批次波段盈亏：</b>
+                    🎯 <b>{L("Swing P/L on these lots:", "本单对应批次波段盈亏：")}</b>
                     <span
                       style={{
                         fontSize: 15.5,
@@ -1511,23 +1517,23 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                     </span>
                     {estAvgProfit != null ? (
                       <span style={{ color: "#99a0a8", fontSize: 12, marginLeft: 10 }}>
-                        [参考：主表总均价 {usd(holding.avg_cost)} 口径记账 {signed(estAvgProfit)}，主表总成本维持不变]
+                        [{L("For reference: at the main-table average", "参考：主表总均价")} {usd(holding.avg_cost)} {L("it would book", "口径记账")} {signed(estAvgProfit)}{L("; the average stays unchanged", "，主表总成本维持不变")}]
                       </span>
                     ) : null}
                   </div>
                 ) : (
-                  <div style={muted}>勾选上方批次并填写卖出单价后，这里会实时显示波段盈亏与新回本价。</div>
+                  <div style={muted}>{L("Pick lots above and enter a sale price to see the swing P/L and the new break-even here.", "勾选上方批次并填写卖出单价后，这里会实时显示波段盈亏与新回本价。")}</div>
                 )}
                 {nextBreakeven !== null || (editSellId == null && totalSelectedQty > 0 && remSharesAfterSell <= 1e-8) ? (
                   <div style={{ fontSize: 12, color: "#aeb4ba" }}>
-                    卖后剩余 <b>{qty(remSharesAfterSell)} 股</b>
+                    {L("Left after the sale", "卖后剩余")} <b>{qty(remSharesAfterSell)} {L("shares", "股")}</b>
                     {remSharesAfterSell > 1e-8 && nextBreakeven != null ? (
                       <>
                         {" "}
-                        · 真实净回本价变化：{usd(holding.breakeven_price)} → <b>{usd(nextBreakeven)}</b>
+                        · {L("net break-even", "真实净回本价变化")}: {usd(holding.breakeven_price)} → <b>{usd(nextBreakeven)}</b>
                       </>
                     ) : (
-                      " · 全部清仓结清"
+                      L(" · position closed", " · 全部清仓结清")
                     )}
                   </div>
                 ) : null}
@@ -1542,7 +1548,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                     setTab("list");
                   }}
                 >
-                  取消
+                  {L("Cancel", "取消")}
                 </button>
                 <button
                   type="submit"
@@ -1558,10 +1564,10 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                   }}
                 >
                   {busy
-                    ? "提交中…"
+                    ? L("Submitting…", "提交中…")
                     : editSellId
-                      ? `保存批次配对 (${qty(totalSelectedQty)} 股)`
-                      : `确认卖出 ${qty(totalSelectedQty)} 股`}
+                      ? L(`Save the lots (${qty(totalSelectedQty)} shares)`, `保存批次配对 (${qty(totalSelectedQty)} 股)`)
+                      : L(`Sell ${qty(totalSelectedQty)} shares`, `确认卖出 ${qty(totalSelectedQty)} 股`)}
                 </button>
               </div>
             </div>
@@ -1586,28 +1592,28 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                 style={chipBtn(statusFilter === "all")}
                 onClick={() => setStatusFilter("all")}
               >
-                全部买入 ({buyOrders.length})
+                {L("All buys", "全部买入")} ({buyOrders.length})
               </button>
               <button
                 type="button"
                 style={chipBtn(statusFilter === "active")}
                 onClick={() => setStatusFilter("active")}
               >
-                🟢 未结清 ({activeOrders.length})
+                🟢 {L("Open", "未结清")} ({activeOrders.length})
               </button>
               <button
                 type="button"
                 style={chipBtn(statusFilter === "profitable")}
                 onClick={() => setStatusFilter("profitable")}
               >
-                ✨ 当前浮盈 ({profitableOrders.length})
+                ✨ {L("In profit", "当前浮盈")} ({profitableOrders.length})
               </button>
               <button
                 type="button"
                 style={chipBtn(statusFilter === "closed")}
                 onClick={() => setStatusFilter("closed")}
               >
-                ⚪ 已结清 ({closedCount})
+                ⚪ {L("Closed", "已结清")} ({closedCount})
               </button>
 
               <span style={{ width: 8 }} />
@@ -1615,9 +1621,9 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                 type="button"
                 style={chipBtn(sortBy === "date_desc")}
                 onClick={() => setSortBy(sortBy === "date_desc" ? "cost_asc" : "date_desc")}
-                title="点击切换排序方式"
+                title={L("Click to change the order", "点击切换排序方式")}
               >
-                {sortBy === "date_desc" ? "排序: 最新买入优先 ⇅" : "排序: 最低成本优先 ⇅"}
+                {sortBy === "date_desc" ? L("Order: newest first ⇅", "排序: 最新买入优先 ⇅") : L("Order: lowest cost first ⇅", "排序: 最低成本优先 ⇅")}
               </button>
 
               <div style={{ marginLeft: "auto", display: "inline-flex", gap: 4 }}>
@@ -1625,17 +1631,17 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                   type="button"
                   style={chipBtn(basisView === "swing")}
                   onClick={() => setBasisView("swing")}
-                  title="按你手动指定的波段平仓配对显示每笔状态"
+                  title={L("Each lot's status by the lots you chose for each sale", "按你手动指定的波段平仓配对显示每笔状态")}
                 >
-                  🎯 波段配对状态
+                  {L("🎯 By chosen lots", "🎯 波段配对状态")}
                 </button>
                 <button
                   type="button"
                   style={chipBtn(basisView === "fifo")}
                   onClick={() => setBasisView("fifo")}
-                  title="查看严格按爱尔兰税法 FIFO (先进先出) 抵消时每笔订单的状态"
+                  title={L("Each lot's status when sales are matched strictly first in, first out (FIFO)", "查看严格按爱尔兰税法 FIFO (先进先出) 抵消时每笔订单的状态")}
                 >
-                  🧾 税法 FIFO 状态
+                  {L("🧾 FIFO status", "🧾 税法 FIFO 状态")}
                 </button>
               </div>
             </div>
@@ -1645,14 +1651,14 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.2 }}>
                 <thead>
                   <tr>
-                    <th style={th}>订单 / 买入日期</th>
-                    <th style={th}>状态</th>
-                    <th style={{ ...th, ...right }}>买入成本价</th>
-                    <th style={{ ...th, ...right }}>剩余 / 买入股数</th>
-                    <th style={{ ...th, ...right }}>单笔独立浮盈亏 (按现价)</th>
-                    <th style={{ ...th, ...right }}>波段目标 (ATR)</th>
-                    <th style={{ ...th, ...right }}>已结清波段盈亏</th>
-                    <th style={{ ...th, ...right }}>操作</th>
+                    <th style={th}>{L("Order / bought", "订单 / 买入日期")}</th>
+                    <th style={th}>{L("Status", "状态")}</th>
+                    <th style={{ ...th, ...right }}>{L("Buy price", "买入成本价")}</th>
+                    <th style={{ ...th, ...right }}>{L("Left / bought", "剩余 / 买入股数")}</th>
+                    <th style={{ ...th, ...right }}>{L("Open P/L (at current price)", "单笔独立浮盈亏 (按现价)")}</th>
+                    <th style={{ ...th, ...right }}>{L("Swing target (ATR)", "波段目标 (ATR)")}</th>
+                    <th style={{ ...th, ...right }}>{L("Realised swing P/L", "已结清波段盈亏")}</th>
+                    <th style={{ ...th, ...right }}>{L("Actions", "操作")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1682,23 +1688,23 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                         <td style={cell}>
                           <StatusBadge status={st} />
                           {st === "partial" ? (
-                            <span style={sub}>已平 {qty(cq)} 股</span>
+                            <span style={sub}>{L("sold", "已平")} {qty(cq)} {L("sh", "股")}</span>
                           ) : null}
                         </td>
                         <td style={{ ...cell, ...right }}>
                           <b>{usd(b.unit_cost)}</b>
-                          {b.fee > 0 ? <span style={sub}>含费 {usd(b.fee)}</span> : null}
+                          {b.fee > 0 ? <span style={sub}>{L("fee", "含费")} {usd(b.fee)}</span> : null}
                         </td>
                         <td style={{ ...cell, ...right }}>
                           <b>{qty(oq)}</b> <span style={{ color: "#99a0a8" }}>/ {qty(b.quantity)}</span>
-                          {oq > 1e-8 ? <span style={sub}>成本 {usd(oq * b.unit_cost)}</span> : null}
+                          {oq > 1e-8 ? <span style={sub}>{L("cost", "成本")} {usd(oq * b.unit_cost)}</span> : null}
                         </td>
                         <td style={{ ...cell, ...right, color: color(openPnl) }}>
                           {openPnl != null ? (
                             <>
                               <b>{signed(openPnl)}</b>
                               <span style={{ ...sub, color: color(openPct) }}>
-                                {pct(openPct)} {isProf ? "· ✨ 可止盈" : ""}
+                                {pct(openPct)} {isProf ? L("· ✨ can take profit", "· ✨ 可止盈") : ""}
                               </span>
                             </>
                           ) : (
@@ -1728,7 +1734,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                                 ) : null}
                                 <span style={sub}>
                                   TP2 {pl.tp2_price != null ? usd(pl.tp2_price) : "—"}
-                                  {pl.trail_stop_price != null ? ` · 🛡 保护 ${usd(pl.trail_stop_price)}` : ""}
+                                  {pl.trail_stop_price != null ? ` · 🛡 ${L("stop", "保护")} ${usd(pl.trail_stop_price)}` : ""}
                                 </span>
                               </div>
                             );
@@ -1766,9 +1772,9 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                                 cursor: "pointer",
                                 marginRight: 4,
                               }}
-                              title={`按本批波段目标价 ${usd(exitPlanByBuyId[b.id].recommended_price!)} 测算独立平仓盈亏`}
+                              title={L(`P/L of selling this lot at its swing target ${usd(exitPlanByBuyId[b.id].recommended_price!)}`, `按本批波段目标价 ${usd(exitPlanByBuyId[b.id].recommended_price!)} 测算独立平仓盈亏`)}
                             >
-                              🎯 目标测算
+                              {L("🎯 Test target", "🎯 目标测算")}
                             </button>
                           ) : null}
                           {b.open_qty > 1e-8 ? (
@@ -1786,15 +1792,15 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                                 cursor: "pointer",
                                 marginRight: 4,
                               }}
-                              title="直接进入卖出页并默认勾选此笔批次（按现价）"
+                              title={L("Go to the sale with this lot picked (at the current price)", "直接进入卖出页并默认勾选此笔批次（按现价）")}
                             >
-                              平这笔
+                              {L("Sell this", "平这笔")}
                             </button>
                           ) : null}
                           <button
                             type="button"
                             style={iconButton}
-                            title="编辑这笔买入"
+                            title={L("Edit this buy", "编辑这笔买入")}
                             onClick={() => openEditBuyTab(b)}
                           >
                             ✎
@@ -1802,11 +1808,11 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                           <button
                             type="button"
                             style={iconButton}
-                            title="删除这笔买入"
+                            title={L("Delete this buy", "删除这笔买入")}
                             onClick={() =>
                               void handleDeleteOrder(
                                 b.id,
-                                `#${b.id} ${b.trade_date} 买入 ${qty(b.quantity)} 股 ${symbol} @ ${usd(b.price)}`,
+                                L(`#${b.id} ${b.trade_date} buy ${qty(b.quantity)} ${symbol} @ ${usd(b.price)}`, `#${b.id} ${b.trade_date} 买入 ${qty(b.quantity)} 股 ${symbol} @ ${usd(b.price)}`),
                               )
                             }
                           >
@@ -1819,7 +1825,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                   {displayedBuyOrders.length === 0 ? (
                     <tr>
                       <td colSpan={7} style={{ ...cell, textAlign: "center", color: "#99a0a8", padding: 20 }}>
-                        当前筛选条件下没有匹配的买入订单。
+                        {L("No buy order matches this filter.", "当前筛选条件下没有匹配的买入订单。")}
                       </td>
                     </tr>
                   ) : null}
@@ -1831,18 +1837,18 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
             {sellOrders.length > 0 ? (
               <div style={{ marginTop: 14 }}>
                 <div style={{ fontWeight: 700, fontSize: 13.5, marginBottom: 6, color: "#bbc0c5" }}>
-                  📤 已卖出记录与平仓配对明细 ({sellOrders.length})
+                  {L("📤 Sales and the lots they closed", "📤 已卖出记录与平仓配对明细")} ({sellOrders.length})
                 </div>
                 <div style={{ overflowX: "auto", border: "1px solid #434b56", borderRadius: 10 }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.8 }}>
                     <thead>
                       <tr>
-                        <th style={th}>卖出单 / 日期</th>
-                        <th style={{ ...th, ...right }}>卖出股数 / 成交价</th>
-                        <th style={th}>平掉的买入批次</th>
-                        <th style={{ ...th, ...right }}>波段盈亏</th>
-                        <th style={{ ...th, ...right }}>总均价口径</th>
-                        <th style={{ ...th, ...right }}>操作</th>
+                        <th style={th}>{L("Sale / date", "卖出单 / 日期")}</th>
+                        <th style={{ ...th, ...right }}>{L("Shares / price", "卖出股数 / 成交价")}</th>
+                        <th style={th}>{L("Buy lots closed", "平掉的买入批次")}</th>
+                        <th style={{ ...th, ...right }}>{L("Swing P/L", "波段盈亏")}</th>
+                        <th style={{ ...th, ...right }}>{L("At the average", "总均价口径")}</th>
+                        <th style={{ ...th, ...right }}>{L("Actions", "操作")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1854,7 +1860,7 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                           </td>
                           <td style={{ ...cell, ...right }}>
                             <b>{qty(s.quantity)}</b> @ {usd(s.price)}
-                            <span style={sub}>回笼 {usd(s.quantity * s.price - s.fee)}</span>
+                            <span style={sub}>{L("proceeds", "回笼")} {usd(s.quantity * s.price - s.fee)}</span>
                           </td>
                           <td style={cell}>
                             <span
@@ -1863,21 +1869,21 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                                 marginRight: 6,
                               }}
                             >
-                              {s.lot_allocations ? "🎯 手动选批" : "⚙️ 默认FIFO"}
+                              {s.lot_allocations ? L("🎯 Chosen lots", "🎯 手动选批") : L("⚙️ FIFO (default)", "⚙️ 默认FIFO")}
                             </span>
                             <span style={{ fontSize: 12, color: "#bbc0c5" }}>
                               {s.matched_lots
-                                .map((m) => `#${m.buy_id} (${usd(m.unit_cost)}×${qty(m.quantity)}股)`)
+                                .map((m) => `#${m.buy_id} (${usd(m.unit_cost)}×${qty(m.quantity)}${L("", "股")})`)
                                 .join(" + ")}
                             </span>
                           </td>
                           <td style={{ ...cell, ...right, color: color(s.swing_profit) }}>
                             <b>{signed(s.swing_profit)}</b>
-                            <span style={sub}>对应成本 {usd(s.swing_unit_cost)}</span>
+                            <span style={sub}>{L("lot cost", "对应成本")} {usd(s.swing_unit_cost)}</span>
                           </td>
                           <td style={{ ...cell, ...right, color: color(s.profit) }}>
                             {signed(s.profit)}
-                            <span style={sub}>均价 {usd(s.avg_cost)}</span>
+                            <span style={sub}>{L("average", "均价")} {usd(s.avg_cost)}</span>
                           </td>
                           <td style={{ ...cell, ...right, whiteSpace: "nowrap" }}>
                             <button
@@ -1889,18 +1895,18 @@ const LotManagerModal: React.FC<LotManagerModalProps> = ({
                                 fontSize: 11.5,
                                 marginRight: 4,
                               }}
-                              title="重新指定这笔卖出平掉哪几笔买入订单"
+                              title={L("Choose again which buy lots this sale closed", "重新指定这笔卖出平掉哪几笔买入订单")}
                             >
-                              🎯 改配批次
+                              {L("🎯 Re-pair lots", "🎯 改配批次")}
                             </button>
                             <button
                               type="button"
                               style={iconButton}
-                              title="删除这笔卖出 (释放已平仓批次)"
+                              title={L("Delete this sale (its lots open again)", "删除这笔卖出 (释放已平仓批次)")}
                               onClick={() =>
                                 void handleDeleteOrder(
                                   s.id,
-                                  `#${s.id} ${s.trade_date} 卖出 ${qty(s.quantity)} 股 ${symbol} @ ${usd(s.price)}`,
+                                  L(`#${s.id} ${s.trade_date} sell ${qty(s.quantity)} ${symbol} @ ${usd(s.price)}`, `#${s.id} ${s.trade_date} 卖出 ${qty(s.quantity)} 股 ${symbol} @ ${usd(s.price)}`),
                                 )
                               }
                             >

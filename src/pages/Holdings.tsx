@@ -1,4 +1,5 @@
 import React from "react";
+import { tr, useLang } from "../lang";
 import {
   addWatch,
   deleteTransaction,
@@ -54,12 +55,12 @@ const store = {
   set: (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* per-viewer convenience only */ } },
 };
 
-// The language is the advisor's and the briefs' (briefLang), so one switch sets every panel.
+// The language is the dashboard's (lang.tsx: English unless switched), so one switch sets every panel.
 // All text comes from the server in both languages; key lines show first, the rest under "More".
 const ActionCell: React.FC<{ a?: DailyAction }> = ({ a }) => {
   const [open, setOpen] = React.useState(false);
   const [more, setMore] = React.useState(false);
-  const [lang, setLang] = React.useState<"zh" | "en">(() => (store.get("briefLang", "zh") === "en" ? "en" : "zh"));
+  const [lang, setLang] = useLang();
   if (!a) return <span style={muted}>—</span>;
   const [enLabel, c] = ACTION_STYLE[a.action] || [a.action, "#99a0a8"];
   const t = (b: { en: string; zh: string } | undefined, fallback: string) => (b ? b[lang] : fallback);
@@ -67,7 +68,7 @@ const ActionCell: React.FC<{ a?: DailyAction }> = ({ a }) => {
   const notes: { en: string; zh: string; key: boolean; section?: string }[] = a.notes ?? a.reasons.map((r) => ({ en: r, zh: r, key: true }));
   const shown = notes.filter((n) => more || n.key);
   const blocks = lang === "zh" && a.blocks_zh ? a.blocks_zh : a.blocks;
-  const choose = (l: "zh" | "en") => { setLang(l); store.set("briefLang", l); };
+  const choose = (l: "zh" | "en") => setLang(l);
   return (
     <div style={{ minWidth: open ? 150 : undefined }}>
       <button type="button" onClick={() => setOpen(!open)} title="Show why"
@@ -79,7 +80,7 @@ const ActionCell: React.FC<{ a?: DailyAction }> = ({ a }) => {
       {open ? (
         <div style={{ ...muted, marginTop: 4, maxWidth: 360, whiteSpace: "normal", lineHeight: 1.45 }}>
           <div style={{ display: "flex", gap: 4, marginBottom: 4 }}>
-            {(["zh", "en"] as const).map((l) => (
+            {(["en", "zh"] as const).map((l) => (
               <button key={l} type="button" onClick={() => choose(l)}
                       style={{ ...pill(lang === l ? "#81dad3" : "#6b7178"), cursor: "pointer", background: "transparent", fontSize: 11 }}>
                 {l === "zh" ? "中文" : "EN"}</button>
@@ -284,6 +285,7 @@ const TradeModal: React.FC<{
 // ------------------------------------------------------------------ the chart
 
 const ChartModal: React.FC<{ symbol: string; state: PortfolioState; onClose: () => void; onOpenEvents: (sym: string) => void; onOpenLots: (sym: string) => void }> = ({ symbol, state, onClose, onOpenEvents, onOpenLots }) => {
+  const [lang] = useLang();
   const [range, setRange] = React.useState(() => store.get("pfChartRange", "6m"));
   const [type, setType] = React.useState<"line" | "candle">(() => (store.get("pfChartType", "line") === "candle" ? "candle" : "line"));
   const [data, setData] = React.useState<ChartData | null>(null);
@@ -313,8 +315,8 @@ const ChartModal: React.FC<{ symbol: string; state: PortfolioState; onClose: () 
         <div style={panelHead}>
           <div><span style={{ fontSize: 20, fontWeight: 800 }}>{symbol}</span> <span style={muted}>{shortName(q.name)}</span></div>
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            {held ? <button style={{ ...ghostButton, padding: "3px 10px", fontSize: 12.5, borderRadius: 8 }} onClick={() => { onClose(); onOpenLots(symbol); }}>📦 批次/波段</button> : null}
-            <button style={{ ...ghostButton, padding: "3px 10px", fontSize: 12.5, borderRadius: 8 }} onClick={() => { onClose(); onOpenEvents(symbol); }}>🔭 未来事件</button>
+            {held ? <button style={{ ...ghostButton, padding: "3px 10px", fontSize: 12.5, borderRadius: 8 }} onClick={() => { onClose(); onOpenLots(symbol); }}>{tr(lang, "📦 Lots / swings", "📦 批次/波段")}</button> : null}
+            <button style={{ ...ghostButton, padding: "3px 10px", fontSize: 12.5, borderRadius: 8 }} onClick={() => { onClose(); onOpenEvents(symbol); }}>{tr(lang, "🔭 Upcoming events", "🔭 未来事件")}</button>
             <button style={iconButton} onClick={onClose} title="Close (Esc)">✕</button>
           </div>
         </div>
@@ -349,11 +351,11 @@ const ChartModal: React.FC<{ symbol: string; state: PortfolioState; onClose: () 
 };
 
 const MarketWeatherBanner: React.FC<{ portfolio: DailyActionPortfolio | null }> = ({ portfolio }) => {
-  const [lang, setLang] = React.useState<"zh" | "en">(() => (store.get("briefLang", "zh") === "en" ? "en" : "zh"));
+  const [lang, setLang] = useLang();
   const m = portfolio?.market;
   if (!m) return null;
 
-  const choose = (l: "zh" | "en") => { setLang(l); store.set("briefLang", l); };
+  const choose = (l: "zh" | "en") => setLang(l);
   const sev = m.severity || "info";
   const theme = sev === "critical"
     ? { bg: "rgba(216,131,131,0.11)", border: "rgba(216,131,131,0.52)", accent: "#f08c8c", icon: "🚨" }
@@ -387,7 +389,7 @@ const MarketWeatherBanner: React.FC<{ portfolio: DailyActionPortfolio | null }> 
           {lang === "zh" ? "市场恐慌与宏观天气（风险背景，非涨跌预测）" : "Market & macro weather (risk context, not a forecast)"}
         </span>
         <div style={{ display: "flex", gap: 4 }}>
-          {(["zh", "en"] as const).map((l) => (
+          {(["en", "zh"] as const).map((l) => (
             <button key={l} type="button" onClick={() => choose(l)}
                     style={{ ...pill(lang === l ? "#81dad3" : "#6b7178"), cursor: "pointer", background: "transparent", fontSize: 11 }}>
               {l === "zh" ? "中文" : "EN"}
@@ -464,6 +466,7 @@ const MarketWeatherBanner: React.FC<{ portfolio: DailyActionPortfolio | null }> 
 // ------------------------------------------------------------------ the page
 
 const Holdings: React.FC = () => {
+  const [pageLang] = useLang();
   const [s, setS] = React.useState<PortfolioState | null>(null);
   const [loadedAt, setLoadedAt] = React.useState(0);
   const [nextAt, setNextAt] = React.useState(0);
@@ -623,8 +626,8 @@ const Holdings: React.FC = () => {
               <td style={{ ...cell, ...right, color: x.sale_profit == null ? undefined : x.sale_profit >= 0 ? UP : DOWN }}>
                 {x.sale_profit != null ? signed(x.sale_profit) : "—"}
                 {x.lot_allocations?.length && x.sale_swing_profit != null ? (
-                  <span style={{ ...sub, color: color(x.sale_swing_profit) }} title="按所选买入批次计算的波段盈亏">
-                    波段 {signed(x.sale_swing_profit)}
+                  <span style={{ ...sub, color: color(x.sale_swing_profit) }} title={tr(pageLang, "Swing profit on the buy lots chosen for the sale", "按所选买入批次计算的波段盈亏")}>
+                    {tr(pageLang, "Swing", "波段")} {signed(x.sale_swing_profit)}
                   </span>
                 ) : null}</td>
               <td style={cell}>{x.note}</td>
@@ -683,11 +686,11 @@ const Holdings: React.FC = () => {
         {weekReports?.over && weekReports.text ? (
           <div style={{ ...muted, color: "#d9b36c", border: "1px solid #5a4a2a", borderRadius: 6, padding: "6px 10px", marginBottom: 8 }}
                title="Bad report nights come together: count holdings reporting in the same week as one exposure">
-            ⚠ {weekReports.text[(() => { try { return localStorage.getItem("briefLang") === "en" ? "en" : "zh"; } catch { return "zh"; } })()]}
+            ⚠ {weekReports.text[pageLang]}
           </div>
         ) : null}
         <div style={panelHead}><div style={panelTitle}>📈 Holdings · {s.holdings.length}</div>
-          <span style={muted}>Mine: buys re-average, sales leave the average unchanged. FIFO: a sale takes the oldest shares first (the Irish CGT basis). Click a row for its chart, 📦 批次 for per-order statuses & swing lot matching, or 🔭 事件 for upcoming catalysts</span></div>
+          <span style={muted}>Mine: buys re-average, sales leave the average unchanged. FIFO: a sale takes the oldest shares first (the Irish CGT basis). Click a row for its chart, 📦 Lots for per-order statuses & swing lot matching, or 🔭 Events for upcoming catalysts</span></div>
         {s.holdings.length ? (
           <>
             <div style={{ display: "flex", height: 8, borderRadius: 4, overflow: "hidden", marginBottom: 8 }}>
@@ -698,7 +701,7 @@ const Holdings: React.FC = () => {
                 <thead><tr>
                   <th style={th}>Stock</th><th style={th}>Price</th><th style={th}>Today</th>
                   <th style={{ ...th, ...right }}>Avg cost</th><th style={{ ...th, ...right }}>Value / shares</th><th style={{ ...th, ...right }}>Unrealised P&L</th>
-                  <th style={th}>Action</th><th style={th}>Events</th><th style={th}>Analysts</th><th style={th}>Lots / 波段</th>
+                  <th style={th}>Action</th><th style={th}>Events</th><th style={th}>Analysts</th><th style={th}>{tr(pageLang, "Lots / swings", "批次 / 波段")}</th>
                 </tr></thead>
                 <tbody>{s.holdings.map((h) => (
                   <React.Fragment key={h.symbol}>
@@ -749,7 +752,7 @@ const Holdings: React.FC = () => {
       <HintScores />
 
       <div style={panel}>
-        <div style={panelHead}><div style={panelTitle}>👀 Watchlist · {s.watchlist.length}</div><span style={muted}>Stocks you follow without holding · click 🔭 事件 to open upcoming catalysts modal</span></div>
+        <div style={panelHead}><div style={panelTitle}>👀 Watchlist · {s.watchlist.length}</div><span style={muted}>Stocks you follow without holding · click 🔭 Events to open upcoming catalysts modal</span></div>
         {s.watchlist.length ? (
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
@@ -831,7 +834,7 @@ const Holdings: React.FC = () => {
                 <td style={{ ...cell, ...right, color: color(p.realized) }}>{signed(p.realized)}</td>
                 <td style={{ ...cell, ...right, color: color(p.fifo_realized) }}>{signed(p.fifo_realized)}</td>
                 <td style={{ ...cell, ...right }}>{usd(p.dividends)}</td><td style={{ ...cell, ...right }}>{p.trades}</td>
-                <td style={{ ...cell, ...right }}><button style={iconButton} onClick={() => setLotModal(p.symbol)}>📦 批次记录</button></td></tr>
+                <td style={{ ...cell, ...right }}><button style={iconButton} onClick={() => setLotModal(p.symbol)}>{tr(pageLang, "📦 Lots", "📦 批次记录")}</button></td></tr>
             ))}</tbody>
           </table>
         </details>

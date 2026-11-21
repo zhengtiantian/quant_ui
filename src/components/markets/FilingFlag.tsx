@@ -1,20 +1,18 @@
 import React from "react";
+import { useLang } from "../../lang";
 import type { Bilingual, FilingFlag as Flag } from "../../api/markets";
 import { muted, pill } from "./format";
 
 /**
  * Q.17.5: the latest 10-K / 10-Q changed its risk factors more than 80% of filings do (quant_ai
  * /portfolio/filing-changes). A base rate for that kind of filing, not a forecast; the action is unchanged.
- * Words come from the server in both languages; the language is the briefs' (briefLang).
+ * Words come from the server in both languages; the language is the dashboard's (lang.tsx: English unless switched).
  */
-const lang = (): "zh" | "en" => {
-  try { return localStorage.getItem("briefLang") === "en" ? "en" : "zh"; } catch { return "zh"; }
-};
 
 const FilingFlag: React.FC<{ f?: Flag; labels?: Record<string, Bilingual> }> = ({ f, labels }) => {
   const [open, setOpen] = React.useState(false);
+  const [l] = useLang();
   if (!f) return null;
-  const l = lang();
   const t = (k: string, fallback: string) => labels?.[k]?.[l] ?? fallback;
   return (
     <div style={{ marginTop: 4 }} onClick={(e) => e.stopPropagation()}>

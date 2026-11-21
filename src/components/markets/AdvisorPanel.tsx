@@ -1,4 +1,5 @@
 import React from "react";
+import { useLang } from "../../lang";
 import { fetchAdvisor, fetchBrief, runBrief } from "../../api/markets";
 import type { AdviceOrder, AdvisorReport, AdvisorState, Brief, Holding } from "../../api/markets";
 import Markdown from "./Markdown";
@@ -73,7 +74,7 @@ const AdvisorPanel: React.FC<{ holdings: Holding[] }> = ({ holdings }) => {
   const [error, setError] = React.useState<string | null>(null);
   const [selected, setSelected] = React.useState<number | null>(null);
   const [brief, setBrief] = React.useState<Brief | null>(null);
-  const [lang, setLang] = React.useState<"zh" | "en">(() => (store.get("briefLang", "zh") === "en" ? "en" : "zh"));
+  const [lang, setLang] = useLang();
   const [seenUntil, setSeenUntil] = React.useState(() => Number(store.get(SEEN_KEY, "0")));
   const [asking, setAsking] = React.useState(false);
 
@@ -121,8 +122,8 @@ const AdvisorPanel: React.FC<{ holdings: Holding[] }> = ({ holdings }) => {
         </div>
         <span style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
           <span style={muted}>Full report weekdays 13:00 Dublin · updates when something moves · advice only</span>
-          {(["zh", "en"] as const).map((l) => (
-            <button key={l} onClick={() => { setLang(l); store.set("briefLang", l); }}
+          {(["en", "zh"] as const).map((l) => (
+            <button key={l} onClick={() => setLang(l)}
                     style={{ ...ghostButton, padding: "3px 10px", background: lang === l ? "#81dad3" : "#23272c", color: lang === l ? "#23272c" : "#81dad3" }}>
               {l === "zh" ? "中文" : "English"}</button>
           ))}

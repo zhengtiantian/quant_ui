@@ -1,4 +1,5 @@
 import React from "react";
+import { useLang } from "../../lang";
 import type { Bilingual, DevilsAdvocateItem } from "../../api/markets";
 import { DOWN, iconButton, muted, pill } from "./format";
 
@@ -6,18 +7,15 @@ import { DOWN, iconButton, muted, pill } from "./format";
  * Q.17.1: the case against adding before averaging down (quant_ai /portfolio/devils-advocate), shown under a
  * holding's Action cell. Written automatically after a drop of 2 x ATR or more, or when the buy gate starts
  * refusing an add, and on demand with the button. A hint only: the action above it is unchanged. All words
- * come from the server in both languages; the language is the briefs' (briefLang), as for NewsHint.
+ * come from the server in both languages; the language is the dashboard's (lang.tsx: English unless switched).
  */
-const lang = (): "zh" | "en" => {
-  try { return localStorage.getItem("briefLang") === "en" ? "en" : "zh"; } catch { return "zh"; }
-};
 const head: React.CSSProperties = { color: "#81dad3", marginTop: 6, fontSize: 12 };
 const STRENGTH_COLOR = { strong: DOWN, moderate: "#d9b36c", weak: "#99a0a8" } as const;
 
 const DevilsAdvocate: React.FC<{ symbol: string; item?: DevilsAdvocateItem; labels?: Record<string, Bilingual>; onAsk: (symbol: string) => void }> =
   ({ symbol, item, labels, onAsk }) => {
   const [open, setOpen] = React.useState(false);
-  const l = lang();
+  const [l] = useLang();
   const t = (k: string, fallback: string) => labels?.[k]?.[l] ?? fallback;
   const busy = item?.status === "queued" || item?.status === "running";
   const ask = <button type="button" style={{ ...iconButton, marginLeft: 0 }} disabled={busy} onClick={() => onAsk(symbol)}
