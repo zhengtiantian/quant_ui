@@ -34,6 +34,7 @@ export interface Quote {
   // "nasdaq" | "nasdaq-batch" normally; "cnbc" in extended/closed sessions or when Nasdaq did not answer
   source?: string;
   price_basis?: string;
+  volume?: number | null;      // shares traded in the latest session (today's so far while it trades)
 }
 
 export type LotOrderStatus = "open" | "partial" | "closed";
@@ -775,6 +776,21 @@ export interface LotAdviceResponse {
   dip_guardrail: DipGuardrail;
   lot_exit_plans: LotExitPlan[];
 }
+
+/** Volume of the held and watched stocks (quant_ai volume.py, 2026-11-21): the latest full session, the last
+ *  month (21 sessions) and year (252), totals and average per session. A young listing has fewer sessions. */
+export interface VolumeWindow { total: number; avg: number; sessions: number; from: string }
+export interface VolumeStats { last_date: string; last_volume: number; month: VolumeWindow; year: VolumeWindow; stale?: boolean }
+export interface VolumeState {
+  session?: string;              // the latest completed US session the figures run to
+  computed_at?: number;
+  groups: { holdings: string[]; watchlist: string[] };
+  symbols?: Record<string, VolumeStats>;
+  errors?: Record<string, string>;
+  windows?: { month: number; year: number };
+  refreshing: boolean;
+}
+export const fetchVolume = () => call<VolumeState>("/portfolio/volume");
 
 export const fetchLotAdvice = (symbol: string, buyPrice?: number | string | null) => {
   const qs = new URLSearchParams({ symbol });

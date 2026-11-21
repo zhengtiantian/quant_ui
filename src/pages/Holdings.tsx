@@ -25,6 +25,8 @@ import CatalystsPanel, { StockCatalystButton } from "../components/markets/Catal
 import LotManagerModal, { StockLotButton } from "../components/markets/LotManagerModal";
 import GlobalMarkets from "../components/markets/GlobalMarkets";
 import IndicesPanel from "../components/markets/IndicesPanel";
+import VolumeCell from "../components/markets/VolumeCell";
+import { useVolume } from "../components/markets/volume";
 import PriceChart from "../components/markets/PriceChart";
 import {
   DOWN, SESSION_COLOR, SESSION_LABEL, UP, cell, color, ghostButton, iconButton, muted, panel, panelHead, panelTitle,
@@ -467,6 +469,7 @@ const MarketWeatherBanner: React.FC<{ portfolio: DailyActionPortfolio | null }> 
 
 const Holdings: React.FC = () => {
   const [pageLang] = useLang();
+  const volume = useVolume();
   const [s, setS] = React.useState<PortfolioState | null>(null);
   const [loadedAt, setLoadedAt] = React.useState(0);
   const [nextAt, setNextAt] = React.useState(0);
@@ -700,6 +703,7 @@ const Holdings: React.FC = () => {
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
                 <thead><tr>
                   <th style={th}>Stock</th><th style={th}>Price</th><th style={th}>Today</th>
+                  <th style={{ ...th, ...right }} title={tr(pageLang, "Shares traded: a day (today so far, or the latest session), the last month and the last year", "成交股数：日（今天截至目前，或最近一个交易日）、近一个月、近一年")}>{tr(pageLang, "Volume", "成交量")}</th>
                   <th style={{ ...th, ...right }}>Avg cost</th><th style={{ ...th, ...right }}>Value / shares</th><th style={{ ...th, ...right }}>Unrealised P&L</th>
                   <th style={th}>Action</th><th style={th}>Events</th><th style={th}>Analysts</th><th style={th}>{tr(pageLang, "Lots / swings", "批次 / 波段")}</th>
                 </tr></thead>
@@ -711,6 +715,7 @@ const Holdings: React.FC = () => {
                     <td style={cell}><PriceCell q={h.quote || {}} /></td>
                     <td style={{ ...cell, color: color(h.ref_change ?? h.day_change) }} title={refTitle(h.quote)}><b>{pct(h.ref_change_pct ?? h.day_change_pct ?? null) || "—"}</b>
                       <span style={{ ...sub, color: color(h.ref_pnl ?? h.day_pnl) }}>{(h.ref_pnl ?? h.day_pnl) != null ? signed((h.ref_pnl ?? h.day_pnl)!) : ""}</span></td>
+                    <VolumeCell q={h.quote} v={volume?.symbols?.[h.symbol]} />
                     <td style={{ ...cell, ...right }}><Tag>Mine</Tag><b>{usd(h.avg_cost)}</b>
                       <span style={sub}><Tag>FIFO</Tag>{usd(h.fifo_avg_cost)}</span><span style={sub}>Cost {usd(h.cost)}</span></td>
                     <td style={{ ...cell, ...right }}><b>{usd(h.market_value)}</b>
@@ -737,7 +742,7 @@ const Holdings: React.FC = () => {
                     </td>
                   </tr>
                   {analystOpen === h.symbol ? (
-                    <tr><td colSpan={10} style={{ ...cell, background: "rgba(20,24,28,0.5)" }}>
+                    <tr><td colSpan={11} style={{ ...cell, background: "rgba(20,24,28,0.5)" }}>
                       <AnalystsPanel symbol={h.symbol} price={h.quote?.price} refreshKey={s.analysts?.[h.symbol]?.fetched_at} />
                     </td></tr>
                   ) : null}
@@ -756,7 +761,7 @@ const Holdings: React.FC = () => {
         {s.watchlist.length ? (
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
-              <thead><tr><th style={th}>Stock</th><th style={th}>Price</th><th style={th}>Today</th><th style={th}>Events</th><th style={th}>Analysts</th><th style={{ ...th, ...right }} title="The price today's move is measured from">Ref price</th><th style={th} /></tr></thead>
+              <thead><tr><th style={th}>Stock</th><th style={th}>Price</th><th style={th}>Today</th><th style={{ ...th, ...right }} title={tr(pageLang, "Shares traded: a day (today so far, or the latest session), the last month and the last year", "成交股数：日（今天截至目前，或最近一个交易日）、近一个月、近一年")}>{tr(pageLang, "Volume", "成交量")}</th><th style={th}>Events</th><th style={th}>Analysts</th><th style={{ ...th, ...right }} title="The price today's move is measured from">Ref price</th><th style={th} /></tr></thead>
               <tbody>{s.watchlist.map((w) => (
                 <React.Fragment key={w.symbol}>
                 <tr onClick={() => setChart(w.symbol)} style={{ cursor: "pointer" }} title="Click to see the chart">
@@ -767,6 +772,7 @@ const Holdings: React.FC = () => {
                   <td style={cell}><PriceCell q={w.quote || {}} /></td>
                   <td style={{ ...cell, color: color(w.ref_change ?? w.day_change) }} title={refTitle(w.quote)}><b>{pct(w.ref_change_pct ?? w.day_change_pct ?? null) || "—"}</b>
                     <span style={{ ...sub, color: color(w.ref_change ?? w.day_change) }}>{(w.ref_change ?? w.day_change) != null ? signed((w.ref_change ?? w.day_change)!) : ""}</span></td>
+                  <VolumeCell q={w.quote} v={volume?.symbols?.[w.symbol]} />
                   <td style={cell} onClick={(e) => e.stopPropagation()}>
                     <StockCatalystButton symbol={w.symbol} info={catalystMap[w.symbol]} lang={catalystLang} onOpen={setCatalystModal} />
                   </td>
@@ -781,7 +787,7 @@ const Holdings: React.FC = () => {
                   </td>
                 </tr>
                 {analystOpen === w.symbol ? (
-                  <tr><td colSpan={7} style={{ ...cell, background: "rgba(20,24,28,0.5)" }}>
+                  <tr><td colSpan={9} style={{ ...cell, background: "rgba(20,24,28,0.5)" }}>
                     <AnalystsPanel symbol={w.symbol} price={w.quote?.price} refreshKey={s.analysts?.[w.symbol]?.fetched_at} />
                   </td></tr>
                 ) : null}

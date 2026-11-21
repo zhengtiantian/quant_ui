@@ -4,9 +4,12 @@
 import React from "react";
 import { fetchIndices, setIndexShown } from "../../api/markets";
 import type { IndexItem, IndicesState } from "../../api/markets";
+import { tr, useLang } from "../../lang";
 import { cell, color, iconButton, muted, num, panel, panelHead, panelTitle, right, signed, sub, th } from "./format";
 
 const IndicesPanel: React.FC<{ live?: IndexItem[] }> = ({ live }) => {
+  const [lang] = useLang();
+  const L = (en: string, zh: string) => tr(lang, en, zh);
   const [st, setSt] = React.useState<IndicesState | null>(null);
   const [error, setError] = React.useState("");
   const [busy, setBusy] = React.useState(false);
@@ -38,8 +41,8 @@ const IndicesPanel: React.FC<{ live?: IndexItem[] }> = ({ live }) => {
   return (
     <div style={panel}>
       <div style={panelHead}>
-        <div style={panelTitle}>📈 Indices · {items.length}</div>
-        <span style={muted}>Indices and index ETFs · CNBC, {hasLive ? "refreshed with the holdings" : `every ${st?.refresh_seconds ?? 60} s`}, may be delayed</span>
+        <div style={panelTitle}>📈 {L("Indices & markets", "指数与市场")} · {items.length}</div>
+        <span style={muted}>{L("Indices, index ETFs, gold, bitcoin and oil", "指数、指数 ETF、黄金、比特币和原油")} · CNBC, {hasLive ? L("refreshed with the holdings", "随持仓刷新") : L(`every ${st?.refresh_seconds ?? 60} s`, `每 ${st?.refresh_seconds ?? 60} 秒`)}, {L("may be delayed", "可能有延迟")}</span>
       </div>
       {error ? <div style={{ ...muted, color: "#e57373" }}>{error}</div> : null}
       {items.length ? (
@@ -68,7 +71,7 @@ const IndicesPanel: React.FC<{ live?: IndexItem[] }> = ({ live }) => {
         <div style={{ marginTop: 10 }}>
           <select value="" disabled={busy} onChange={(e) => { if (e.target.value) void toggle(e.target.value, true); }}
                   style={{ padding: "7px 9px", borderRadius: 8, border: "1px solid #4b545f", maxWidth: 420, width: "100%" }}>
-            <option value="">+ Add an index…</option>
+            <option value="">{L("+ Add an index, commodity or crypto…", "+ 添加指数、大宗商品或加密货币…")}</option>
             {groups.map((g) => (
               <optgroup key={g} label={g}>
                 {hidden.filter((c) => c.group === g).map((c) => <option key={c.symbol} value={c.symbol}>{c.name} ({c.symbol})</option>)}
