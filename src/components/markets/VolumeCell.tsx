@@ -24,7 +24,6 @@ const VolumeCell: React.FC<{ q?: Quote; v?: VolumeStats }> = ({ q, v }) => {
   const day = today ?? v?.last_volume ?? null;
   const ratio = day != null && v?.month.avg ? day / v.month.avg : null;
   const busy = ratio != null && ratio >= BUSY;
-  const sessions = (n: number, full: number) => (n < full ? L(` (${n} sessions)`, `（${n} 个交易日）`) : "");
   const title = v
     ? [
         today != null ? L(`Day: today so far ${volumeText(today)}`, `日：今天截至目前 ${volumeText(today)}`)
@@ -37,12 +36,14 @@ const VolumeCell: React.FC<{ q?: Quote; v?: VolumeStats }> = ({ q, v }) => {
         v.stale ? L("The latest fetch failed: last good figures", "最近一次没取到，沿用上次数据") : "",
       ].filter(Boolean).join("\n")
     : L("Volume figures not in yet", "成交量数据还没算好");
+  // Two lines: the day (with its multiple of the month's average when busy), then month · year.
+  // A young listing's shorter windows are marked "*" and spelled out on hover.
+  const short = v && (v.month.sessions < 21 || v.year.sessions < 252) ? "*" : "";
   return (
     <td style={{ ...cell, ...right, whiteSpace: "nowrap" }} title={title}>
       <b style={busy ? { color: "#e3b177" } : undefined}>{L("D", "日")} {volumeText(day)}</b>
-      {busy ? <span style={{ ...sub, color: "#e3b177" }}>{ratio!.toFixed(1)}× {L("1M avg", "月均")}</span> : null}
-      <span style={sub}>{L("M", "月")} {volumeText(v?.month.total)}{v ? sessions(v.month.sessions, 21) : ""}</span>
-      <span style={sub}>{L("Y", "年")} {volumeText(v?.year.total)}{v ? sessions(v.year.sessions, 252) : ""}</span>
+      {busy ? <span style={{ color: "#e3b177", fontSize: 11.5, marginLeft: 4 }}>{ratio!.toFixed(1)}×</span> : null}
+      <span style={sub}>{L("M", "月")} {volumeText(v?.month.total)} · {L("Y", "年")} {volumeText(v?.year.total)}{short}</span>
     </td>
   );
 };

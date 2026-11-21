@@ -33,27 +33,33 @@ export const AnalystCell: React.FC<{ s?: AnalystSummary; price?: number | null; 
   const upside = target && price ? (target / price - 1) * 100 : null;
   const n = (s.buy ?? 0) + (s.hold ?? 0) + (s.sell ?? 0);
   return (
-    <div style={{ minWidth: 120 }}>
+    <div style={{ minWidth: 120, whiteSpace: "nowrap" }}>
       <button type="button" onClick={onToggle} title="Every firm's rating and price target"
               style={{ background: "transparent", border: 0, padding: 0, cursor: "pointer", color: "inherit", textAlign: "left", font: "inherit" }}>
         <b>{target ? usd(target, 0) : "—"}</b>
         {upside != null ? <span style={{ color: upside >= 0 ? UP : DOWN, marginLeft: 4 }}>{pct(upside)}</span> : null}
         <span style={{ ...muted, marginLeft: 4 }}>{open ? "▴" : "▾"}</span>
       </button>
-      {n ? (
-        <span style={sub} title={`${s.buy} buy · ${s.hold} hold · ${s.sell} sell`}>
-          <span style={{ display: "inline-flex", width: 60, height: 6, borderRadius: 3, overflow: "hidden", verticalAlign: "middle", marginRight: 4 }}>
-            <i style={{ flex: s.buy ?? 0, background: UP }} /><i style={{ flex: s.hold ?? 0, background: FLAT }} /><i style={{ flex: s.sell ?? 0, background: DOWN }} />
-          </span>
-          {s.buy}/{s.hold}/{s.sell}
+      {/* Two lines: the target, then the ratings with the latest change; the details on hover */}
+      {n || s.latest || s.up_30d || s.down_30d ? (
+        <span style={{ ...sub, whiteSpace: "nowrap" }}
+              title={[`${s.buy} buy · ${s.hold} hold · ${s.sell} sell`,
+                      s.latest ? `Latest: ${s.latest.text || `${s.latest.firm} · ${ago(s.latest.graded_at)}`}` : "",
+                      s.up_30d || s.down_30d ? `Last 30 days: ${s.up_30d} up, ${s.down_30d} down` : ""].filter(Boolean).join("\n")}>
+          {n ? (
+            <>
+              <span style={{ display: "inline-flex", width: 44, height: 6, borderRadius: 3, overflow: "hidden", verticalAlign: "middle", marginRight: 4 }}>
+                <i style={{ flex: s.buy ?? 0, background: UP }} /><i style={{ flex: s.hold ?? 0, background: FLAT }} /><i style={{ flex: s.sell ?? 0, background: DOWN }} />
+              </span>
+              {s.buy}/{s.hold}/{s.sell}
+            </>
+          ) : null}
+          {s.latest ? (
+            <span style={{ color: dirColor(s.latest.direction), marginLeft: n ? 6 : 0 }}>{arrow(s.latest.direction)} {ago(s.latest.graded_at)}</span>
+          ) : s.up_30d || s.down_30d ? (
+            <span style={{ marginLeft: n ? 6 : 0 }}><span style={{ color: UP }}>▲{s.up_30d}</span> <span style={{ color: DOWN }}>▼{s.down_30d}</span></span>
+          ) : null}
         </span>
-      ) : null}
-      {s.latest ? (
-        <span style={{ ...sub, color: dirColor(s.latest.direction) }} title={s.latest.text}>
-          {arrow(s.latest.direction)} {s.latest.firm} · {ago(s.latest.graded_at)}
-        </span>
-      ) : s.up_30d || s.down_30d ? (
-        <span style={sub} title="Changes in the last 30 days">30d: <span style={{ color: UP }}>▲{s.up_30d}</span> <span style={{ color: DOWN }}>▼{s.down_30d}</span></span>
       ) : null}
     </div>
   );

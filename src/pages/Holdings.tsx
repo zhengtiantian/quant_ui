@@ -126,8 +126,6 @@ const Kpi: React.FC<{ label: string; main: React.ReactNode; sub?: React.ReactNod
   </div>
 );
 
-// A company name on one line, cut with "…" (the full name on hover), so the tables fit the page.
-const nameLine: React.CSSProperties = { ...sub, maxWidth: 130, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" };
 
 const Tag: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <span style={{ fontSize: 10.5, color: "#aeb4ba", background: "#272e34", borderRadius: 4, padding: "0 4px", marginRight: 4 }}>{children}</span>
@@ -144,23 +142,24 @@ const PriceCell: React.FC<{ q: Holding["quote"] }> = ({ q }) => {
   if (q.price == null) return <span style={{ color: DOWN }} title={q.error}>No quote</span>;
   const ext = q.session === "pre" || q.session === "post";
   const postClose = q.session === "closed" && q.price_basis === "post_close";
+  const extMove = (ext || postClose) && q.regular_price && q.session_change_pct != null;
+  // Two lines: the price with its session, then the extended-hours move. The rest is on hover.
+  const details = [
+    (ext || postClose) && q.regular_price ? `Close ${usd(q.regular_price)}` : "",
+    extMove ? `${postClose ? "After hours" : SESSION_LABEL[q.session!]} ${pct(q.session_change_pct!)}` : "",
+    q.ref_basis === "post_close" && q.ref_price
+      ? `Prev after-hours close ${usd(q.ref_price)} (${q.ref_date ?? ""}, last trade by 19:59 ET)` : "",
+    q.source === "cnbc" && q.session === "regular" ? "Nasdaq did not answer; quote from CNBC" : "",
+  ].filter(Boolean).join("\n");
   return (
-    <div>
+    <div style={{ whiteSpace: "nowrap" }} title={details || undefined}>
       <b>{usd(q.price)}</b>{" "}
-      {q.session ? <span style={pill(SESSION_COLOR[q.session] || "#99a0a8")}>{SESSION_LABEL[q.session] || q.session}</span> : null}
-      {q.stale ? <span style={{ ...pill("#dd7e95"), marginLeft: 4 }}>Stale quote</span> : null}
-      {q.source === "cnbc" && q.session === "regular" ? (
-        <span style={{ ...pill("#99a0a8"), marginLeft: 4 }} title="Nasdaq did not answer; quote from CNBC">CNBC</span>
-      ) : null}
-      {(ext || postClose) && q.regular_price ? (
-        <span style={sub}>Close {usd(q.regular_price)}
-          {q.session_change_pct != null ? <> · {postClose ? "AH" : SESSION_LABEL[q.session!]} <span style={{ color: color(q.session_change) }}>{pct(q.session_change_pct)}</span></> : null}
-        </span>
-      ) : null}
-      {q.ref_basis === "post_close" && q.ref_price ? (
-        <span style={sub} title={`Previous trading day's after-hours end (${q.ref_date ?? ""}, last trade by 19:59 ET)`}>
-          Prev AH close {usd(q.ref_price)} · <span style={{ color: color(q.price - q.ref_price) }}>{pct((q.price - q.ref_price) / q.ref_price * 100)}</span>
-        </span>
+      {q.session ? <span style={{ ...pill(SESSION_COLOR[q.session] || "#99a0a8"), fontSize: 10.5, padding: "0 6px" }}>{SESSION_LABEL[q.session] || q.session}</span> : null}
+      {q.stale ? <span style={{ ...pill("#dd7e95"), fontSize: 10.5, padding: "0 6px", marginLeft: 4 }}>Stale</span> : null}
+      {q.source === "cnbc" && q.session === "regular" ? <span style={{ ...pill("#99a0a8"), fontSize: 10.5, padding: "0 6px", marginLeft: 4 }}>CNBC</span> : null}
+      {extMove ? (
+        <span style={sub}>{postClose ? "AH" : SESSION_LABEL[q.session!]} <span style={{ color: color(q.session_change) }}>{pct(q.session_change_pct!)}</span>
+          <span style={{ marginLeft: 4 }}>· {usd(q.regular_price)}</span></span>
       ) : null}
     </div>
   );
@@ -710,20 +709,18 @@ const Holdings: React.FC = () => {
                 <tbody>{s.holdings.map((h) => (
                   <React.Fragment key={h.symbol}>
                   <tr onClick={() => setChart(h.symbol)} style={{ cursor: "pointer" }} title="Click to see the chart">
-                    <td style={cell}><b><i style={{ display: "inline-block", width: 8, height: 8, borderRadius: 4, background: colors[h.symbol], marginRight: 6 }} />{h.symbol}</b>
-                      <span style={nameLine} title={shortName(h.quote?.name)}>{shortName(h.quote?.name)}</span></td>
+                    <td style={{ ...cell, whiteSpace: "nowrap" }} title={h.quote?.name || h.symbol}><b><i style={{ display: "inline-block", width: 8, height: 8, borderRadius: 4, background: colors[h.symbol], marginRight: 6 }} />{h.symbol}</b></td>
                     <td style={cell}><PriceCell q={h.quote || {}} /></td>
                     <td style={{ ...cell, color: color(h.ref_change ?? h.day_change) }} title={refTitle(h.quote)}><b>{pct(h.ref_change_pct ?? h.day_change_pct ?? null) || "—"}</b>
                       <span style={{ ...sub, color: color(h.ref_pnl ?? h.day_pnl) }}>{(h.ref_pnl ?? h.day_pnl) != null ? signed((h.ref_pnl ?? h.day_pnl)!) : ""}</span></td>
                     <VolumeCell q={h.quote} v={volume?.symbols?.[h.symbol]} />
-                    <td style={{ ...cell, ...right }}><Tag>Mine</Tag><b>{usd(h.avg_cost)}</b>
-                      <span style={sub}><Tag>FIFO</Tag>{usd(h.fifo_avg_cost)}</span><span style={sub}>Cost {usd(h.cost)}</span></td>
-                    <td style={{ ...cell, ...right }}><b>{usd(h.market_value)}</b>
-                      {h.weight != null ? <span style={sub}>{h.weight.toFixed(1)}%</span> : null}
-                      <span style={sub} title="Shares held">{qty(h.quantity)} sh</span></td>
-                    <td style={{ ...cell, ...right, color: color(h.unrealized) }}><b>{signed(h.unrealized)}</b>
-                      <span style={{ ...sub, color: color(h.unrealized) }}>{pct(h.unrealized_pct)}</span>
-                      <span style={sub}><Tag>FIFO</Tag><span style={{ color: color(h.fifo_unrealized) }}>{signed(h.fifo_unrealized)}</span></span></td>
+                    <td style={{ ...cell, ...right, whiteSpace: "nowrap" }} title={`Cost ${usd(h.cost)}`}><Tag>Mine</Tag><b>{usd(h.avg_cost)}</b>
+                      <span style={sub}><Tag>FIFO</Tag>{usd(h.fifo_avg_cost)}</span></td>
+                    <td style={{ ...cell, ...right, whiteSpace: "nowrap" }} title={`${qty(h.quantity)} shares${h.weight != null ? ` · ${h.weight.toFixed(1)}% of the portfolio` : ""}`}><b>{usd(h.market_value)}</b>
+                      <span style={sub}>{h.weight != null ? `${h.weight.toFixed(1)}% · ` : ""}{h.quantity.toLocaleString("en-US", { maximumFractionDigits: 2 })} sh</span></td>
+                    <td style={{ ...cell, ...right, color: color(h.unrealized), whiteSpace: "nowrap" }}><b>{signed(h.unrealized)}</b>
+                      <span style={sub}><span style={{ color: color(h.unrealized) }}>{pct(h.unrealized_pct)}</span>
+                        <span style={{ marginLeft: 6 }}><Tag>FIFO</Tag><span style={{ color: color(h.fifo_unrealized) }}>{signed(h.fifo_unrealized)}</span></span></span></td>
                     <td style={cell} onClick={(e) => e.stopPropagation()}>
                       {actions[h.symbol] || !news?.hints[h.symbol] ? <ActionCell a={actions[h.symbol]} /> : null}
                       <NewsHint j={news?.hints[h.symbol]} labels={news?.labels} track={news?.track?.text} />
@@ -765,8 +762,7 @@ const Holdings: React.FC = () => {
               <tbody>{s.watchlist.map((w) => (
                 <React.Fragment key={w.symbol}>
                 <tr onClick={() => setChart(w.symbol)} style={{ cursor: "pointer" }} title="Click to see the chart">
-                  <td style={cell}><b>{w.symbol}</b><span style={nameLine} title={`${shortName(w.quote?.name)}${w.note ? ` · ${w.note}` : ""}`}>
-                    {shortName(w.quote?.name)}{w.note ? ` · ${w.note}` : ""}</span>
+                  <td style={cell} title={`${w.quote?.name || w.symbol}${w.note ? ` · ${w.note}` : ""}`}><b>{w.symbol}</b>
                     <NewsHint j={news?.hints[w.symbol]} labels={news?.labels} track={news?.track?.text} />
                     <FilingFlag f={filings?.items[w.symbol]} labels={filings?.labels} /></td>
                   <td style={cell}><PriceCell q={w.quote || {}} /></td>
