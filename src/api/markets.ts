@@ -31,8 +31,9 @@ export interface Quote {
   pending?: boolean;
   error?: string;
   fetched_at?: number;
-  // "nasdaq" | "nasdaq-batch" normally; "cnbc" when Nasdaq did not answer
+  // "nasdaq" | "nasdaq-batch" normally; "cnbc" in extended/closed sessions or when Nasdaq did not answer
   source?: string;
+  price_basis?: string;
 }
 
 export type LotOrderStatus = "open" | "partial" | "closed";
@@ -997,12 +998,78 @@ export interface DailyAction {
   labels?: Record<string, Bilingual>;            // blocked / basis / more / less, and the section headings
   weight_pct?: number;
 }
+export interface MarketWeatherPill {
+  id: string;
+  label: string;
+  value: string;
+  stress: boolean;
+}
+export interface MarketUpcomingEvent {
+  date: string;
+  days_away: number;
+  kind: "macro" | "policy";
+  impact?: string;
+  title_en: string;
+  title_zh: string;
+}
+export interface MarketWeather {
+  state: "fearful" | "tense" | "normal";
+  severity: "critical" | "warn" | "info";
+  tighten_buys: boolean;
+  sector_stress?: boolean;
+  vix?: number | null;
+  vix_source?: string | null;
+  vix_pctile?: number | null;
+  spy_5d_pct?: number | null;
+  spx_1d_pct?: number | null;
+  sox_1d_pct?: number | null;
+  soxx_5d_pct?: number | null;
+  label?: string;
+  label_zh?: string;
+  title?: Bilingual;
+  detail?: Bilingual;
+  pills?: MarketWeatherPill[];
+  upcoming?: MarketUpcomingEvent[];
+  macro?: {
+    level: "heavy" | "moderate" | "calm";
+    flags: string[];
+    headwind_count: number;
+    us10y?: number | null;
+    us2y?: number | null;
+    dxy?: number | null;
+    y10_chg60?: number | null;
+    y2_chg60?: number | null;
+    dxy_chg60?: number | null;
+    credit_chg20?: number | null;
+    credit_chg60?: number | null;
+    oil?: number | null;
+    brent?: number | null;
+    oil_chg20?: number | null;
+    oil_chg60?: number | null;
+    hist_as_of?: string | null;
+  };
+}
+export interface DailyActionPortfolio {
+  total: number;
+  cash: number;
+  cash_pct?: number;
+  cluster_pct: number;
+  max_symbol_pct: number;
+  max_cluster_pct: number;
+  min_cash_pct?: number;
+  breaches: string[];
+  breaches_zh?: string[];
+  bad_day_loss?: number | null;
+  loss_budget_usd?: number | null;
+  loss_budget_pct?: number;
+  market?: MarketWeather | null;
+  week_reports?: WeekReports | null;
+}
 export interface DailyActionReply {
   generated_at: string;
   symbols: string[];
   actions: DailyAction[];
-  portfolio: { total: number; cash: number; cluster_pct: number; max_symbol_pct: number; max_cluster_pct: number; breaches: string[];
-               week_reports?: WeekReports | null };
+  portfolio: DailyActionPortfolio;
 }
 // Holdings reporting within a week, their bad report nights summed against the loss budget (Q.17 round 4)
 export interface WeekReports { symbols: string[]; loss_usd: number; budget_usd: number; over: boolean; loss_pct: number | null; text?: Bilingual }

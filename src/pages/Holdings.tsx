@@ -13,7 +13,7 @@ import {
   saveTransaction,
   setCash,
 } from "../api/markets";
-import type { ChartData, DailyAction, DevilsAdvocateReply, FilingChangesReply, WeekReports, Holding, NewsJudgmentReply, PerStockCatalysts, PortfolioState, Side, Transaction, WatchItem } from "../api/markets";
+import type { ChartData, DailyAction, DailyActionPortfolio, DevilsAdvocateReply, FilingChangesReply, WeekReports, Holding, NewsJudgmentReply, PerStockCatalysts, PortfolioState, Side, Transaction, WatchItem } from "../api/markets";
 import NewsHint from "../components/markets/NewsHint";
 import DevilsAdvocate from "../components/markets/DevilsAdvocate";
 import HintScores from "../components/markets/HintScores";
@@ -140,17 +140,18 @@ const PriceCell: React.FC<{ q: Holding["quote"] }> = ({ q }) => {
   if (q.price == null && /not found/i.test(q.error || "")) return <span style={{ color: DOWN }}>Symbol not found, check the spelling</span>;
   if (q.price == null) return <span style={{ color: DOWN }} title={q.error}>No quote</span>;
   const ext = q.session === "pre" || q.session === "post";
+  const postClose = q.session === "closed" && q.price_basis === "post_close";
   return (
     <div>
       <b>{usd(q.price)}</b>{" "}
       {q.session ? <span style={pill(SESSION_COLOR[q.session] || "#99a0a8")}>{SESSION_LABEL[q.session] || q.session}</span> : null}
       {q.stale ? <span style={{ ...pill("#dd7e95"), marginLeft: 4 }}>Stale quote</span> : null}
-      {q.source === "cnbc" ? (
+      {q.source === "cnbc" && q.session === "regular" ? (
         <span style={{ ...pill("#99a0a8"), marginLeft: 4 }} title="Nasdaq did not answer; quote from CNBC">CNBC</span>
       ) : null}
-      {ext && q.regular_price ? (
+      {(ext || postClose) && q.regular_price ? (
         <span style={sub}>Close {usd(q.regular_price)}
-          {q.session_change_pct != null ? <> · {SESSION_LABEL[q.session!]} <span style={{ color: color(q.session_change) }}>{pct(q.session_change_pct)}</span></> : null}
+          {q.session_change_pct != null ? <> · {postClose ? "AH" : SESSION_LABEL[q.session!]} <span style={{ color: color(q.session_change) }}>{pct(q.session_change_pct)}</span></> : null}
         </span>
       ) : null}
       {q.ref_basis === "post_close" && q.ref_price ? (
@@ -347,6 +348,119 @@ const ChartModal: React.FC<{ symbol: string; state: PortfolioState; onClose: () 
   );
 };
 
+const MarketWeatherBanner: React.FC<{ portfolio: DailyActionPortfolio | null }> = ({ portfolio }) => {
+  const [lang, setLang] = React.useState<"zh" | "en">(() => (store.get("briefLang", "zh") === "en" ? "en" : "zh"));
+  const m = portfolio?.market;
+  if (!m) return null;
+
+  const choose = (l: "zh" | "en") => { setLang(l); store.set("briefLang", l); };
+  const sev = m.severity || "info";
+  const theme = sev === "critical"
+    ? { bg: "rgba(216,131,131,0.11)", border: "rgba(216,131,131,0.52)", accent: "#f08c8c", icon: "🚨" }
+    : sev === "warn"
+      ? { bg: "rgba(227,177,119,0.10)", border: "rgba(227,177,119,0.48)", accent: "#e3b177", icon: "⚠️" }
+      : { bg: "rgba(129,218,211,0.06)", border: "rgba(129,218,211,0.24)", accent: "#81dad3", icon: "🌤️" };
+
+  const title = m.title?.[lang] || (lang === "zh" ? m.label_zh : m.label) || (lang === "zh" ? "市场状态" : "Market status");
+  const detail = m.detail?.[lang] || "";
+  const breaches = (lang === "zh" && portfolio?.breaches_zh?.length ? portfolio.breaches_zh : portfolio?.breaches) || [];
+  const badDay = portfolio?.bad_day_loss;
+  const budget = portfolio?.loss_budget_usd;
+  const overBudget = badDay != null && budget != null && budget > 0 && badDay > budget;
+
+  return (
+    <div style={{
+      background: theme.bg,
+      border: `1px solid ${theme.border}`,
+      borderRadius: 10,
+      padding: "11px 14px",
+      marginBottom: 14,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
+        <span style={{ fontSize: 15, fontWeight: 700, color: theme.accent }}>{theme.icon} {title}</span>
+        {m.tighten_buys ? (
+          <span style={{ ...pill(theme.accent), fontSize: 11.5, background: "rgba(0,0,0,0.22)" }}>
+            {lang === "zh" ? "买盘护栏收紧：暂停补仓 / 3×ATR 间距" : "Buy guardrails tightened: pause adds / 3×ATR spacing"}
+          </span>
+        ) : null}
+        <span style={{ ...muted, fontSize: 11.5, marginLeft: "auto" }}>
+          {lang === "zh" ? "市场恐慌与宏观天气（风险背景，非涨跌预测）" : "Market & macro weather (risk context, not a forecast)"}
+        </span>
+        <div style={{ display: "flex", gap: 4 }}>
+          {(["zh", "en"] as const).map((l) => (
+            <button key={l} type="button" onClick={() => choose(l)}
+                    style={{ ...pill(lang === l ? "#81dad3" : "#6b7178"), cursor: "pointer", background: "transparent", fontSize: 11 }}>
+              {l === "zh" ? "中文" : "EN"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {m.pills?.length ? (
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: detail || breaches.length || overBudget ? 7 : 0 }}>
+          {m.pills.map((p) => (
+            <span key={p.id} style={{
+              fontSize: 12,
+              padding: "2px 8px",
+              borderRadius: 999,
+              border: `1px solid ${p.stress ? theme.border : "rgba(153,160,168,0.28)"}`,
+              background: p.stress ? "rgba(216,131,131,0.16)" : "rgba(20,24,28,0.45)",
+              color: p.stress ? theme.accent : "#cfd4da",
+              fontWeight: p.stress ? 600 : 400,
+            }}>
+              <span style={{ opacity: 0.78, marginRight: 4 }}>{p.label}</span>{p.value}
+            </span>
+          ))}
+        </div>
+      ) : null}
+
+      {detail ? <div style={{ fontSize: 12.5, color: "#cfd4da", lineHeight: 1.5 }}>{detail}</div> : null}
+
+      {m.upcoming?.length ? (
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginTop: 7, paddingTop: 6, borderTop: "1px solid rgba(255,255,255,0.08)", fontSize: 12 }}>
+          <span style={{ color: "#99a0a8", fontWeight: 600 }}>
+            {lang === "zh" ? "近期宏观 / 政策节点：" : "Upcoming macro / policy:"}
+          </span>
+          {m.upcoming.map((ev, idx) => {
+            const isPolicy = ev.kind === "policy";
+            const badgeColor = isPolicy ? "#b07fdc" : "#79cde2";
+            const when = ev.days_away <= 0
+              ? (lang === "zh" ? "今天" : "Today")
+              : (lang === "zh" ? `${ev.days_away}天后` : `in ${ev.days_away}d`);
+            return (
+              <span key={`${ev.date}-${idx}`} style={{
+                display: "inline-flex", alignItems: "center", gap: 4,
+                padding: "2px 8px", borderRadius: 6,
+                background: "rgba(20,24,28,0.52)",
+                border: `1px solid ${isPolicy ? "rgba(176,127,220,0.35)" : "rgba(121,205,226,0.3)"}`,
+                color: "#d9dde2",
+              }}>
+                <span style={{ color: badgeColor, fontWeight: 600 }}>
+                  {isPolicy ? (lang === "zh" ? "政策" : "Policy") : (lang === "zh" ? "宏观" : "Macro")}
+                </span>
+                <span style={{ color: "#99a0a8" }}>{ev.date.slice(5)} ({when})</span>
+                <span>{lang === "zh" ? ev.title_zh : ev.title_en}</span>
+              </span>
+            );
+          })}
+        </div>
+      ) : null}
+
+      {breaches.length || overBudget ? (
+        <div style={{ fontSize: 12, color: "#e3b177", marginTop: 6, paddingTop: 6, borderTop: "1px solid rgba(255,255,255,0.08)", lineHeight: 1.45 }}>
+          <b>{lang === "zh" ? "组合风控提醒：" : "Portfolio risk alert: "}</b>
+          {[
+            ...(overBudget ? [lang === "zh"
+              ? `极端单日预计回撤 ${usd(badDay)}（超过 ${portfolio?.loss_budget_pct ?? 5}% 预算 ${usd(budget)}）`
+              : `1-in-20 bad day ${usd(badDay)} (over ${portfolio?.loss_budget_pct ?? 5}% budget ${usd(budget)})`] : []),
+            ...breaches,
+          ].join(lang === "zh" ? " · " : " · ")}
+        </div>
+      ) : null}
+    </div>
+  );
+};
+
 // ------------------------------------------------------------------ the page
 
 const Holdings: React.FC = () => {
@@ -389,10 +503,12 @@ const Holdings: React.FC = () => {
 
   // Today's action changes slowly (the server caches it 10 minutes): fetched on open and every 10 minutes.
   const [actions, setActions] = React.useState<Record<string, DailyAction>>({});
+  const [portfolioRisk, setPortfolioRisk] = React.useState<DailyActionPortfolio | null>(null);
   const [weekReports, setWeekReports] = React.useState<WeekReports | null>(null);
   React.useEffect(() => {
     const get = () => fetchDailyAction().then((r) => {
       setActions(Object.fromEntries(r.actions.map((a) => [a.symbol, a])));
+      setPortfolioRisk(r.portfolio ?? null);
       setWeekReports(r.portfolio?.week_reports ?? null);
     }).catch(() => undefined);
     void get();
@@ -551,6 +667,8 @@ const Holdings: React.FC = () => {
                sub={<>Sales {signed(t.realized)} · dividends {usd(t.dividends)}<br />FIFO sales <span style={{ color: color(t.fifo_realized) }}>{signed(t.fifo_realized)}</span></>} />
         ) : null}
       </div>
+
+      <MarketWeatherBanner portfolio={portfolioRisk} />
 
       <CatalystsPanel
         holdings={s.holdings}
