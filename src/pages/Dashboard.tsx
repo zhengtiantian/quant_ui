@@ -100,6 +100,13 @@ const Dashboard: React.FC = () => {
                     🔤 Keywords
                     <Badge n={kw?.coverage_alerts ?? 0} color="#d88383" title="Coverage alerts: companies whose news fell below half their usual week, or a rule fault" />
                     <Badge n={kw?.pending ?? 0} color="#e3b177" title="Keyword suggestions waiting for a decision" />
+                    {kw?.screen_health?.degraded ? (
+                        <span title={`Claude ambiguity screening answered ${kw.screen_health.claude_answered}/${kw.screen_health.total} on ${kw.screen_health.week ?? "latest run"}; auto-add is paused`}
+                              style={{ marginLeft: 6, padding: "0 6px", borderRadius: 9, fontSize: 11.5, fontWeight: 700,
+                                       background: "#e3b177", color: "#16191d" }}>
+                            Claude 0%
+                        </span>
+                    ) : null}
                 </button>
                 <span style={{ width: 1, background: "#434b56", margin: "0 4px" }} />
                 {AGENT_TABS.map((t) => (

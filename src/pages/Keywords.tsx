@@ -34,12 +34,18 @@ const TIER_COLOR: Record<KeywordTier, string> = { add: "#84d6a3", weak: "#e3b177
 const DECISION_LABEL: Record<KeywordDecision, string> = { add: "Added", weak: "Weak", reject: "Rejected" };
 const DECISION_COLOR: Record<KeywordDecision, string> = { add: "#84d6a3", weak: "#e3b177", reject: "#d88383" };
 const AUDIT_LABEL: Record<KeywordAudit["verdict"], string> = {
-  watching: "watching", confirmed: "confirmed", revert: "taken out", poor: "the model keeps little of it",
+  watching: "watching", confirmed: "confirmed", revert: "taken out", poor: "the model keeps little of it", idle: "idle (no new hits yet)",
 };
 
-type StatusFilter = "pending" | "add" | "weak" | "reject" | "all";
+type StatusFilter = "pending" | "add" | "weak" | "reject" | "expired" | "all";
 type TierFilter = "suggested" | KeywordTier | "all";
 type SetFilter = "all" | "core" | "universe";
+type RiskFilter = "all" | "high" | "any_risk" | "clean";
+
+const isHighRisk = (p: KeywordProposal) => {
+  const codes = new Set((p.screen?.risks || []).map((r) => r.code));
+  return codes.has("flood") || (codes.has("claude") && codes.has("history"));
+};
 
 const store = {
   get: (k: string, d: string) => { try { return localStorage.getItem(k) || d; } catch { return d; } },
@@ -58,7 +64,13 @@ const actionButton = (active: boolean, c: string): React.CSSProperties => ({
 });
 
 const Status: React.FC<{ p: KeywordProposal }> = ({ p }) => {
-  if (!p.decision) return <span style={muted}>{p.auto_eligible ? "Pending · passes every check" : "Pending"}</span>;
+  if (!p.decision) {
+    return (
+      <span style={muted}>
+        {p.expired ? <span style={pill("#7a838e")}>Expired (archived)</span> : p.auto_eligible ? "Pending · passes every check" : "Pending"}
+      </span>
+    );
+  }
   const waiting = p.decision === "reject" ? p.in_rules : !p.in_rules;
   const a = p.audit;
   return (
@@ -151,7 +163,7 @@ const Row: React.FC<{ p: KeywordProposal; busy: boolean; onDecide: Decide }> = (
           <span style={{ display: "block", marginTop: 3 }}>
             <span style={pill(TIER_COLOR[p.tier])}>{TIER_LABEL[p.tier]}</span>
             {p.ordinary_word ? <span style={{ ...pill("#e3b177"), marginLeft: 4 }}>ordinary word</span> : null}
-            {p.caveat ? <span style={{ ...pill("#e3b177"), marginLeft: 4 }} title="Starts with a number, or the model's reason says former / discontinued / category / being acquired">check</span> : null}
+            {p.caveat ? <span style={{ ...pill("#e3b177"), marginLeft: 4 }} title={p.caveat_reason ? `Caveat: ${p.caveat_reason}` : "Starts with a digit/title, too short, singular/plural duplicate, or doubtful reason"}>check</span> : null}
             <Screen p={p} />
           </span>
         </td>
@@ -203,6 +215,8 @@ const Keywords: React.FC = () => {
   const [status, setStatus] = React.useState<StatusFilter>(() => store.get("kw.status", "pending") as StatusFilter);
   const [tier, setTier] = React.useState<TierFilter>(() => store.get("kw.tier", "suggested") as TierFilter);
   const [set, setSet] = React.useState<SetFilter>(() => store.get("kw.set", "all") as SetFilter);
+  const [risk, setRisk] = React.useState<RiskFilter>(() => store.get("kw.risk", "all") as RiskFilter);
+  const [week, setWeek] = React.useState<string>("all");
   const [query, setQuery] = React.useState("");
 
   const load = React.useCallback(() => {
@@ -223,9 +237,19 @@ const Keywords: React.FC = () => {
   };
 
   const rows = (data?.proposals || []).filter((p) => {
-    if (status === "pending" ? p.decision : status !== "all" && p.decision !== status) return false;
+    if (status === "pending") {
+      if (p.decision || p.expired) return false;
+    } else if (status === "expired") {
+      if (p.decision || !p.expired) return false;
+    } else if (status !== "all" && p.decision !== status) {
+      return false;
+    }
     if (tier === "suggested" ? !(p.tier === "add" || p.tier === "weak") : tier !== "all" && p.tier !== tier) return false;
     if (set !== "all" && p.set !== set) return false;
+    if (week !== "all" && p.week !== week) return false;
+    if (risk === "high" && !isHighRisk(p)) return false;
+    if (risk === "any_risk" && !(p.screen?.risks?.length)) return false;
+    if (risk === "clean" && (!p.screen || p.screen.risks.length > 0)) return false;
     const q = query.trim().toLowerCase();
     return !q || p.symbol.toLowerCase().includes(q) || p.term.toLowerCase().includes(q) || (p.name || "").toLowerCase().includes(q);
   });
@@ -239,7 +263,9 @@ const Keywords: React.FC = () => {
   const all = data?.proposals || [];
   const count = (f: (p: KeywordProposal) => boolean) => all.filter(f).length;
   const latest = data?.runs[0];
+  const sh = data?.screen_health;
   const suggestedAddShown = rows.filter((p) => p.tier === "add" && !p.decision).map((p) => p.id);
+  const undecidedShown = rows.filter((p) => !p.decision).map((p) => p.id);
   const autoReady = count((p) => p.auto_eligible && !p.decision);
   const autoOn = !!data?.auto?.enabled;
   const toggleAuto = async () => {
@@ -282,7 +308,8 @@ const Keywords: React.FC = () => {
           products, from first seen for subsidiaries and executives, whose older news is about someone else).
         </div>
         <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 12, fontSize: 13 }}>
-          <span>Waiting for review: <b>{count((p) => !p.decision && (p.tier === "add" || p.tier === "weak"))}</b></span>
+          <span>Waiting for review: <b>{count((p) => !p.decision && !p.expired && (p.tier === "add" || p.tier === "weak"))}</b></span>
+          <span>Expired: <b>{count((p) => !p.decision && !!p.expired)}</b></span>
           <span>Added: <b>{count((p) => p.decision === "add")}</b></span>
           <span>Weak: <b>{count((p) => p.decision === "weak")}</b></span>
           <span>Rejected: <b>{count((p) => p.decision === "reject")}</b></span>
@@ -299,18 +326,39 @@ const Keywords: React.FC = () => {
             {autoOn ? " They go in at the next :55" : " With Auto-add on they would go in at the next :55"}, searched only from the day first seen,
             and come out again if the relevance model keeps under 30% of what they bring in. Your own decision always wins.
           </span>
+          {sh && sh.total > 0 ? (
+            <span style={pill(sh.degraded ? "#d88383" : "#84d6a3")}>
+              Claude screen ({sh.week}): {sh.claude_answered}/{sh.total} ({sh.claude_rate != null ? `${Math.round(sh.claude_rate * 100)}%` : "—"})
+            </span>
+          ) : null}
         </div>
+        {sh?.degraded ? (
+          <div style={{ background: "#3a2424", border: "1px solid #d88383", color: "#f3c7c7", borderRadius: 8, padding: "8px 12px", marginBottom: 12, fontSize: 13 }}>
+            ⚠ Claude ambiguity screening answered {sh.claude_answered}/{sh.total} candidates for week {sh.week}. Auto-add cannot admit new terms until `keyword_refresh.py screen` succeeds.
+          </div>
+        ) : null}
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-          {filterSelect(status, setStatus, "kw.status", [["pending", "Not decided"], ["add", "Added"], ["weak", "Weak"], ["reject", "Rejected"], ["all", "Any decision"]])}
+          {filterSelect(status, setStatus, "kw.status", [["pending", "Not decided"], ["expired", "Expired (old)"], ["add", "Added"], ["weak", "Weak"], ["reject", "Rejected"], ["all", "Any decision"]])}
           {filterSelect(tier, setTier, "kw.tier", [["suggested", "Suggested (add + weak)"], ["add", "Suggested: add"], ["weak", "Suggested: weak"],
                                                    ["model_none", "Model: not this company"], ["unjudged", "Not judged"], ["all", "Every candidate"]])}
+          {filterSelect(risk, setRisk, "kw.risk", [["all", "All risk levels"], ["high", "High risk (Claude+History / Flood)"], ["any_risk", "Any screen risk"], ["clean", "Clean (no risk)"]])}
           {filterSelect(set, setSet, "kw.set", [["all", "Core + universe"], ["core", "Core (102)"], ["universe", "Universe (490)"]])}
+          <select style={select} value={week} onChange={(e) => setWeek(e.target.value)}>
+            <option value="all">All weeks</option>
+            {(data?.runs || []).map((r) => <option key={r.week} value={r.week}>{r.week}</option>)}
+          </select>
           <input style={{ ...select, minWidth: 180 }} placeholder="Search symbol, company or term" value={query} onChange={(e) => setQuery(e.target.value)} />
           <button style={ghostButton} onClick={load} disabled={busy}>Refresh</button>
           {suggestedAddShown.length ? (
             <button style={ghostButton} disabled={busy}
                     onClick={() => { if (window.confirm(`Add all ${suggestedAddShown.length} undecided "Suggested: add" terms shown?`)) decide(suggestedAddShown, "add"); }}>
               Add all suggested shown ({suggestedAddShown.length})
+            </button>
+          ) : null}
+          {undecidedShown.length ? (
+            <button style={{ ...ghostButton, borderColor: "#d8838388", color: "#d88383" }} disabled={busy}
+                    onClick={() => { if (window.confirm(`Reject all ${undecidedShown.length} undecided terms currently shown?`)) decide(undecidedShown, "reject"); }}>
+              Reject all shown ({undecidedShown.length})
             </button>
           ) : null}
           <span style={muted}>{rows.length} shown</span>

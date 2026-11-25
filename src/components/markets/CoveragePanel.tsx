@@ -50,6 +50,12 @@ const CoreRow: React.FC<{ sym: string; r: CoverageCore }> = ({ sym, r }) => {
         <td style={cell}><Weeks weeks={r.weeks} /></td>
         <td style={{ ...cell, maxWidth: 260 }}>
           {Object.entries(r.why).slice(0, 3).map(([k, n]) => <span key={k} style={{ display: "block", fontSize: 12.5 }}>{k}: <b>{n}</b></span>)}
+          {r.gate_triggers && Object.keys(r.gate_triggers).length ? (
+            <span style={{ ...muted, display: "block", fontSize: 12, marginTop: 2 }}
+                  title="Collector keywords most frequently matching gate-rejected articles">
+              triggers: {Object.entries(r.gate_triggers).slice(0, 3).map(([k, n]) => `${k} (${n})`).join(", ")}
+            </span>
+          ) : null}
           <button style={{ ...iconButton, marginLeft: 0, marginTop: 4 }} onClick={() => setOpen(!open)}>{open ? "Hide headlines" : "Headlines"}</button>
         </td>
       </tr>

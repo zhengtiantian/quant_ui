@@ -1198,6 +1198,8 @@ export interface KeywordProposal {
   current_keywords: string[];
   ordinary_word?: boolean;
   caveat?: boolean;
+  caveat_reason?: string | null;
+  expired?: boolean;
   week: string;
   weeks_seen: string[];
   decision: KeywordDecision | null;
@@ -1237,8 +1239,17 @@ export interface KeywordAudit {
   kept?: number;
   keep_rate?: number | null;
   per_week?: number;
-  verdict: "watching" | "confirmed" | "revert" | "poor";
+  verdict: "watching" | "confirmed" | "revert" | "poor" | "idle";
   reason?: string;
+}
+
+export interface KeywordScreenHealth {
+  week: string | null;
+  total: number;
+  screened: number;
+  claude_answered: number;
+  claude_rate: number | null;
+  degraded: boolean;
 }
 
 export interface KeywordRun {
@@ -1254,6 +1265,7 @@ export interface KeywordReview {
   runs: KeywordRun[];
   proposals: KeywordProposal[];
   auto: { enabled: boolean; preview_at: string | null; eligible: number };
+  screen_health?: KeywordScreenHealth;
   audit_at: string | null;
 }
 
@@ -1271,6 +1283,7 @@ export interface CoverageCore {
   flags: CoverageFlag[];
   why: Record<string, number>;
   named_by_rule: Record<string, number>;
+  gate_triggers?: Record<string, number>;
   kept?: CoverageSample[];
   lost?: CoverageSample[];
 }
@@ -1295,10 +1308,12 @@ export interface Coverage {
 }
 export interface KeywordSummary {
   pending: number;
+  expired?: number;
   coverage_at: string | null;
   coverage_alerts: number;
   coverage_notices: number;
   auto_apply: boolean;
+  screen_health?: KeywordScreenHealth;
 }
 
 export const fetchKeywordReview = () => call<KeywordReview>("/keywords/review");
