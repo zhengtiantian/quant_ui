@@ -23,6 +23,8 @@ import AdvisorPanel from "../components/markets/AdvisorPanel";
 import { AnalystCell, AnalystsPanel } from "../components/markets/AnalystsPanel";
 import CatalystsPanel, { StockCatalystButton } from "../components/markets/CatalystsPanel";
 import LotManagerModal, { StockLotButton } from "../components/markets/LotManagerModal";
+import { ResearchDrawer, StockResearchButton } from "../components/markets/ResearchDrawer";
+import { PortfolioReviewDrawer } from "../components/markets/PortfolioReviewDrawer";
 import GlobalMarkets from "../components/markets/GlobalMarkets";
 import IndicesPanel from "../components/markets/IndicesPanel";
 import VolumeCell from "../components/markets/VolumeCell";
@@ -479,6 +481,8 @@ const Holdings: React.FC = () => {
   const [analystOpen, setAnalystOpen] = React.useState<string | null>(null);   // the row whose analysts are expanded
   const [catalystModal, setCatalystModal] = React.useState<string | null>(null);
   const [lotModal, setLotModal] = React.useState<string | null>(null);
+  const [researchTarget, setResearchTarget] = React.useState<string | null>(null);
+  const [reviewOpen, setReviewOpen] = React.useState(false);
   const [catalystMap, setCatalystMap] = React.useState<Record<string, PerStockCatalysts>>({});
   const [catalystLang, setCatalystLang] = React.useState<"zh" | "en">("zh");
   const handleCatalystSummary = React.useCallback((m: Record<string, PerStockCatalysts>, l: "zh" | "en") => {
@@ -652,6 +656,7 @@ const Holdings: React.FC = () => {
           ? `Holdings every ${s.refresh_seconds} s, watchlist every ${s.watch_refresh_seconds} s` : `Every ${s.refresh_seconds} s auto-refresh`) : "Closed"}
           {age != null ? ` · Quotes ${age < 60 ? `${age} s` : `${Math.round(age / 60)} min`} ago` : ""} · {nextText}</span>
         <span style={{ ...muted, marginLeft: "auto" }}>Nasdaq quotes incl. pre-market (4:00–9:30 ET) and after hours (16:00–20:00 ET)</span>
+        <button style={ghostButton} onClick={() => setReviewOpen(true)}>🛡️ {tr(pageLang, "Portfolio Review", "组合复核")}</button>
         <button style={ghostButton} onClick={() => { void load(true); flash("Refreshing quotes…"); }}>🔄 Refresh</button>
       </div>
       {error ? <div style={{ ...panel, color: DOWN }}>Quote refresh failed: {error}</div> : null}
@@ -726,6 +731,9 @@ const Holdings: React.FC = () => {
                       <NewsHint j={news?.hints[h.symbol]} labels={news?.labels} track={news?.track?.text} />
                       <DevilsAdvocate symbol={h.symbol} item={advocate?.items[h.symbol]} labels={advocate?.labels} onAsk={askAdvocate} />
                       <FilingFlag f={filings?.items[h.symbol]} labels={filings?.labels} />
+                      <div>
+                        <StockResearchButton symbol={h.symbol} onOpen={setResearchTarget} />
+                      </div>
                     </td>
                     <td style={cell} onClick={(e) => e.stopPropagation()}>
                       <StockCatalystButton symbol={h.symbol} info={catalystMap[h.symbol]} lang={catalystLang} onOpen={setCatalystModal} />
@@ -778,6 +786,7 @@ const Holdings: React.FC = () => {
                   </td>
                   <td style={{ ...cell, ...right }} title={refTitle(w.quote)}>{usd(w.quote?.ref_price ?? w.quote?.prev_close)}</td>
                   <td style={{ ...cell, whiteSpace: "nowrap" }} onClick={(e) => e.stopPropagation()}>
+                    <StockResearchButton symbol={w.symbol} onOpen={setResearchTarget} compact />{" "}
                     <button style={iconButton} title="Add a buy" onClick={() => { setFilter(""); editTx(null, w.symbol); }}>+</button>
                     <button style={iconButton} title="Remove from watchlist" onClick={() => void unwatch(w.symbol)}>✕</button>
                   </td>
@@ -846,6 +855,8 @@ const Holdings: React.FC = () => {
                           onSaved={(st, msg, err) => { apply(st); setForm(null); flash(msg, err); void load(); }} /> : null}
       {chart ? <ChartModal symbol={chart} state={s} onClose={() => setChart(null)} onOpenEvents={(sym) => setCatalystModal(sym)} onOpenLots={(sym) => setLotModal(sym)} /> : null}
       {lotModal ? <LotManagerModal symbol={lotModal} state={s} onClose={() => setLotModal(null)} onSaved={(st, msg) => { apply(st); flash(msg); void load(); }} onOpenChart={(sym) => setChart(sym)} /> : null}
+      <ResearchDrawer open={researchTarget !== null} symbol={researchTarget} onClose={() => setResearchTarget(null)} />
+      <PortfolioReviewDrawer open={reviewOpen} onClose={() => setReviewOpen(false)} />
       {toast ? (
         <div style={{ position: "fixed", bottom: 20, right: 20, background: toast.err ? "#6e3535" : "#d6d9dc", color: "#e4e5e7", padding: "10px 14px",
                       borderRadius: 10, fontSize: 13.5, zIndex: 60, maxWidth: 420 }}>{toast.msg}</div>

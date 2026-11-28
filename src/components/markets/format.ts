@@ -16,6 +16,14 @@ export const pct = (v: number | null | undefined): string =>
 export const qty = (v: number): string => v.toLocaleString("en-US", { maximumFractionDigits: 6 });
 export const num = (v: number | null | undefined, dp = 2): string =>
   v == null ? "—" : v.toLocaleString("en-US", { minimumFractionDigits: dp, maximumFractionDigits: dp });
+/** Shares traded, compact: 132.7M, 1.25B. */
+export const volumeText = (v?: number | null): string => {
+  if (v == null || !Number.isFinite(v)) return "—";
+  if (v >= 1e9) return `${(v / 1e9).toFixed(2)}B`;
+  if (v >= 1e6) return `${(v / 1e6).toFixed(1)}M`;
+  if (v >= 1e3) return `${(v / 1e3).toFixed(1)}K`;
+  return String(Math.round(v));
+};
 export const color = (v: number | null | undefined): string =>
   v == null || Math.abs(v) < 1e-9 ? FLAT : v > 0 ? UP : DOWN;
 export const shortName = (name?: string): string =>

@@ -42,7 +42,14 @@ const DevilsAdvocate: React.FC<{ symbol: string; item?: DevilsAdvocateItem; labe
       {open ? (
         <div style={{ ...muted, marginTop: 4, maxWidth: 380, whiteSpace: "normal", lineHeight: 1.45 }}>
           <div style={{ color: "#bbc0c5" }}><b>{a.summary[l]}</b></div>
-          <div>{t(item.trigger, item.trigger)} · {when}</div>
+          <div>
+            {t(item.trigger, item.trigger)} · {when}
+            {item.engine === "local_fallback" ? (
+              <span style={{ ...pill("#e3b177"), fontSize: 10.5, marginLeft: 6 }}>
+                {t("local_fallback", "Local 9B fallback")}
+              </span>
+            ) : null}
+          </div>
           <div style={head}>{t("points", "Against adding now")}</div>
           {a.points.map((p, i) => (
             <div key={i}>{i + 1}. {l === "en" ? p.en : p.zh}

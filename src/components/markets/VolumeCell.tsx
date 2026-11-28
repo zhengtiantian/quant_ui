@@ -4,17 +4,9 @@
 import React from "react";
 import type { Quote, VolumeStats } from "../../api/markets";
 import { tr, useLang } from "../../lang";
-import { cell, right, sub } from "./format";
+import { cell, right, sub, volumeText } from "./format";
 
 const BUSY = 1.5;
-
-const volumeText = (v?: number | null): string => {
-  if (v == null || !Number.isFinite(v)) return "—";
-  if (v >= 1e9) return `${(v / 1e9).toFixed(2)}B`;
-  if (v >= 1e6) return `${(v / 1e6).toFixed(1)}M`;
-  if (v >= 1e3) return `${(v / 1e3).toFixed(1)}K`;
-  return String(Math.round(v));
-};
 
 const VolumeCell: React.FC<{ q?: Quote; v?: VolumeStats }> = ({ q, v }) => {
   const [lang] = useLang();

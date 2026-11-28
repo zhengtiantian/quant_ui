@@ -1149,6 +1149,7 @@ export interface DevilsAdvocateItem {
   answer: DevilsAdvocateAnswer | null;   // only when status is "done"
   sources: { id: string; title: string; url: string | null; time?: string; source?: string }[];
   facts: { id: string; text: string }[];
+  engine?: string;
   error: string | null;
 }
 export interface DevilsAdvocateReply { items: Record<string, DevilsAdvocateItem>; labels: Record<string, Bilingual> }
@@ -1159,8 +1160,14 @@ export const requestDevilsAdvocate = (symbol: string) =>
 // ---- Blocked buys scored against having bought at that session's close (Q.17.0, quant_ai markets/hint_scores.py)
 export interface HintSide { n: number; fell: number; loss_avoided: number | null; rose: number; gain_missed: number | null; net: number | null }
 export interface HintGroup { fired: number; first_day: string; last_day: string; horizons: Record<string, { own: HintSide; vs_spy: HintSide }> }
-export interface HintScoresReply { groups: Record<string, HintGroup>; labels: Record<string, Bilingual> }
-export const fetchHintScores = () => call<HintScoresReply>("/portfolio/hint-scores");
+export interface HintScoresReply {
+  groups: Record<string, HintGroup>;
+  labels: Record<string, Bilingual>;
+  held_only?: boolean;
+  total_rows?: number;
+}
+export const fetchHintScores = (heldOnly = false) =>
+  call<HintScoresReply>(`/portfolio/hint-scores${heldOnly ? "?held_only=1" : ""}`);
 
 // ---- Risk factors rewritten in the latest 10-K / 10-Q (Q.17.5, quant_ai markets/filing_changes.py)
 export interface FilingFlag { form: string; date: string; direction: "grown" | "rewritten" | null; sim_1a: number; cut: number; url: string | null; text: Bilingual }

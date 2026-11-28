@@ -1,11 +1,15 @@
 import React from "react";
 import LangSwitch from "../LangSwitch";
+import { useLang, tr } from "../lang";
 import Holdings from "./Holdings";
 import Briefs from "./Briefs";
 import Keywords from "./Keywords";
 import QuantModelPanel from "../components/QuantModelPanel";
 import PositionsPanel from "../components/PositionsPanel";
 import TaskMonitorPanel from "../components/TaskMonitorPanel";
+import NewsRagPanel from "../components/NewsRagPanel";
+import { ResearchDrawer } from "../components/markets/ResearchDrawer";
+import { PortfolioReviewDrawer } from "../components/markets/PortfolioReviewDrawer";
 import { hostUrl, signOut, useSession } from "../auth";
 import { fetchKeywordSummary } from "../api/markets";
 import type { KeywordSummary } from "../api/markets";
@@ -43,10 +47,13 @@ const Badge: React.FC<{ n: number; color: string; title: string }> = ({ n, color
     ) : null;
 
 const Dashboard: React.FC = () => {
+    const [lang] = useLang();
+    const [researchOpen, setResearchOpen] = React.useState(false);
+    const [reviewOpen, setReviewOpen] = React.useState(false);
     const username = localStorage.getItem("username");
     const kw = useKeywordSummary();
-    type Tab = "quant" | "holdings" | "briefs" | "positions" | "tasks" | "keywords" | AgentModule;
-    const TABS: Tab[] = ["quant", "holdings", "briefs", "positions", "tasks", "keywords", "jobs", "budget", "time"];
+    type Tab = "quant" | "holdings" | "briefs" | "news_rag" | "positions" | "tasks" | "keywords" | AgentModule;
+    const TABS: Tab[] = ["quant", "holdings", "briefs", "news_rag", "positions", "tasks", "keywords", "jobs", "budget", "time"];
     // Tabs merged into Quant Model (2026-11-08); old ?tab= links still land there.
     const LEGACY: Record<string, Tab> = { signals: "quant", performance: "quant", strategy: "quant" };
     // ?tab=briefs opens straight on a tab
@@ -84,6 +91,38 @@ const Dashboard: React.FC = () => {
             >
                 <h2>Quant Dashboard</h2>
                 <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+                    <button
+                        type="button"
+                        onClick={() => setReviewOpen(true)}
+                        style={{
+                            background: "#1b2e26",
+                            color: "#84d6a3",
+                            border: "1px solid #3c6e56",
+                            borderRadius: 8,
+                            padding: "5px 11px",
+                            fontSize: 12.5,
+                            fontWeight: 600,
+                            cursor: "pointer",
+                        }}
+                    >
+                        🛡️ {tr(lang, "Review", "组合复核")}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setResearchOpen(true)}
+                        style={{
+                            background: "#1c2a36",
+                            color: "#79cde2",
+                            border: "1px solid #35586d",
+                            borderRadius: 8,
+                            padding: "5px 11px",
+                            fontSize: 12.5,
+                            fontWeight: 600,
+                            cursor: "pointer",
+                        }}
+                    >
+                        🧠 {tr(lang, "AI Research", "AI 投研")}
+                    </button>
                     <LangSwitch size={12} />
                     <span>👋 Welcome, {username || "User"}</span>
                     <button onClick={handleLogout}>Logout</button>
@@ -94,6 +133,7 @@ const Dashboard: React.FC = () => {
                 <button onClick={() => setTab("quant")} style={tabStyle(tab === "quant")}>Quant Model</button>
                 <button onClick={() => setTab("holdings")} style={tabStyle(tab === "holdings")}>My Holdings</button>
                 <button onClick={() => setTab("briefs")} style={tabStyle(tab === "briefs")}>Market Briefs</button>
+                <button onClick={() => setTab("news_rag")} style={tabStyle(tab === "news_rag")}>🔎 News Q&amp;A</button>
                 <button onClick={() => setTab("positions")} style={tabStyle(tab === "positions")}>Positions</button>
                 <button onClick={() => setTab("tasks")} style={tabStyle(tab === "tasks")}>⏱️ Task Monitor</button>
                 <button onClick={() => setTab("keywords")} style={tabStyle(tab === "keywords")}>
@@ -132,6 +172,8 @@ const Dashboard: React.FC = () => {
                     <Holdings />
                 ) : tab === "briefs" ? (
                     <Briefs />
+                ) : tab === "news_rag" ? (
+                    <NewsRagPanel />
                 ) : tab === "positions" ? (
                     <PositionsPanel />
                 ) : tab === "keywords" ? (
@@ -140,6 +182,8 @@ const Dashboard: React.FC = () => {
                     <TaskMonitorPanel />
                 )}
             </main>
+            <ResearchDrawer open={researchOpen} symbol={null} onClose={() => setResearchOpen(false)} />
+            <PortfolioReviewDrawer open={reviewOpen} onClose={() => setReviewOpen(false)} />
         </div>
     );
 };
